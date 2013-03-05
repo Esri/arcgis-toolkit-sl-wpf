@@ -1,12 +1,12 @@
-# arcgis-toolkit-silverlight
+# arcgis-toolkit-sl-wpf
 
 This project contains the source code and libraries for the Esri ArcGIS Silverlight Toolkit SDK. The library is an extension of the ArcGIS API for Silverlight™, ArcGIS Runtime SDK for Windows Phone, and the ArcGIS Runtime SDK for WPF™. Included are a number of controls, widgets, tools, and data sources you can use to enhance your applications. 
 
 NOTE: This library is only an extension of the ArcGIS API for Silverlight™, ArcGIS Runtime SDK for Windows Phone, or the ArcGIS Runtime SDK for WPF™.   In order to build a complete mapping application, you will also need to install the respective products on which they are built.  See below for instructions on how to get started.
 
-[View it live](http://resources.arcgis.com/en/help/silverlight-api/samples/start.htm)
+[View it live](http://resources.arcgis.com/en/help/arcgis-toolkit-sl-wpf/samples/start.htm)
 
-![App](https://raw.github.com/Esri/arcgis-toolkit-silverlight/master/arcgis-toolkit-silverlight.png)
+![App](https://raw.github.com/Esri/arcgis-toolkit-sl-wpf/master/arcgis-toolkit-sl-wpf.png)
 
 ## Features
 * AttachmentEditor
@@ -40,7 +40,7 @@ See instructions above.
 
 ## Resources
 
-* [ArcGIS API for Silverlight Resource Center](http://http://resources.arcgis.com/en/communities/silverlight-api/index.html)
+* [ArcGIS API for Silverlight Resource Center](http://http://resources.arcgis.com/en/communities/arcgis-toolkit-sl-wpf/index.html)
 * [ArcGIS Blog](http://blogs.esri.com/esri/arcgis/)
 * [@esri](http://twitter.com/esri)
 
@@ -67,7 +67,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
-A copy of the license is available in the repository's [license.txt]( https://raw.github.com/Esri/arcgis-toolkit-silverlight/master/license.txt) file.
+A copy of the license is available in the repository's [license.txt]( https://raw.github.com/Esri/arcgis-toolkit-sl-wpf/master/license.txt) file.
 
-[](Esri Tags: ArcGIS Web Mapping Toolkit)
+[](Esri Tags: ArcGIS Web Mapping Toolkit Wpf WP7)
 [](Esri Language: Silverlight)
