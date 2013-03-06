@@ -1,0 +1,25 @@
+<ResourceDictionary 
+	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+	xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+	<ResourceDictionary.MergedDictionaries>
+		<ResourceDictionary Source="/ESRI.ArcGIS.Client.Toolkit;component/Bookmark/Bookmark.Theme.xaml" />
+		<ResourceDictionary Source="/ESRI.ArcGIS.Client.Toolkit;component/MagnifyingGlass.Theme.xaml" />
+		<ResourceDictionary Source="/ESRI.ArcGIS.Client.Toolkit;component/MapTip/MapTip.Theme.xaml" />
+		<ResourceDictionary Source="/ESRI.ArcGIS.Client.Toolkit;component/Navigation.Theme.xaml" />
+		<ResourceDictionary Source="/ESRI.ArcGIS.Client.Toolkit;component/OverviewMap.Theme.xaml" />
+		<ResourceDictionary Source="/ESRI.ArcGIS.Client.Toolkit;component/ProgressBar.Theme.xaml" />
+        <ResourceDictionary Source="/ESRI.ArcGIS.Client.Toolkit;component/SignInDialog/SignInDialog.Theme.xaml" />
+		<ResourceDictionary Source="/ESRI.ArcGIS.Client.Toolkit;component/FeatureDataForm/FeatureDataForm.Theme.xaml" />
+		<ResourceDictionary Source="/ESRI.ArcGIS.Client.Toolkit;component/FeatureDataGrid/FeatureDataGrid.Theme.xaml" />
+		<ResourceDictionary Source="/ESRI.ArcGIS.Client.Toolkit;component/TimeSlider.Theme.xaml" />
+		<ResourceDictionary Source="/ESRI.ArcGIS.Client.Toolkit;component/Editor/TemplatePicker.Theme.xaml" />
+		<ResourceDictionary Source="/ESRI.ArcGIS.Client.Toolkit;component/TemplatePanel.Theme.xaml" />
+		<ResourceDictionary Source="/ESRI.ArcGIS.Client.Toolkit;component/Editor/EditorWidget.Theme.xaml" />
+		<ResourceDictionary Source="/ESRI.ArcGIS.Client.Toolkit;component/AttachmentEditor/AttachmentEditor.Theme.xaml" />
+		<ResourceDictionary Source="/ESRI.ArcGIS.Client.Toolkit;component/Legend/Legend.Theme.xaml" />
+		<ResourceDictionary Source="/ESRI.ArcGIS.Client.Toolkit;component/InfoWindow.Theme.xaml" />
+		<ResourceDictionary Source="/ESRI.ArcGIS.Client.Toolkit;component/ScaleLine.Theme.xaml" />
+        <ResourceDictionary Source="/ESRI.ArcGIS.Client.Toolkit;component/Attribution/Attribution.Theme.xaml" />
+		<ResourceDictionary Source="/ESRI.ArcGIS.Client.Toolkit;component/Primitives/DateTimePicker/DateTimePicker.Theme.xaml" />
+	</ResourceDictionary.MergedDictionaries>
+</ResourceDictionary>

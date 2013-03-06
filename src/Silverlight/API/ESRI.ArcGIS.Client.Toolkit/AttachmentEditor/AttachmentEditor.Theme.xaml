@@ -1,0 +1,137 @@
+﻿<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="clr-namespace:ESRI.ArcGIS.Client.Toolkit;assembly=ESRI.ArcGIS.Client.Toolkit">
+    <Style TargetType="local:AttachmentEditor">
+        <Setter Property="Background" Value="White" />
+        <Setter Property="AllowDrop" Value="True"/>
+        <Setter Property="BorderBrush" Value="#FFA3AEB9"/>
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="ItemTemplate">
+            <Setter.Value>
+                <DataTemplate>
+                    <Grid Margin="3">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Orientation="Horizontal">
+                            <HyperlinkButton Content="{Binding Name}" NavigateUri="{Binding Uri}" 
+        			 	                     VerticalAlignment="Center" TargetName="_blank">
+                                <ToolTipService.ToolTip>
+                                    <Grid>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto" />
+                                            <RowDefinition Height="Auto" />
+                                            <RowDefinition Height="Auto" />
+                                            <RowDefinition Height="Auto" />
+                                        </Grid.RowDefinitions>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+
+                                        <TextBlock Text="Name: " Margin="10,0,0,0" 
+                                                   HorizontalAlignment="Right" VerticalAlignment="Center" 
+                                                   Grid.Row="0" Grid.Column="0" />
+                                        <TextBlock Text="{Binding Name}" Margin="5,0" MaxWidth="250" TextWrapping="Wrap" 
+                                                   Grid.Row="0" Grid.Column="1" VerticalAlignment="Center" />
+
+                                        <TextBlock Text="Size: " Margin="10,0,0,0" 
+                                                   HorizontalAlignment="Right" 
+                                                   Grid.Row="1" Grid.Column="0" />
+                                        <TextBlock Text="{Binding Size}" Margin="5,0" MaxWidth="250" 
+                                                   TextWrapping="Wrap" Grid.Row="1" Grid.Column="1" />
+
+                                        <TextBlock Text="Uri: " Margin="10,0,0,0" 
+                                                   HorizontalAlignment="Right" 
+                                                   Grid.Row="2" Grid.Column="0" />
+                                        <TextBlock Text="{Binding Uri}" Margin="5,0" MaxWidth="250" 
+                                                   TextWrapping="Wrap" Grid.Row="2" Grid.Column="1" />
+
+                                        <TextBlock Text="Content Type: " Margin="10,0,0,0" 
+                                                   HorizontalAlignment="Right" 
+                                                   Grid.Row="3" Grid.Column="0" />
+                                        <TextBlock Text="{Binding ContentType}" Margin="5,0" MaxWidth="250" 
+                                                   TextWrapping="Wrap" Grid.Row="3" Grid.Column="1" />
+                                    </Grid>
+                                </ToolTipService.ToolTip>
+                            </HyperlinkButton>
+                        </StackPanel>
+                        <Button Grid.Column="1" Command="{Binding Delete}" VerticalAlignment="Center" Cursor="Hand">
+                            <Button.Template>
+                                <ControlTemplate TargetType="Button">
+                                    <ContentPresenter x:Name="contentPresenter" ContentTemplate="{TemplateBinding ContentTemplate}" Content="{TemplateBinding Content}" HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" Margin="{TemplateBinding Padding}" VerticalAlignment="{TemplateBinding VerticalContentAlignment}"/>
+                                </ControlTemplate>
+                            </Button.Template>
+                            <Image VerticalAlignment="Center" Source="/ESRI.ArcGIS.Client.Toolkit;component/Images/deleteFeature.png" Stretch="None" />
+                        </Button>
+                    </Grid>
+                </DataTemplate>
+            </Setter.Value>
+        </Setter>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="local:AttachmentEditor">
+                    <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" 
+                            BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="2">
+                        <VisualStateManager.VisualStateGroups>
+                            <VisualStateGroup x:Name="BusyStates">
+                                <VisualState x:Name="Loaded">
+                                    <Storyboard>
+                                        <ObjectAnimationUsingKeyFrames Storyboard.TargetProperty="(UIElement.Visibility)" Storyboard.TargetName="ProgressIndicator">
+                                            <DiscreteObjectKeyFrame KeyTime="0">
+                                                <DiscreteObjectKeyFrame.Value>
+                                                    <Visibility>Collapsed</Visibility>
+                                                </DiscreteObjectKeyFrame.Value>
+                                            </DiscreteObjectKeyFrame>
+                                        </ObjectAnimationUsingKeyFrames>
+                                    </Storyboard>
+                                </VisualState>
+                                <VisualState x:Name="Busy">
+                                    <Storyboard>
+                                        <ObjectAnimationUsingKeyFrames Storyboard.TargetProperty="(UIElement.Visibility)" Storyboard.TargetName="ProgressIndicator">
+                                            <DiscreteObjectKeyFrame KeyTime="0">
+                                                <DiscreteObjectKeyFrame.Value>
+                                                    <Visibility>Visible</Visibility>
+                                                </DiscreteObjectKeyFrame.Value>
+                                            </DiscreteObjectKeyFrame>
+                                        </ObjectAnimationUsingKeyFrames>
+                                        <DoubleAnimation Duration="0:0:0.75" RepeatBehavior="Forever" To="360" Storyboard.TargetName="ProgressIndicator" 
+                                                         Storyboard.TargetProperty="(UIElement.RenderTransform).(RotateTransform.Angle)" />
+                                    </Storyboard>
+                                </VisualState>
+                            </VisualStateGroup>
+                        </VisualStateManager.VisualStateGroups>
+                        <Grid Background="{TemplateBinding Background}">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="*" />
+                            </Grid.RowDefinitions>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <Grid x:Name="ProgressIndicator" Background="Transparent" Grid.Row="0" Grid.Column="0" Margin="3,0" 
+                                  Visibility="Collapsed" HorizontalAlignment="Left" VerticalAlignment="Center" RenderTransformOrigin="0.5,0.5">
+                                <Grid.RenderTransform>
+                                    <RotateTransform />
+                                </Grid.RenderTransform>
+                                <Ellipse Fill="#1E525252" Margin="11,2,11,20" Width="2" Height="2"/>
+                                <Ellipse Fill="#3F525252" Height="3" Width="3" VerticalAlignment="Top" HorizontalAlignment="Right" Margin="0,4,5,0" />
+                                <Ellipse Fill="#7F525252" Width="4" HorizontalAlignment="Right" Height="4" VerticalAlignment="Top" Margin="0,9,1,0" />
+                                <Ellipse Fill="#BF525252" Height="5" Width="5" VerticalAlignment="Bottom" Margin="0,0,3,3" HorizontalAlignment="Right" />
+                                <Ellipse Fill="#FF525252" Height="6" Width="6" VerticalAlignment="Bottom" Margin="9,0" />
+                            </Grid>
+                            <Button x:Name="AddNewButton" Content="Add" HorizontalAlignment="Right" 
+                                    Margin="3" Padding="3" MinWidth="50" Grid.Row="0" Grid.Column="1" IsEnabled="False" />
+                            <ScrollViewer Grid.Row="1" Margin="3,0,3,3" Grid.ColumnSpan="2">
+                                <ItemsControl x:Name="AttachmentList" ItemTemplate="{TemplateBinding ItemTemplate}"/>
+                            </ScrollViewer>
+                        </Grid>
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+</ResourceDictionary>

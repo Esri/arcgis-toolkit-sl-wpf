@@ -1,0 +1,65 @@
+<ResourceDictionary
+	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" 
+	xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+	xmlns:local="clr-namespace:ESRI.ArcGIS.Client.Toolkit"
+    xmlns:data="http://schemas.microsoft.com/winfx/2006/xaml/presentation">
+
+    <Style TargetType="local:Bookmark">
+		<Setter Property="MaxHeight" Value="200" />
+		<Setter Property="Width" Value="120" />
+		<Setter Property="Background" Value="#99000000" />
+		<Setter Property="Title" Value="Bookmarks" />
+		<Setter Property="BorderThickness" Value="1" />
+		<Setter Property="BorderBrush" Value="White" />
+
+		<Setter Property="Template">
+			<Setter.Value>
+				<ControlTemplate TargetType="local:Bookmark">
+					<Grid>
+						<Grid.RowDefinitions>
+							<RowDefinition Height="25" />
+							<RowDefinition Height="20" />
+							<RowDefinition Height="*" />
+							<RowDefinition Height="25" />
+						</Grid.RowDefinitions>
+						<Border CornerRadius="5" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" Grid.RowSpan="4" />
+
+						<TextBlock Grid.Row="0" Margin="5,5,5,0" FontSize="12" FontFamily="Verdana" 
+								   Foreground="White" FontWeight="Bold" Text="{TemplateBinding Title}"/>
+						<Grid Grid.Row="1" Margin="5,0,5,0">
+							<Grid.ColumnDefinitions>
+								<ColumnDefinition Width="*" />
+								<ColumnDefinition Width="20" />
+							</Grid.ColumnDefinitions>
+							<TextBox x:Name="AddBookmarkName" Grid.Column="0" Width="200" />
+							<Button x:Name="AddBookmark" Grid.Column="1" Content="+" />
+						</Grid>
+
+						<data:DataGrid x:Name="BookmarkList" AutoGenerateColumns="False" 
+									   HeadersVisibility="None" Grid.Row="2"  Visibility="Visible"
+									   RowHeight="16"
+									   RowDetailsVisibilityMode="Collapsed"
+									   CanUserReorderColumns="False"
+									   CanUserResizeColumns="False"
+									   Margin="5,0,5,0">
+							<data:DataGrid.Columns>
+								<data:DataGridTextColumn IsReadOnly="False" Header="Bookmark" 
+										Foreground="Black" FontSize="10" Width="{TemplateBinding Width}"
+										FontFamily="Times"
+										Binding="{Binding Name, Mode=TwoWay}" />
+							</data:DataGrid.Columns>
+						</data:DataGrid>
+						<Grid Grid.Row="3"  Margin="5,0,5,5" >
+							<Grid.ColumnDefinitions>
+								<ColumnDefinition Width="*" />
+								<ColumnDefinition Width="*" />
+							</Grid.ColumnDefinitions>
+							<Button x:Name="ClearBookmarks" Grid.Column="0" Content="Clear" />
+						</Grid>
+
+					</Grid>
+				</ControlTemplate>
+			</Setter.Value>
+		</Setter>
+	</Style>
+</ResourceDictionary>

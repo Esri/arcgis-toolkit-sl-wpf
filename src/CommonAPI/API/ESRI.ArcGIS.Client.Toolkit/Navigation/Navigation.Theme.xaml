@@ -1,0 +1,123 @@
+﻿<ResourceDictionary
+	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" 
+	xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+	xmlns:local="clr-namespace:ESRI.ArcGIS.Client.Toolkit">
+
+	<Style TargetType="local:Navigation">
+		<Setter Property="Background" Value="#FF949494" />
+		<Setter Property="Foreground" Value="#FF333333" />
+		<Setter Property="BorderBrush" Value="White" />
+		<Setter Property="HorizontalAlignment" Value="Left" />
+		<Setter Property="VerticalAlignment" Value="Top" />
+		<Setter Property="Template">
+			<Setter.Value>
+				<ControlTemplate TargetType="local:Navigation">
+					<Grid MinHeight="125" MinWidth="148" x:Name="LayoutRoot" RenderTransformOrigin="{TemplateBinding RenderTransformOrigin}" HorizontalAlignment="Left" VerticalAlignment="Top" Background="#00FFFFFF">
+						<VisualStateManager.VisualStateGroups>
+							<VisualStateGroup x:Name="CommonStates">
+								<VisualState x:Name="Normal">
+									<Storyboard>
+										<DoubleAnimation Duration="0:0:0.1" Storyboard.TargetName="LayoutRoot" Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleX)" To="0.75"/>
+										<DoubleAnimation Duration="0:0:0.1" Storyboard.TargetName="LayoutRoot" Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)" To="0.75"/>
+										<DoubleAnimation BeginTime="00:00:00" Duration="0:0:0.1" Storyboard.TargetName="LayoutRoot" Storyboard.TargetProperty="(UIElement.Opacity)" To="0.25"/>
+									</Storyboard>
+								</VisualState>
+								<VisualState x:Name="MouseOver">
+									<Storyboard>
+										<DoubleAnimation BeginTime="00:00:00" Duration="0:0:0.1" Storyboard.TargetName="LayoutRoot" Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleX)" To="1"/>
+										<DoubleAnimation BeginTime="00:00:00" Duration="0:0:0.1" Storyboard.TargetName="LayoutRoot" Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)" To="1"/>
+										<DoubleAnimation BeginTime="00:00:00" Duration="0:0:0.1" Storyboard.TargetName="LayoutRoot" Storyboard.TargetProperty="(UIElement.Opacity)" To="0.75"/>
+									</Storyboard>
+								</VisualState>
+							</VisualStateGroup>
+						</VisualStateManager.VisualStateGroups>
+						<Grid.ColumnDefinitions>
+							<ColumnDefinition Width="20"/>
+							<ColumnDefinition Width="*"/>
+						</Grid.ColumnDefinitions>
+						<Grid.RenderTransform>
+							<ScaleTransform CenterX="0" CenterY="0"/>
+						</Grid.RenderTransform>
+						<Grid x:Name="ZoomContainer" Margin="0" VerticalAlignment="Center">
+							<Grid.RowDefinitions>
+								<RowDefinition Height="Auto"/>
+								<RowDefinition Height="Auto"/>
+								<RowDefinition Height="Auto"/>
+							</Grid.RowDefinitions>
+							<Rectangle Fill="{TemplateBinding Background}" Stroke="{TemplateBinding BorderBrush}" StrokeThickness="1" RadiusX="3" RadiusY="3" Margin="0,0,0,0" Grid.ColumnSpan="4" Grid.RowSpan="4"/>
+								<Button x:Name="ZoomInButton" Foreground="{TemplateBinding Foreground}" FontSize="8" Height="16" Margin="2,2,2,0" Width="14" Content="+" Grid.Row="0" ToolTipService.ToolTip="Zoom In"/>
+							<Rectangle Fill="White" Height="3" HorizontalAlignment="Center" VerticalAlignment="Center" Width="2" Grid.Row="1"/>
+							<Slider x:Name="ZoomSlider" Cursor="Hand" VerticalAlignment="Top" Grid.Row="1" Orientation="Vertical" LargeChange="1" Maximum="15" Minimum="0" SmallChange="1" Value="0" ToolTipService.ToolTip="Drag to zoom in or out" Height="89"/>
+							<Button x:Name="ZoomOutButton" Foreground="{TemplateBinding Foreground}" FontSize="8" Height="16" Margin="2,0,2,2" Width="14" Content="-" Grid.Row="2" ToolTipService.ToolTip="Zoom Out"/>
+						</Grid>
+						<Grid x:Name="Navigator" Height="125" Margin="3,0,0,0" Width="125" RenderTransformOrigin="0.5,0.5" Grid.Column="1">
+							<Grid.RenderTransform>
+								<RotateTransform x:Name="TransformRotate" Angle="0"/>
+							</Grid.RenderTransform>
+							<Path x:Name="RotateRing" Fill="{TemplateBinding Background}" Stretch="Fill" Stroke="{TemplateBinding BorderBrush}" Cursor="Hand" Margin="8" Data="M97.050499,68.386246 L106.5,68.386246 L106.1507,69.74157 C101.85528,83.519669 92.276138,94.975006 79.777817,101.74873 C76.653244,103.44215 73.34623,104.84298 69.893723,105.91433 L69.5,106.01534 L69.5,96.482994 L71.447334,95.771919 C74.205498,94.608025 76.826485,93.184006 79.279457,91.530655 C84.185387,88.223969 88.419128,84.000031 91.733521,79.105515 C93.390709,76.658241 94.818054,74.043327 95.98465,71.29158 z M0.5,68.386246 L9.9494915,68.386246 L11.015333,71.29158 C12.181933,74.043343 13.609276,76.658241 15.266468,79.105515 C18.580849,84.000053 22.814623,88.223969 27.720554,91.530655 C30.173519,93.18399 32.794529,94.608032 35.552677,95.771912 L38.5,96.848145 L38.5,106.27186 L37.106312,105.91433 C23.296202,101.62891 11.814036,92.07193 5.0245867,79.602684 C3.3272135,76.485374 1.923135,73.186035 0.8492955,69.741547 z M69.5,0.75652671 L69.893661,0.85751152 C83.703682,5.14291 95.185875,14.699864 101.97538,27.169144 C103.67275,30.286457 105.07684,33.585789 106.15069,37.030285 L106.5,38.38562 L97.050507,38.38562 L95.984657,35.480282 C94.818062,32.728535 93.390701,30.113619 91.733528,27.666359 C88.419121,22.771801 84.185356,18.547873 79.279427,15.241194 C76.826447,13.58785 74.205452,12.163824 71.447311,10.999947 L69.5,10.288876 z M38.5,0.5 L38.5,9.9237194 L35.552654,10.999952 C32.794514,12.163842 30.173498,13.587873 27.720541,15.241213 C22.81461,18.547897 18.580839,22.771828 15.266464,27.666361 C13.609274,30.113626 12.181928,32.728542 11.015331,35.480286 L9.9494915,38.38562 L0.5,38.38562 L0.84929955,37.030308 C5.1446834,23.252361 14.723901,11.796858 27.222183,5.02314 C30.346762,3.3297043 33.653778,1.928881 37.106293,0.85752773 z" ToolTipService.ToolTip="Drag to rotate"/>
+							<Grid x:Name="PanLeft" Cursor="Hand" HorizontalAlignment="Left" Margin="0" Width="25" ToolTipService.ToolTip="Click to move west" VerticalAlignment="Center">
+								<Ellipse Fill="{TemplateBinding Background}" Stroke="{TemplateBinding BorderBrush}" Height="24.5" Width="25"/>
+								<Path Fill="#FFFFFFFF" Stretch="Fill" Stroke="#FFFFFFFF" Height="13" Width="8" Canvas.Left="7" Canvas.Top="5.75" Data="M48,71 L40,76 L48,81 z" Margin="7.836,6,9.164,6" />
+							</Grid>
+							<Grid x:Name="PanRight" Cursor="Hand" HorizontalAlignment="Right" Margin="0" Width="25" RenderTransformOrigin="0.5,0.5" ToolTipService.ToolTip="Click to move east" VerticalAlignment="Center">
+								<Grid.RenderTransform>
+									<RotateTransform Angle="180"/>
+								</Grid.RenderTransform>
+								<Ellipse Fill="{TemplateBinding Background}" Stroke="{TemplateBinding BorderBrush}" Height="24.5" Width="25"/>
+								<Path Fill="#FFFFFFFF" Stretch="Fill" Stroke="#FFFFFFFF" Height="13" Width="8" Canvas.Left="7" Canvas.Top="5.75" Data="M48,71 L40,76 L48,81 z" Margin="7.836,6,9.164,6" />
+							</Grid>
+							<Grid x:Name="PanUp" Cursor="Hand" Height="25" Margin="0" VerticalAlignment="Top" RenderTransformOrigin="0.5,0.5" ToolTipService.ToolTip="Click to move north" HorizontalAlignment="Center">
+								<Grid.RenderTransform>
+									<RotateTransform Angle="90"/>
+								</Grid.RenderTransform>
+								<Ellipse Fill="{TemplateBinding Background}" Stroke="{TemplateBinding BorderBrush}" Height="24.5" Width="25"/>
+								<Path Fill="#FFFFFFFF" Stretch="Fill" Stroke="#FFFFFFFF" Height="14.125" Width="11.313" Canvas.Left="4.906" Canvas.Top="4.906" Data="M49.643433,70.53167 L37.857143,76 L49.572575,81.46917 z" Margin="5.672,5.5,8.015,5.375" />
+								<Path Fill="{TemplateBinding Foreground}" Stretch="Fill" Height="5.322" Width="4.416" RenderTransformOrigin="0.506,0.5" Canvas.Left="10.746" Canvas.Top="9.367" Data="M92,29.833334 L92.000114,24.166691 L93.247681,24.184656 L96.134811,27.716934 L96.076241,24.166662 L97.444435,24.166662 L97.444435,29.833332 L96.218758,29.810295 L93.332748,26.418152 L93.361107,29.808037 z">
+									<Path.RenderTransform>
+										<RotateTransform Angle="90"/>
+									</Path.RenderTransform>
+								</Path>
+								<Path Fill="#FF000000" Stretch="Fill" Stroke="#FF000000" Height="1" Width="1" RenderTransformOrigin="0.5,0.5" Canvas.Left="10.375" Canvas.Top="9.417" Data="M91.666664,39">
+									<Path.RenderTransform>
+										<TransformGroup>
+											<RotateTransform Angle="90"/>
+											<TranslateTransform X="3.5064478404741046" Y="0.50863583808085222"/>
+										</TransformGroup>
+									</Path.RenderTransform>
+								</Path>
+							</Grid>
+							<Grid x:Name="PanDown" Cursor="Hand" Height="25" Margin="0" VerticalAlignment="Bottom" RenderTransformOrigin="0.5,0.5" ToolTipService.ToolTip="Click to move south" HorizontalAlignment="Center">
+								<Grid.RenderTransform>
+									<RotateTransform Angle="270"/>
+								</Grid.RenderTransform>
+								<Ellipse Fill="{TemplateBinding Background}" Stroke="{TemplateBinding BorderBrush}" Height="24.5" Width="25"/>
+								<Path Fill="#FFFFFFFF" Stretch="Fill" Stroke="#FFFFFFFF" Height="13" Width="8" Canvas.Left="7" Canvas.Top="5.75" Data="M48,71 L40,76 L48,81 z" Margin="7.172,6,9.828,6" />
+							</Grid>
+						</Grid>
+						<Button x:Name="ZoomFullExtent" BorderBrush="{TemplateBinding BorderBrush}" Cursor="Hand" Height="20" HorizontalAlignment="Right" VerticalAlignment="Bottom" Width="20" Grid.Column="1" ToolTipService.ToolTip="Full Extent">
+							<Grid Height="14" Width="14">
+								<Ellipse Stroke="{TemplateBinding Foreground}" Height="Auto" Width="Auto"/>
+								<Ellipse Stroke="{TemplateBinding Foreground}" Height="6" Width="Auto"/>
+								<Ellipse Stroke="{TemplateBinding Foreground}" Height="Auto" Width="6"/>
+							</Grid>
+						</Button>
+						<Button x:Name="ResetRotation" BorderBrush="{TemplateBinding BorderBrush}" Cursor="Hand" Height="20" HorizontalAlignment="Left" Margin="3,0,0,0" VerticalAlignment="Bottom" Width="20" Grid.Column="1" ToolTipService.ToolTip="Reset North">
+							<Grid Height="Auto" HorizontalAlignment="Left" Width="Auto" RenderTransformOrigin="0.5,0.5">
+								<Grid.RenderTransform>
+									<RotateTransform Angle="0"/>
+								</Grid.RenderTransform>
+								<Path Fill="{TemplateBinding Background}" Stretch="Fill" Height="12" Width="10" RenderTransformOrigin="0.5,0.5" Data="M49.643433,70.53167 L37.857143,76 L49.572575,81.46917 z">
+									<Path.RenderTransform>
+										<RotateTransform Angle="90"/>
+									</Path.RenderTransform>
+								</Path>
+								<Path Fill="{TemplateBinding Foreground}" Stretch="Fill" Height="4" Margin="0,3,0,0" Width="4" Data="M92,29.833334 L92.000114,24.166691 L93.247681,24.184656 L96.134811,27.716934 L96.076241,24.166662 L97.444435,24.166662 L97.444435,29.833332 L96.218758,29.810295 L93.332748,26.418152 L93.361107,29.808037 z"/>
+							</Grid>
+						</Button>
+					</Grid>
+				</ControlTemplate>
+			</Setter.Value>
+		</Setter>
+	</Style>
+
+</ResourceDictionary>

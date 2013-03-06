@@ -1,0 +1,471 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProductVersion>9.0.30729</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{3B8E60A9-171E-4F6A-91E4-6AAA079D6F50}</ProjectGuid>
+    <OutputType>library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>ESRI.ArcGIS.Client.Toolkit</RootNamespace>
+    <AssemblyName>ESRI.ArcGIS.Client.Toolkit</AssemblyName>
+    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <ProjectTypeGuids>{60dc8134-eba5-43b8-bcc9-bb4bc16c2548};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
+    <WarningLevel>4</WarningLevel>
+    <FileUpgradeFlags>
+    </FileUpgradeFlags>
+    <OldToolsVersion>3.5</OldToolsVersion>
+    <UpgradeBackupLocation />
+    <PublishUrl>publish\</PublishUrl>
+    <Install>true</Install>
+    <InstallFrom>Disk</InstallFrom>
+    <UpdateEnabled>false</UpdateEnabled>
+    <UpdateMode>Foreground</UpdateMode>
+    <UpdateInterval>7</UpdateInterval>
+    <UpdateIntervalUnits>Days</UpdateIntervalUnits>
+    <UpdatePeriodically>false</UpdatePeriodically>
+    <UpdateRequired>false</UpdateRequired>
+    <MapFileExtensions>true</MapFileExtensions>
+    <ApplicationRevision>0</ApplicationRevision>
+    <ApplicationVersion>1.0.0.%2a</ApplicationVersion>
+    <IsWebBootstrapper>false</IsWebBootstrapper>
+    <UseApplicationTrust>false</UseApplicationTrust>
+    <BootstrapperEnabled>true</BootstrapperEnabled>
+    <TargetFrameworkProfile>Client</TargetFrameworkProfile>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>..\ClientBin\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <DocumentationFile>..\ClientBin\ESRI.ArcGIS.Client.Toolkit.xml</DocumentationFile>
+    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>..\ClientBin\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <DocumentationFile>..\ClientBin\ESRI.ArcGIS.Client.Toolkit.xml</DocumentationFile>
+    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="ESRI.ArcGIS.Client">
+      <SpecificVersion>False</SpecificVersion>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.ComponentModel.DataAnnotations">
+      <RequiredTargetFramework>3.5</RequiredTargetFramework>
+    </Reference>
+    <Reference Include="System.Core">
+      <RequiredTargetFramework>3.5</RequiredTargetFramework>
+    </Reference>
+    <Reference Include="System.Security" />
+    <Reference Include="System.Xaml" />
+    <Reference Include="System.Xml.Linq">
+      <RequiredTargetFramework>3.5</RequiredTargetFramework>
+    </Reference>
+    <Reference Include="System.Data.DataSetExtensions">
+      <RequiredTargetFramework>3.5</RequiredTargetFramework>
+    </Reference>
+    <Reference Include="System.Data" />
+    <Reference Include="System.Xml" />
+    <Reference Include="UIAutomationProvider">
+      <RequiredTargetFramework>3.0</RequiredTargetFramework>
+    </Reference>
+    <Reference Include="WindowsBase" />
+    <Reference Include="PresentationCore" />
+    <Reference Include="PresentationFramework" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="..\..\..\CommonAPI\API\ESRI.ArcGIS.Client.Toolkit\Properties\buildnum.cs">
+      <Link>Properties\buildnum.cs</Link>
+    </Compile>
+    <Compile Include="..\..\..\CommonAPI\API\ESRI.ArcGIS.Client.Toolkit\AttachmentEditor\AttachmentEditor.cs">
+      <Link>AttachmentEditor\AttachmentEditor.cs</Link>
+    </Compile>
+    <Compile Include="..\..\..\CommonAPI\API\ESRI.ArcGIS.Client.Toolkit\Bookmark\Bookmark.cs">
+      <Link>Bookmark\Bookmark.cs</Link>
+    </Compile>
+    <Compile Include="..\..\..\CommonAPI\API\ESRI.ArcGIS.Client.Toolkit\Editor\EditorWidget.cs">
+      <Link>Editor\EditorWidget.cs</Link>
+    </Compile>
+    <Compile Include="..\..\..\CommonAPI\API\ESRI.ArcGIS.Client.Toolkit\Editor\TemplatePicker.cs">
+      <Link>Editor\TemplatePicker.cs</Link>
+    </Compile>
+    <Compile Include="..\..\..\CommonAPI\API\ESRI.ArcGIS.Client.Toolkit\FeatureDataForm\FeatureDataField.cs">
+      <Link>FeatureDataForm\FeatureDataField.cs</Link>
+    </Compile>
+    <Compile Include="..\..\..\CommonAPI\API\ESRI.ArcGIS.Client.Toolkit\FeatureDataForm\FeatureDataForm.cs">
+      <Link>FeatureDataForm\FeatureDataForm.cs</Link>
+    </Compile>
+    <Compile Include="..\..\..\CommonAPI\API\ESRI.ArcGIS.Client.Toolkit\FeatureDataForm\FeatureDataFormConverters.cs">
+      <Link>FeatureDataForm\FeatureDataFormConverters.cs</Link>
+    </Compile>
+    <Compile Include="..\..\..\CommonAPI\API\ESRI.ArcGIS.Client.Toolkit\FeatureDataForm\FeatureDataFormEnums.cs">
+      <Link>FeatureDataForm\FeatureDataFormEnums.cs</Link>
+    </Compile>
+    <Compile Include="..\..\..\CommonAPI\API\ESRI.ArcGIS.Client.Toolkit\FeatureDataGrid\FeatureDataGrid.cs">
+      <Link>FeatureDataGrid\FeatureDataGrid.cs</Link>
+    </Compile>
+    <Compile Include="..\..\..\CommonAPI\API\ESRI.ArcGIS.Client.Toolkit\Primitives\DateTimePicker\DateTimePicker.cs">
+      <Link>Primitives\DateTimePicker\DateTimePicker.cs</Link>
+    </Compile>
+    <Compile Include="..\..\..\CommonAPI\API\ESRI.ArcGIS.Client.Toolkit\ValueConverters\DateTimeFormatConverter.cs">
+      <Link>ValueConverters\DateTimeFormatConverter.cs</Link>
+    </Compile>
+    <Compile Include="FeatureDataGrid\FeatureDataGrid.WPF.cs" />
+    <Compile Include="..\..\..\CommonAPI\API\ESRI.ArcGIS.Client.Toolkit\InfoWindow\InfoWindow.cs">
+      <Link>InfoWindow\InfoWindow.cs</Link>
+    </Compile>
+    <Compile Include="..\..\..\CommonAPI\API\ESRI.ArcGIS.Client.Toolkit\Magnifier\Magnifier.xaml.cs">
+      <Link>Magnifier\Magnifier.xaml.cs</Link>
+      <DependentUpon>Magnifier.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="..\..\..\CommonAPI\API\ESRI.ArcGIS.Client.Toolkit\Magnifier\MagnifyingGlass.cs">
+      <Link>Magnifier\MagnifyingGlass.cs</Link>
+    </Compile>
+    <Compile Include="..\..\..\CommonAPI\API\ESRI.ArcGIS.Client.Toolkit\MapTip\MapTip.cs">
+      <Link>MapTip\MapTip.cs</Link>
+    </Compile>
+    <Compile Include="..\..\..\CommonAPI\API\ESRI.ArcGIS.Client.Toolkit\Navigation\Navigation.cs">
+      <Link>Navigation\Navigation.cs</Link>
+    </Compile>
+    <Compile Include="..\..\..\CommonAPI\API\ESRI.ArcGIS.Client.Toolkit\OverviewMap\OverviewMap.cs">
+      <Link>OverviewMap\OverviewMap.cs</Link>
+    </Compile>
+    <Compile Include="..\..\..\CommonAPI\API\ESRI.ArcGIS.Client.Toolkit\Primitives\SymbolDisplay.cs">
+      <Link>Primitives\SymbolDisplay.cs</Link>
+    </Compile>
+    <Compile Include="..\..\..\CommonAPI\API\ESRI.ArcGIS.Client.Toolkit\Primitives\SymbolPresenter.cs">
+      <Link>Primitives\SymbolPresenter.cs</Link>
+    </Compile>
+    <Compile Include="..\..\..\CommonAPI\API\ESRI.ArcGIS.Client.Toolkit\Primitives\TemplatePanel.cs">
+      <Link>Primitives\TemplatePanel.cs</Link>
+    </Compile>
+    <Compile Include="..\..\..\CommonAPI\API\ESRI.ArcGIS.Client.Toolkit\Primitives\TickBar.cs">
+      <Link>Primitives\TickBar.cs</Link>
+    </Compile>
+    <Compile Include="..\..\..\CommonAPI\API\ESRI.ArcGIS.Client.Toolkit\ProgressBar\ProgressBar.cs">
+      <Link>ProgressBar\ProgressBar.cs</Link>
+    </Compile>
+    <Compile Include="..\..\..\CommonAPI\API\ESRI.ArcGIS.Client.Toolkit\SignInDialog\SignInDialog.cs">
+      <Link>SignInDialog\SignInDialog.cs</Link>
+    </Compile>
+    <Compile Include="..\..\..\CommonAPI\API\ESRI.ArcGIS.Client.Toolkit\Properties\Resources.Designer.cs">
+      <Link>Properties\Resources.Designer.cs</Link>
+    </Compile>
+    <Compile Include="..\..\..\CommonAPI\API\ESRI.ArcGIS.Client.Toolkit\TimeSlider\TimeSlider.cs">
+      <Link>TimeSlider\TimeSlider.cs</Link>
+    </Compile>
+    <Compile Include="..\..\..\CommonAPI\API\ESRI.ArcGIS.Client.Toolkit\Utilities\DateTimeConverter.cs">
+      <Link>Utilities\DateTimeConverter.cs</Link>
+    </Compile>
+    <Compile Include="..\..\..\CommonAPI\API\ESRI.ArcGIS.Client.Toolkit\Utilities\FieldDomain.cs">
+      <Link>Utilities\FieldDomain.cs</Link>
+    </Compile>
+    <Compile Include="..\..\..\CommonAPI\API\ESRI.ArcGIS.Client.Toolkit\Legend\CollectionExtensions.cs">
+      <Link>Legend\CollectionExtensions.cs</Link>
+    </Compile>
+    <Compile Include="..\..\..\CommonAPI\API\ESRI.ArcGIS.Client.Toolkit\Legend\Legend.cs">
+      <Link>Legend\Legend.cs</Link>
+    </Compile>
+    <Compile Include="..\..\..\CommonAPI\API\ESRI.ArcGIS.Client.Toolkit\Legend\LegendTree.cs">
+      <Link>Legend\LegendTree.cs</Link>
+    </Compile>
+    <Compile Include="..\..\..\CommonAPI\API\ESRI.ArcGIS.Client.Toolkit\Legend\MapLayerItem.cs">
+      <Link>Legend\MapLayerItem.cs</Link>
+    </Compile>
+    <Compile Include="..\..\..\CommonAPI\API\ESRI.ArcGIS.Client.Toolkit\Legend\ViewModels\LegendItemViewModel.cs">
+      <Link>Legend\ViewModels\LegendItemViewModel.cs</Link>
+    </Compile>
+    <Compile Include="..\..\..\CommonAPI\API\ESRI.ArcGIS.Client.Toolkit\Legend\ViewModels\LayerItemViewModel.cs">
+      <Link>Legend\ViewModels\LayerItemViewModel.cs</Link>
+    </Compile>
+    <Compile Include="..\..\..\CommonAPI\API\ESRI.ArcGIS.Client.Toolkit\Attribution\Attribution.cs">
+      <Link>Attribution\Attribution.cs</Link>
+    </Compile>
+    <Compile Include="..\..\..\CommonAPI\API\ESRI.ArcGIS.Client.Toolkit\ScaleLine\ScaleLine.cs">
+      <Link>ScaleLine\ScaleLine.cs</Link>
+    </Compile>
+    <Compile Include="..\..\..\CommonAPI\API\ESRI.ArcGIS.Client.Toolkit\ScaleLine\ScaleLineUnit.cs">
+      <Link>ScaleLine\ScaleLineUnit.cs</Link>
+    </Compile>
+    <Compile Include="..\..\..\CommonAPI\API\ESRI.ArcGIS.Client.Toolkit\Utilities\FieldDomainUtils.cs">
+      <Link>Utilities\FieldDomainUtils.cs</Link>
+    </Compile>
+    <Compile Include="..\..\..\CommonAPI\API\ESRI.ArcGIS.Client.Toolkit\Utilities\FieldDomainUtils.SetFieldInfo.cs">
+      <Link>Utilities\FieldDomainUtils.SetFieldInfo.cs</Link>
+    </Compile>
+    <Compile Include="..\..\..\CommonAPI\API\ESRI.ArcGIS.Client.Toolkit\Utilities\RangeDomainValidator.cs">
+      <Link>Utilities\RangeDomainValidator.cs</Link>
+    </Compile>
+    <Compile Include="..\..\..\CommonAPI\API\ESRI.ArcGIS.Client.Toolkit\ValueConverters\ObjectToObjectConverter.cs">
+      <Link>ValueConverters\ObjectToObjectConverter.cs</Link>
+    </Compile>
+    <Compile Include="..\..\..\CommonAPI\API\ESRI.ArcGIS.Client.Toolkit\ValueConverters\VisibilityConverter.cs">
+      <Link>ValueConverters\VisibilityConverter.cs</Link>
+    </Compile>
+    <Compile Include="FeatureDataGrid\FeatureCollectionView.cs" />
+    <Compile Include="Primitives\HyperlinkButton.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Properties\Settings.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Settings.settings</DependentUpon>
+      <DesignTimeSharedInput>True</DesignTimeSharedInput>
+    </Compile>
+    <None Include="Properties\Settings.settings">
+      <Generator>SettingsSingleFileGenerator</Generator>
+      <LastGenOutput>Settings.Designer.cs</LastGenOutput>
+    </None>
+    <AppDesigner Include="Properties\" />
+  </ItemGroup>
+  <ItemGroup>
+    <Page Include="..\..\..\CommonAPI\API\ESRI.ArcGIS.Client.Toolkit\InfoWindow\InfoWindow.Theme.xaml">
+      <Link>InfoWindow.Theme.xaml</Link>
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="..\..\..\CommonAPI\API\ESRI.ArcGIS.Client.Toolkit\Magnifier\Magnifier.xaml">
+      <Link>Magnifier\Magnifier.xaml</Link>
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="..\..\..\CommonAPI\API\ESRI.ArcGIS.Client.Toolkit\Magnifier\MagnifyingGlass.Theme.xaml">
+      <Link>MagnifyingGlass.Theme.xaml</Link>
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="..\..\..\CommonAPI\API\ESRI.ArcGIS.Client.Toolkit\Navigation\Navigation.Theme.xaml">
+      <Link>Navigation.Theme.xaml</Link>
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="..\..\..\CommonAPI\API\ESRI.ArcGIS.Client.Toolkit\OverviewMap\OverviewMap.Theme.xaml">
+      <Link>OverviewMap.Theme.xaml</Link>
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="..\..\..\CommonAPI\API\ESRI.ArcGIS.Client.Toolkit\Primitives\TemplatePanel.Theme.xaml">
+      <Link>TemplatePanel.Theme.xaml</Link>
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="..\..\..\CommonAPI\API\ESRI.ArcGIS.Client.Toolkit\ProgressBar\ProgressBar.Theme.xaml">
+      <Link>ProgressBar.Theme.xaml</Link>
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="..\..\..\CommonAPI\API\ESRI.ArcGIS.Client.Toolkit\TimeSlider\TimeSlider.Theme.xaml">
+      <Link>TimeSlider.Theme.xaml</Link>
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="..\..\..\CommonAPI\API\ESRI.ArcGIS.Client.Toolkit\ScaleLine\ScaleLine.Theme.xaml">
+      <Link>ScaleLine.Theme.xaml</Link>
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="AttachmentEditor\AttachmentEditor.Theme.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Attribution\Attribution.Theme.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Bookmark\Bookmark.Theme.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Editor\EditorWidget.Theme.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Editor\TemplatePicker.Theme.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="FeatureDataForm\FeatureDataForm.Theme.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="FeatureDataGrid\FeatureDataGrid.Theme.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="MapTip\MapTip.Theme.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Primitives\DateTimePicker\DateTimePicker.Theme.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Themes\Generic.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Legend\Legend.Theme.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="SignInDialog\SignInDialog.Theme.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Images\addFeature.png" />
+    <Resource Include="Images\AddToSelection.png" />
+    <Resource Include="Images\attributes.png" />
+    <Resource Include="Images\autocomplete.png" />
+    <Resource Include="Images\Clear.png" />
+    <Resource Include="Images\commit.png" />
+    <Resource Include="Images\cut.png" />
+    <Resource Include="Images\deleteFeature.png" />
+    <Resource Include="Images\NewSelection.png" />
+    <Resource Include="Images\redo.png" />
+    <Resource Include="Images\RemoveFromSelection.png" />
+    <Resource Include="Images\reshape.png" />
+    <Resource Include="Images\showVertices.png" />
+    <Resource Include="Images\undo.png" />
+    <Resource Include="Images\union.png" />
+    <Resource Include="..\..\..\CommonAPI\API\ESRI.ArcGIS.Client.Toolkit\Images\legendItem.png">
+      <Link>Images\legendItem.png</Link>
+    </Resource>
+  </ItemGroup>
+  <ItemGroup>
+    <BootstrapperPackage Include="Microsoft.Net.Client.3.5">
+      <Visible>False</Visible>
+      <ProductName>.NET Framework 3.5 SP1 Client Profile</ProductName>
+      <Install>false</Install>
+    </BootstrapperPackage>
+    <BootstrapperPackage Include="Microsoft.Net.Framework.3.5.SP1">
+      <Visible>False</Visible>
+      <ProductName>.NET Framework 3.5 SP1</ProductName>
+      <Install>true</Install>
+    </BootstrapperPackage>
+    <BootstrapperPackage Include="Microsoft.Windows.Installer.3.1">
+      <Visible>False</Visible>
+      <ProductName>Windows Installer 3.1</ProductName>
+      <Install>true</Install>
+    </BootstrapperPackage>
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="..\..\..\CommonAPI\API\ESRI.ArcGIS.Client.Toolkit\Properties\Resources.resx">
+      <Link>Properties\Resources.resx</Link>
+    </EmbeddedResource>
+    <EmbeddedResource Include="..\..\..\CommonAPI\API\ESRI.ArcGIS.Client.Toolkit\Properties\Resources.ar.resx">
+      <Link>Properties\Resources.ar.resx</Link>
+    </EmbeddedResource>
+    <EmbeddedResource Include="..\..\..\CommonAPI\API\ESRI.ArcGIS.Client.Toolkit\Properties\Resources.da.resx">
+      <Link>Properties\Resources.da.resx</Link>
+    </EmbeddedResource>
+    <EmbeddedResource Include="..\..\..\CommonAPI\API\ESRI.ArcGIS.Client.Toolkit\Properties\Resources.de.resx">
+      <Link>Properties\Resources.de.resx</Link>
+    </EmbeddedResource>
+    <EmbeddedResource Include="..\..\..\CommonAPI\API\ESRI.ArcGIS.Client.Toolkit\Properties\Resources.es.resx">
+      <Link>Properties\Resources.es.resx</Link>
+    </EmbeddedResource>
+    <EmbeddedResource Include="..\..\..\CommonAPI\API\ESRI.ArcGIS.Client.Toolkit\Properties\Resources.fr.resx">
+      <Link>Properties\Resources.fr.resx</Link>
+    </EmbeddedResource>
+    <EmbeddedResource Include="..\..\..\CommonAPI\API\ESRI.ArcGIS.Client.Toolkit\Properties\Resources.he.resx">
+      <Link>Properties\Resources.he.resx</Link>
+    </EmbeddedResource>
+    <EmbeddedResource Include="..\..\..\CommonAPI\API\ESRI.ArcGIS.Client.Toolkit\Properties\Resources.it.resx">
+      <Link>Properties\Resources.it.resx</Link>
+    </EmbeddedResource>
+    <EmbeddedResource Include="..\..\..\CommonAPI\API\ESRI.ArcGIS.Client.Toolkit\Properties\Resources.ja.resx">
+      <Link>Properties\Resources.ja.resx</Link>
+    </EmbeddedResource>
+    <EmbeddedResource Include="..\..\..\CommonAPI\API\ESRI.ArcGIS.Client.Toolkit\Properties\Resources.ko.resx">
+      <Link>Properties\Resources.ko.resx</Link>
+    </EmbeddedResource>
+    <EmbeddedResource Include="..\..\..\CommonAPI\API\ESRI.ArcGIS.Client.Toolkit\Properties\Resources.lt.resx">
+      <Link>Properties\Resources.lt.resx</Link>
+    </EmbeddedResource>
+    <EmbeddedResource Include="..\..\..\CommonAPI\API\ESRI.ArcGIS.Client.Toolkit\Properties\Resources.nb-NO.resx">
+      <Link>Properties\Resources.nb-NO.resx</Link>
+    </EmbeddedResource>
+    <EmbeddedResource Include="..\..\..\CommonAPI\API\ESRI.ArcGIS.Client.Toolkit\Properties\Resources.nl.resx">
+      <Link>Properties\Resources.nl.resx</Link>
+    </EmbeddedResource>
+    <EmbeddedResource Include="..\..\..\CommonAPI\API\ESRI.ArcGIS.Client.Toolkit\Properties\Resources.no.resx">
+      <Link>Properties\Resources.no.resx</Link>
+    </EmbeddedResource>
+    <EmbeddedResource Include="..\..\..\CommonAPI\API\ESRI.ArcGIS.Client.Toolkit\Properties\Resources.pl.resx">
+      <Link>Properties\Resources.pl.resx</Link>
+    </EmbeddedResource>
+    <EmbeddedResource Include="..\..\..\CommonAPI\API\ESRI.ArcGIS.Client.Toolkit\Properties\Resources.pt-BR.resx">
+      <Link>Properties\Resources.pt-BR.resx</Link>
+    </EmbeddedResource>
+    <EmbeddedResource Include="..\..\..\CommonAPI\API\ESRI.ArcGIS.Client.Toolkit\Properties\Resources.pt-PT.resx">
+      <Link>Properties\Resources.pt-PT.resx</Link>
+    </EmbeddedResource>
+    <EmbeddedResource Include="..\..\..\CommonAPI\API\ESRI.ArcGIS.Client.Toolkit\Properties\Resources.ro.resx">
+      <Link>Properties\Resources.ro.resx</Link>
+    </EmbeddedResource>
+    <EmbeddedResource Include="..\..\..\CommonAPI\API\ESRI.ArcGIS.Client.Toolkit\Properties\Resources.ru.resx">
+      <Link>Properties\Resources.ru.resx</Link>
+    </EmbeddedResource>
+    <EmbeddedResource Include="..\..\..\CommonAPI\API\ESRI.ArcGIS.Client.Toolkit\Properties\Resources.sv.resx">
+      <Link>Properties\Resources.sv.resx</Link>
+    </EmbeddedResource>
+    <EmbeddedResource Include="..\..\..\CommonAPI\API\ESRI.ArcGIS.Client.Toolkit\Properties\Resources.zh-CN.resx">
+      <Link>Properties\Resources.zh-CN.resx</Link>
+    </EmbeddedResource>
+    <EmbeddedResource Include="..\..\..\CommonAPI\API\ESRI.ArcGIS.Client.Toolkit\Properties\Resources.zh-Hans.resx">
+      <Link>Properties\Resources.zh-Hans.resx</Link>
+    </EmbeddedResource>
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+  <PropertyGroup>
+    <PostBuildEvent>
+    </PostBuildEvent>
+  </PropertyGroup>
+</Project>

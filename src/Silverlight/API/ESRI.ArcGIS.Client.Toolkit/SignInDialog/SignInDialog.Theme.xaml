@@ -1,0 +1,105 @@
+﻿<ResourceDictionary
+	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" 
+	xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+	xmlns:local="clr-namespace:ESRI.ArcGIS.Client.Toolkit"
+	xmlns:converters="clr-namespace:ESRI.ArcGIS.Client.Toolkit.ValueConverters">
+    <Style TargetType="local:SignInDialog">
+        <Setter Property="Title" Value="SIGN IN" />
+        <Setter Property="Background">
+            <Setter.Value>
+                <LinearGradientBrush EndPoint="0.5,1" StartPoint="0.5,0">
+                    <GradientStop Color="#FFFDFDFD" Offset="0" />
+                    <GradientStop Color="#FFEFF1F3" Offset="0.5" />
+                    <GradientStop Color="#FFCCD3D8" Offset="1" />
+                </LinearGradientBrush>
+            </Setter.Value>
+        </Setter>
+        <Setter Property="BorderBrush">
+            <Setter.Value>
+                <LinearGradientBrush EndPoint="0,1" StartPoint="0,0">
+                    <GradientStop Color="#FFA3AEB9" Offset="0"/>
+                    <GradientStop Color="#FF8399A9" Offset="0.375"/>
+                    <GradientStop Color="#FF718597" Offset="0.375"/>
+                    <GradientStop Color="#FF617584" Offset="1"/>
+                </LinearGradientBrush>
+            </Setter.Value>
+        </Setter>
+        <Setter Property="HorizontalContentAlignment" Value="Left" />
+        <Setter Property="VerticalContentAlignment" Value="Top" />
+        <Setter Property="Cursor" Value="Arrow" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="Padding" Value="0" />
+        <Setter Property="Margin" Value="0" />
+        <Setter Property="IsTabStop" Value="False" />
+
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="local:SignInDialog">
+                    <Border Background="{TemplateBinding Background}" 
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            CornerRadius="3" Padding="5">
+                        <Grid>
+                            <Grid.Resources>
+                                <converters:VisibilityConverter x:Key="visibilityConverter" />
+                            </Grid.Resources>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="*" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+
+                            <!-- Body -->
+                            <StackPanel Grid.Row="0" MinHeight="50">
+                                <!-- Info about the Url -->
+                                <RichTextBox x:Name="RichTextBoxMessage" Margin="0,2" IsReadOnly="True"
+                                                Background="Transparent" BorderBrush="Transparent" BorderThickness="0" IsTabStop="False">
+                                    <Paragraph TextAlignment="Left">
+                                        A <Bold>username</Bold> and <Bold>password</Bold> are required to access
+                                        <Hyperlink NavigateUri="$URL" TargetName="_blank">$RESOURCENAME</Hyperlink> on $SERVER.
+                                    </Paragraph>
+                                </RichTextBox>
+
+                                <!-- Error message -->
+                                <Grid MinHeight="15" Margin="0,2">
+                                    <Grid Background="#FFF24444" Visibility="{Binding ErrorMessage, Converter={StaticResource visibilityConverter}}">
+                                        <RichTextBox x:Name="RichTextBoxErrorMessage" IsReadOnly="True"
+                                                Background="Transparent" BorderBrush="Transparent" BorderThickness="0" IsTabStop="False">
+                                            <Paragraph>
+                                                $ERRORMESSAGE
+                                                <Bold> Please try again.</Bold>
+                                            </Paragraph>
+                                        </RichTextBox>
+                                    </Grid>
+                                </Grid>
+                                    
+                                <!-- User name -->
+                                <TextBlock Text="User name:" Margin="0,5,0,0" />
+                                <TextBox Text="{Binding UserName, Mode=TwoWay, ValidatesOnExceptions=True}" TabIndex="0"
+                                         local:TextInputManager.UpdateSourceOnTextChanged="True"
+                                         local:TextInputManager.EnterCommand="{Binding GenerateCredentialCommand}"/>
+                                    
+                                <!-- Password-->
+                                <TextBlock Text="Password:"  Margin="0,10,0,0"/>
+                                <PasswordBox Password="{Binding Password, Mode=TwoWay, ValidatesOnExceptions=True}" TabIndex="1"
+                                             local:TextInputManager.UpdateSourceOnTextChanged="True"
+                                             local:TextInputManager.EnterCommand="{Binding GenerateCredentialCommand}"/>
+                            </StackPanel>
+
+
+                            <!-- Footer with OK/Cancel buttons-->
+                            <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right" Margin="5">
+                                <Grid>
+                                    <Button Content="OK" Command="{Binding GenerateCredentialCommand}" Margin="5" Padding="5" TabIndex="2"
+                                            Visibility="{Binding IsBusy, Converter={StaticResource visibilityConverter}, ConverterParameter=reverse}"/>
+                                    <Button Content="Signing in....  " Margin="5" Padding="5" IsTabStop="False"
+                                            Visibility="{Binding IsBusy, Converter={StaticResource visibilityConverter}}" IsHitTestVisible="False" />
+                                </Grid>
+                                <Button Content="Cancel" Command="{Binding CancelCommand}" Margin="5" Padding="5" TabIndex="3"/>
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+</ResourceDictionary>

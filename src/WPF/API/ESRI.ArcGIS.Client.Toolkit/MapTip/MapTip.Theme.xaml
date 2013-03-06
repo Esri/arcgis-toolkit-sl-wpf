@@ -1,0 +1,101 @@
+﻿<ResourceDictionary
+	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" 
+	xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+	xmlns:local="clr-namespace:ESRI.ArcGIS.Client.Toolkit">
+
+	<Style TargetType="local:MapTip">
+		<Setter Property="HorizontalOffset" Value="20" />
+		<Setter Property="VerticalOffset" Value="30" />
+		<Setter Property="Background" Value="White" />
+		<Setter Property="BorderThickness" Value="1" />
+		<Setter Property="BorderBrush" Value="#FF666666" />
+		<Setter Property="Template">
+			<Setter.Value>
+				<ControlTemplate TargetType="local:MapTip">
+                    <Grid x:Name="MapTip" MinWidth="50" >
+                        <VisualStateManager.VisualStateGroups>
+                            <VisualStateGroup x:Name="CommonStates">
+
+                                <VisualState x:Name="Collapsed">
+                                    <Storyboard>
+                                        <DoubleAnimationUsingKeyFrames BeginTime="00:00:00" Storyboard.TargetName="MapTipData" Storyboard.TargetProperty="Height">
+                                            <SplineDoubleKeyFrame KeyTime="00:00:00.5" Value="0" KeySpline="0.3,0 0,1" />
+                                        </DoubleAnimationUsingKeyFrames>
+                                        <DoubleAnimationUsingKeyFrames BeginTime="00:00:00" Storyboard.TargetName="MapTipData" Storyboard.TargetProperty="Width">
+                                            <SplineDoubleKeyFrame KeyTime="00:00:00.5" Value="0" KeySpline="0.3,0 0,1" />
+                                        </DoubleAnimationUsingKeyFrames>
+                                    </Storyboard>
+                                </VisualState>
+
+                                <VisualState x:Name="Expanded">
+                                    <Storyboard>
+                                        <DoubleAnimationUsingKeyFrames BeginTime="00:00:00" Storyboard.TargetName="MapTipData" Storyboard.TargetProperty="Height">
+                                            <SplineDoubleKeyFrame KeyTime="00:00:00.5" Value="150" KeySpline="0.3,0 0,1" />
+                                        </DoubleAnimationUsingKeyFrames>
+                                        <DoubleAnimationUsingKeyFrames BeginTime="00:00:00" Storyboard.TargetName="MapTipData" Storyboard.TargetProperty="Width">
+                                            <SplineDoubleKeyFrame KeyTime="00:00:00.5" Value="200" KeySpline="0.3,0 0,1" />
+                                        </DoubleAnimationUsingKeyFrames>
+                                    </Storyboard>
+                                </VisualState>
+
+                            </VisualStateGroup>
+                        </VisualStateManager.VisualStateGroups>
+
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="20" />
+                            <RowDefinition Height="*" />
+                        </Grid.RowDefinitions>
+
+                        <Border CornerRadius="5" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" Grid.RowSpan="2" />
+                        <Polyline Points="0,10 -10,-10 10,0" Stroke="{TemplateBinding BorderBrush}" StrokeThickness="{TemplateBinding BorderThickness}" Fill="{TemplateBinding Background}" />
+
+                        <ContentPresenter Margin="5,5,5,0" Content="{TemplateBinding Title}" />
+
+                        <ListView x:Name="MapTipData" Grid.Column="0" Grid.Row="1" ItemsSource="{Binding}" 
+                                  BorderThickness="1" BorderBrush="Black" Padding="8,2,5,0"  
+                                   Margin="5,2,5,5" AlternationCount="2">
+                            <ListView.Background>
+                                <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                    <GradientStop Color="#BBFFFFFF" Offset="0" />
+                                    <GradientStop Color="#55EEEEEE" Offset=".5" />
+                                    <GradientStop Color="#22888888" Offset=".7" />
+                                    <GradientStop Color="#00FFFFFF" Offset="1" />
+                                </LinearGradientBrush>
+                            </ListView.Background>
+                            <ListView.ItemContainerStyle>
+                                <Style TargetType="{x:Type ListViewItem}">
+                                    <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                                    <Style.Triggers>
+                                        <Trigger Property="ItemsControl.AlternationIndex" Value="1">
+                                            <Setter Property="Background" Value="AliceBlue"></Setter>
+                                        </Trigger>
+                                        <Trigger Property="ItemsControl.AlternationIndex" Value="2">
+                                            <Setter Property="Background" Value="White"></Setter>
+                                        </Trigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </ListView.ItemContainerStyle>
+                            <ListView.View>
+                                <GridView>
+                                    <GridView.ColumnHeaderContainerStyle>
+                                        <Style>
+                                            <Setter Property="FrameworkElement.Visibility" Value="Collapsed"/>
+                                        </Style>
+                                    </GridView.ColumnHeaderContainerStyle>
+                                    <GridView.Columns>
+                                        <GridViewColumn DisplayMemberBinding="{Binding Path=Key}" Width="Auto"/>
+                                        <GridViewColumn DisplayMemberBinding="{Binding Path=Value}" Width="Auto"/>
+                                    </GridView.Columns>
+                                </GridView>
+                            </ListView.View>
+                        </ListView>
+                    </Grid>
+                </ControlTemplate>
+			</Setter.Value>
+		</Setter>
+	</Style>
+
+</ResourceDictionary>

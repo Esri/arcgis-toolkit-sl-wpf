@@ -1,0 +1,64 @@
+﻿<ResourceDictionary
+	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" 
+	xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+	xmlns:local="clr-namespace:ESRI.ArcGIS.Client.Toolkit"
+	xmlns:converters="clr-namespace:ESRI.ArcGIS.Client.Toolkit.ValueConverters"
+	xmlns:sys="clr-namespace:System;assembly=mscorlib">
+	<Style TargetType="local:ScaleLine">
+		<Setter Property="HorizontalContentAlignment" Value="Left" />
+		<Setter Property="Template">
+			<Setter.Value>
+				<ControlTemplate TargetType="local:ScaleLine">
+					<Grid x:Name="LayoutRoot">
+						<Grid.Resources>
+							<converters:ObjectToObjectConverter x:Key="UnitsConverter">
+								<ResourceDictionary>
+									<sys:String x:Key="Feet">ft</sys:String>
+									<sys:String x:Key="Miles">mi</sys:String>
+									<sys:String x:Key="Meters">m</sys:String>
+									<sys:String x:Key="Kilometers">km</sys:String>
+								</ResourceDictionary>
+							</converters:ObjectToObjectConverter>
+						</Grid.Resources>
+						<StackPanel HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" >
+							<StackPanel x:Name="MetricText" Orientation="Horizontal">
+								<Rectangle x:Name="PaddingLeftForTextMeters" Fill="Transparent" 
+										   Width="{Binding MetricSize, RelativeSource={RelativeSource TemplatedParent}}"/>
+								<TextBlock Text="{Binding MetricValue, RelativeSource={RelativeSource TemplatedParent}}"/>
+								<TextBlock Text="{Binding MetricUnit, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource UnitsConverter}}"/>
+							</StackPanel>
+							<StackPanel x:Name="MetricNotchs" Orientation="Horizontal">
+								<Rectangle x:Name="LeftTopNotch" Width="2" Fill="{TemplateBinding Foreground}" Height="5" Stroke="{TemplateBinding Foreground}" />
+								<Rectangle x:Name="PaddingLeftTopNotch" Fill="Transparent" 
+										   Width="{Binding MetricSize, RelativeSource={RelativeSource TemplatedParent}}"/>
+								<Rectangle x:Name="RightTopNotch" Width="2" Fill="{TemplateBinding Foreground}" Height="5" Stroke="{TemplateBinding Foreground}" />
+							</StackPanel>
+							<StackPanel x:Name="ScaleLineBlock" Orientation="Horizontal">
+								<Rectangle x:Name="NotchsWidth" Fill="{TemplateBinding Foreground}" Height="2" Stroke="{TemplateBinding Foreground}" Width="4"/>
+								<Grid >
+									<!-- US and Metric lines overlap-->
+									<Rectangle Fill="{TemplateBinding Foreground}" Height="2" Stroke="{TemplateBinding Foreground}" Margin="0" HorizontalAlignment="Left" 
+										   Width="{Binding MetricSize, RelativeSource={RelativeSource TemplatedParent}}" />
+									<Rectangle Fill="{TemplateBinding Foreground}" Height="2" Stroke="{TemplateBinding Foreground}" Margin="0" HorizontalAlignment="Left" 
+										   Width="{Binding USSize, RelativeSource={RelativeSource TemplatedParent}}" />
+								</Grid>
+							</StackPanel>
+							<StackPanel x:Name="USNotchs" Orientation="Horizontal">
+								<Rectangle x:Name="LeftBottomNotch" Width="2" Fill="{TemplateBinding Foreground}" Height="5" Stroke="{TemplateBinding Foreground}" />
+								<Rectangle x:Name="PaddingLeftBottomNotch"  Fill="Transparent" 
+										   Width="{Binding USSize, RelativeSource={RelativeSource TemplatedParent}}"/>
+								<Rectangle x:Name="RightBottomNotch" Width="2" Fill="{TemplateBinding Foreground}" Height="5"  Stroke="{TemplateBinding Foreground}" />
+							</StackPanel>
+							<StackPanel x:Name="USText" Orientation="Horizontal">
+								<Rectangle x:Name="PaddingLeftForTextMiles" Fill="Transparent" 
+										   Width="{Binding USSize, RelativeSource={RelativeSource TemplatedParent}}"/>
+								<TextBlock Text="{Binding USValue, RelativeSource={RelativeSource TemplatedParent}}"/>
+								<TextBlock Text="{Binding USUnit, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource UnitsConverter}}"/>
+							</StackPanel>
+						</StackPanel>
+					</Grid>
+				</ControlTemplate>
+			</Setter.Value>
+		</Setter>
+	</Style>
+</ResourceDictionary>

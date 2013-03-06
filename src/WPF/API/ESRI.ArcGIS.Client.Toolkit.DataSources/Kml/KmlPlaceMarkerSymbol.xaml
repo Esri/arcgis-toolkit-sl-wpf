@@ -1,0 +1,22 @@
+﻿<ResourceDictionary
+	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" 
+	xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <ControlTemplate x:Key="KmlPlaceMarkerSymbol">
+        <Rectangle 
+            Width="{Binding Symbol.Width}"
+            Height="{Binding Symbol.Height}"
+            Fill="{Binding Symbol.Fill}"
+			Opacity="{Binding Symbol.Opacity}"
+            >
+            <Rectangle.RenderTransform>
+                <TransformGroup>
+                    <TranslateTransform X="{Binding Symbol.TranslateX}" Y="{Binding Symbol.TranslateY}" />
+                    <RotateTransform Angle="{Binding Symbol.Heading}" />
+                    <ScaleTransform ScaleX="{Binding Symbol.Scale, FallbackValue=1}" ScaleY="{Binding Symbol.Scale, FallbackValue=1}" />
+                </TransformGroup>
+            </Rectangle.RenderTransform>
+        </Rectangle>
+    </ControlTemplate>
+
+</ResourceDictionary>

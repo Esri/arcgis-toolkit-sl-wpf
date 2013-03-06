@@ -1,0 +1,12 @@
+﻿<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" 
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+	<ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="/ESRI.ArcGIS.Client.Toolkit;component/Attribution/Attribution.Theme.xaml" />
+		<ResourceDictionary Source="/ESRI.ArcGIS.Client.Toolkit;component/ProgressBar/ProgressBar.Theme.xaml" />
+		<ResourceDictionary Source="/ESRI.ArcGIS.Client.Toolkit;component/InfoWindow/InfoWindow.Theme.xaml" />
+		<ResourceDictionary Source="/ESRI.ArcGIS.Client.Toolkit;component/Legend/Legend.Theme.xaml" />
+		<ResourceDictionary Source="/ESRI.ArcGIS.Client.Toolkit;component/ScaleLine.Theme.xaml" />
+		<ResourceDictionary Source="/ESRI.ArcGIS.Client.Toolkit;component/Primitives/ChildPage.Theme.xaml" />
+	</ResourceDictionary.MergedDictionaries>
+</ResourceDictionary>
