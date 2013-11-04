@@ -397,7 +397,7 @@ namespace ESRI.ArcGIS.Client.Toolkit.DataSources.Kml
 
 		private static PlacemarkDescriptor GetFeaturePlacemarkerDescriptor(DependencyObject graphic)
 		{
-			return (PlacemarkDescriptor)graphic.GetValue(BitmapImageKeyProperty);
+            return (PlacemarkDescriptor)graphic.GetValue(FeaturePlacemarkerDescriptorProperty);
 		}
 
 		private static void SetFeaturePlacemarkerDescriptor(DependencyObject graphic, PlacemarkDescriptor feature)
@@ -482,11 +482,10 @@ namespace ESRI.ArcGIS.Client.Toolkit.DataSources.Kml
 		/// Returns the bitmap image brush associated with the icon href for the point feature.
 		/// </summary>
 		/// <param name="IconHref">Value used to obtain image from remote server via HTTP or key for image dictionary.</param>
-		/// <param name="onFailed">The on failed.</param>
 		/// <returns>
 		/// A bitmap image brush or null if not found.
 		/// </returns>
-		private ImageBrush GetIconImage(string IconHref, Action<string> onFailed)
+        private ImageBrush GetIconImage(string IconHref)
 		{
 			Uri imageUri = KmlLayer.GetUri(IconHref, _baseUri);
 
@@ -510,28 +509,10 @@ namespace ESRI.ArcGIS.Client.Toolkit.DataSources.Kml
 					bi.SetValue(BitmapImageKeyProperty, IconHref);	
                     bi.CreateOptions = BitmapCreateOptions.None;
 					bi.UriSource = imageUri;
-					EventHandler<ExceptionRoutedEventArgs> imageFailed = null;					
-					imageFailed = (s, e) =>
-						{
-							var b = s as BitmapImage;
-							b.ImageFailed -= imageFailed;
-							var key = (string)b.GetValue(BitmapImageKeyProperty);
-							onFailed(key);
-						};
-					bi.ImageFailed += imageFailed;
                     return new ImageBrush { ImageSource = bi };
 #else					
 					BitmapImage bi = new BitmapImage(imageUri);
 					bi.SetValue(BitmapImageKeyProperty, IconHref);	
-					EventHandler<ExceptionEventArgs> imageFailed = null;
-					imageFailed = (s, e) =>
-						{
-							var b = s as BitmapImage;
-							b.DownloadFailed -= imageFailed;
-							var key = (string)b.GetValue(BitmapImageKeyProperty);
-							onFailed(key);
-						};
-					bi.DownloadFailed += imageFailed;
 					return new ImageBrush { ImageSource = bi };
 #endif
 				}
@@ -572,6 +553,20 @@ namespace ESRI.ArcGIS.Client.Toolkit.DataSources.Kml
 					style.ZipFile = null;
 				}
 
+                //Define handlers upfront so we can unhook from them
+#if SILVERLIGHT
+                EventHandler<RoutedEventArgs>
+#else
+                EventHandler
+#endif
+ imageCompleted = null;
+#if SILVERLIGHT
+                EventHandler<ExceptionRoutedEventArgs> 		
+#else
+                EventHandler<ExceptionEventArgs>
+#endif
+ imageFailed = null;
+
 				// If the style has an HREF then it is associated with an image
 				if (style.IconImage == null && !String.IsNullOrEmpty(style.IconHref))
 				{
@@ -582,14 +577,36 @@ namespace ESRI.ArcGIS.Client.Toolkit.DataSources.Kml
 					{
 						// Get the image using the HREF and store the image in the images dictionary so that if
 						// other features reference it, it is cached
-						style.IconImage = GetIconImage(style.IconHref,
-							(key) =>
+                        style.IconImage = GetIconImage(style.IconHref);
+                        if (style.IconImage != null && (style.IconImage as ImageBrush).ImageSource != null)
 							{
+                            var bi = (style.IconImage as ImageBrush).ImageSource as BitmapImage;
+                            if (bi != null)
+                            {
+                                imageFailed = (s, e) =>
+                                {
+                                    var b = s as BitmapImage;
+#if SILVERLIGHT           
+                                    if (imageCompleted != null) b.ImageOpened -= imageCompleted;
+                                    if(imageFailed != null) b.ImageFailed -= imageFailed;
+#else
+                                    if (imageCompleted != null) b.DownloadCompleted -= imageCompleted;
+                                    if (imageFailed != null) b.DownloadFailed -= imageFailed;
+#endif
+                                    var key = b.GetValue(BitmapImageKeyProperty) as string;
 								layer.Dispatcher.BeginInvoke((Action)delegate
 								{								
 									UpdateGraphicsAndRenderer(layer, renderer, key);
 								});
-							});
+                                };
+
+#if SILVERLIGHT                                    
+                                bi.ImageFailed += imageFailed;
+#else
+                                bi.DownloadFailed += imageFailed;
+#endif
+                            }
+                        }
 						images.Add(style.IconHref.ToLower(), style.IconImage);
 					}
 				}
@@ -626,32 +643,30 @@ namespace ESRI.ArcGIS.Client.Toolkit.DataSources.Kml
 						// Default to half the pixel size (width and height) if symbol offsets are 0 (supported in wpf and sl3)
 						ImageBrush ib = ms.Fill;
 						BitmapImage bi = ib.ImageSource as BitmapImage;
-
 #if SILVERLIGHT
 						if (bi.PixelHeight == 0 || bi.PixelWidth == 0)
-						{
-							EventHandler<RoutedEventArgs> completed = null;
-							completed = (s, e) =>
-							{
-								bi.ImageOpened -= completed;
-
-								ComputeIconTranslationValues(style, ms, bi);
-							};
-							bi.ImageOpened += completed;
-						}
 #else
 						if (bi.IsDownloading)
-						{
-							EventHandler completed = null;
-							completed = (s, e) =>
-							{
-								bi.DownloadCompleted -= completed;
-
-								ComputeIconTranslationValues(style, ms, bi);
-							};
-							bi.DownloadCompleted += completed;
-						}
 #endif
+						{
+                            imageCompleted = (s, e) =>
+							{
+                                var b = s as BitmapImage;
+#if SILVERLIGHT                                    
+                                if (imageCompleted != null) b.ImageOpened -= imageCompleted;
+                                if(imageFailed != null) b.ImageFailed -= imageFailed;
+#else
+                                if (imageCompleted != null) b.DownloadCompleted -= imageCompleted;
+                                if (imageFailed != null) b.DownloadFailed -= imageFailed;
+#endif
+                                ComputeIconTranslationValues(style, ms, b);
+							};
+#if SILVERLIGHT   
+                            bi.ImageOpened += imageCompleted;
+#else
+                            bi.DownloadCompleted += imageCompleted;
+#endif
+                        }
 						else
 						{
 							ComputeIconTranslationValues(style, ms, bi);

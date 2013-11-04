@@ -211,11 +211,30 @@ namespace ESRI.ArcGIS.Client.Toolkit
 			e.Column.Header = AliasLookup(e.PropertyName);			
 #endif			
 			e.Column.CanUserSort = true;
-			e.Column.CanUserReorder = e.Column.CanUserReorder;
-			e.Column.CanUserResize = e.Column.CanUserResize;
 			e.Column.SortMemberPath = e.PropertyName;			
 		}
 
+		/// <summary>
+        /// Copies property from c2 over to c1.
+        /// </summary>
+        /// <param name="c1">column to copy to.</param>
+        /// <param name="c2">column to copy from.</param>
+        private void CopyColumnProperties(DataGridColumn c1, DataGridColumn c2)
+        {
+            c1.CanUserReorder = c2.CanUserReorder;
+            c1.CanUserResize = c2.CanUserResize;
+            c1.HeaderStyle = c2.HeaderStyle;
+            c1.IsReadOnly = c2.IsReadOnly;            
+            c1.CellStyle = c2.CellStyle;
+            c1.ClipboardContentBinding = c2.ClipboardContentBinding;            
+            c1.DragIndicatorStyle = c2.DragIndicatorStyle;
+            c1.Header = c2.Header;
+            c1.MaxWidth = c2.MaxWidth;
+            c1.MinWidth = c2.MinWidth;
+            c1.Visibility = c2.Visibility;
+            c1.Width = c2.Width;
+        }
+        
 		/// <summary>
 		/// Raises the <see cref="E:System.Windows.Controls.DataGrid.SelectionChanged"/> event.
 		/// </summary>
@@ -721,7 +740,7 @@ namespace ESRI.ArcGIS.Client.Toolkit
 				RangeDomainValidationXAML);
 
 			templateColumn.CellEditingTemplate = (DataTemplate)LoadXaml(xaml);
-
+            CopyColumnProperties(templateColumn, e.Column);
 			e.Column = templateColumn;
 		}
 #endif
@@ -734,6 +753,7 @@ namespace ESRI.ArcGIS.Client.Toolkit
 			CodedValueDomainColumn column = new CodedValueDomainColumn();
 			column.CodedValueSources = FieldDomainUtils.BuildTypeIDCodedValueSource(field, featureLayer.LayerInfo);
 			column.Field = e.PropertyName;
+            CopyColumnProperties(column, e.Column);
 			e.Column = column;
 		}
 		/// <summary>
@@ -745,6 +765,7 @@ namespace ESRI.ArcGIS.Client.Toolkit
 			CodedValueDomainColumn column = new CodedValueDomainColumn();
 			column.CodedValueSources = FieldDomainUtils.BuildCodedValueSource(field);
 			column.Field = e.PropertyName;
+            CopyColumnProperties(column, e.Column);
 			e.Column = column;
 		}
 		/// <summary>
@@ -760,6 +781,7 @@ namespace ESRI.ArcGIS.Client.Toolkit
 			column.LookupField = featureLayer.LayerInfo.TypeIdField;
 			column.FieldInfo = field;
 			column.Field = e.PropertyName;
+            CopyColumnProperties(column, e.Column);
 			e.Column = column;
 		}
 		/// <summary>
@@ -780,6 +802,7 @@ namespace ESRI.ArcGIS.Client.Toolkit
 				// information is used for validation rules for WPF data binding.
 				column.FieldInfo = field;
 #endif
+                CopyColumnProperties(column, e.Column);
 				e.Column = column;
 			}
 		}
@@ -922,7 +945,11 @@ namespace ESRI.ArcGIS.Client.Toolkit
 #if SILVERLIGHT
 			PagedCollectionView view = ItemsSource as PagedCollectionView;
 			if (view != null && view.Count > 0)
+            {
+                if(currentRecordNumber < 0)
+                    currentRecordNumber = 0;
 				view.MoveCurrentTo(view.GetItemAt(currentRecordNumber));
+            }
 			int idx = GetRowIndexInRowsCollection(CurrentItem);
 			if (idx > 0)
 				currentRecordNumber = idx - 1;

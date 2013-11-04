@@ -24,7 +24,7 @@ namespace ESRI.ArcGIS.Client.Toolkit
 		internal const string c_mapLayerType = "MapLayer Layer";
 		private bool _isQuerying = false;
 		private Dispatcher _dispatcher = null;
-		private double maxServiceResolution = 0.0; // Max and Min resolution coming from the service : to combine with max and min resolution coming from the layer
+		private double maxServiceResolution = double.PositiveInfinity; // Max and Min resolution coming from the service : to combine with max and min resolution coming from the layer
 		private double minServiceResolution = 0.0;
 
 		/// <summary>
@@ -127,10 +127,9 @@ namespace ESRI.ArcGIS.Client.Toolkit
 				if (LegendTree != null)
 					LegendTree.UpdateLayerVisibilities();
 			}
-			else if (e.PropertyName == "ID")
+			else if (e.PropertyName == "ID" || e.PropertyName == "DisplayName")
 			{
-				if (!string.IsNullOrEmpty(layer.ID))
-					Label = layer.ID;
+				Label = layer.DisplayName ?? layer.ID;
 			}
 		}
 
@@ -170,11 +169,12 @@ namespace ESRI.ArcGIS.Client.Toolkit
 			}
 			LegendItems = null;
 
-			if (Layer is ILegendSupport)
+			var simplifiedLegendSupport = new SimplifiedLegendSupport(Layer);
+			var legendSupport = LayerItemsOptions.ReturnLegendItems == false && simplifiedLegendSupport.IsSupported ? simplifiedLegendSupport : Layer as ILegendSupport;
+			if (legendSupport != null)
 			{
 				IsBusy = true;
 				_isQuerying = true;
-				ILegendSupport legendSupport = Layer as ILegendSupport;
 
 				Action queryLegendInfosAction = delegate()
 				{
@@ -256,6 +256,8 @@ namespace ESRI.ArcGIS.Client.Toolkit
 			else
 			{
 				IsBusy = false;
+				MinimumResolution = Layer.MinimumResolution;
+				MaximumResolution = Layer.MaximumResolution;
 				// Fire event Refreshed
 				if (LegendTree != null)
 					LegendTree.OnRefreshed(this, new Legend.RefreshedEventArgs(this, null));
@@ -270,7 +272,7 @@ namespace ESRI.ArcGIS.Client.Toolkit
 				ObservableCollection<LayerItemViewModel> mapLayerItems = new ObservableCollection<LayerItemViewModel>();
 				if ((Layer as GroupLayerBase).ChildLayers != null)
 				{
-					foreach (Layer layer in (Layer as GroupLayerBase).ChildLayers)
+					foreach (Layer layer in (Layer as GroupLayerBase).ChildLayers.Where(l => l.ShowLegend))
 					{
 						Layer layerToFind = layer;
 						MapLayerItem mapLayerItem = LayerItems == null ? null : LayerItems.FirstOrDefault(item => item.Layer == layerToFind) as MapLayerItem;
@@ -278,7 +280,7 @@ namespace ESRI.ArcGIS.Client.Toolkit
 						if (mapLayerItem == null || mapLayerItems.Contains(mapLayerItem)) // else reuse existing map layer item to avoid querying again the legend and lose the item states (note : contains test if for the degenerated case where a layer is twice or more in a group layer)
 						{
 							// Create a new map layer item
-							mapLayerItem = new MapLayerItem(layer) { LegendTree = this.LegendTree };
+							mapLayerItem = new MapLayerItem(layer) { LegendTree = this.LegendTree, LayerItemsOptions = LegendTree.LayerItemsOptions};
 							if (_dispatcher != null)
 								_dispatcher.BeginInvoke(new Action(() => mapLayerItem.Refresh()));
 							else
@@ -357,5 +359,45 @@ namespace ESRI.ArcGIS.Client.Toolkit
 			base.Detach();
 		}
 		#endregion
+	}
+
+	// Avoid getting useless swatches when LegendItemTemplate is null
+	internal class SimplifiedLegendSupport : ILegendSupport
+	{
+		private readonly Layer _layer;
+
+		public SimplifiedLegendSupport(Layer layer)
+		{
+			_layer = layer;
+		}
+
+		public bool IsSupported
+		{
+			get { return _layer is GraphicsLayer; }
+		}
+
+#pragma warning disable 0067
+		public event EventHandler<EventArgs> LegendChanged;
+#pragma warning restore 0067
+
+		public void QueryLegendInfos(Action<LayerLegendInfo> callback, Action<Exception> errorCallback)
+		{
+			if (!IsSupported)
+				throw new NotImplementedException();
+
+			var featureLayer = _layer as FeatureLayer;
+			var layerLegendInfo = new LayerLegendInfo();
+			var layerInfo = featureLayer == null ? null : featureLayer.LayerInfo;
+
+			if (layerInfo != null)
+			{
+				layerLegendInfo.LayerDescription = layerInfo.Description;
+				layerLegendInfo.MinimumScale = layerInfo.MinimumScale;
+				layerLegendInfo.MaximumScale = layerInfo.MaximumScale;
+			}
+			if (featureLayer != null)
+				layerLegendInfo.LayerType = "Feature Layer";
+			callback(layerLegendInfo);
+		}
 	}
 }

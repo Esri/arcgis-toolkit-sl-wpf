@@ -116,6 +116,9 @@
     <Compile Include="..\..\..\CommonAPI\API\ESRI.ArcGIS.Client.Toolkit\FeatureDataGrid\FeatureDataGrid.cs">
       <Link>FeatureDataGrid\FeatureDataGrid.cs</Link>
     </Compile>
+    <Compile Include="..\..\..\CommonAPI\API\ESRI.ArcGIS.Client.Toolkit\OAuthAuthorize\OAuthAuthorize.cs">
+      <Link>OAuthAuthorize\OAuthAuthorize.cs</Link>
+    </Compile>
     <Compile Include="..\..\..\CommonAPI\API\ESRI.ArcGIS.Client.Toolkit\Primitives\DateTimePicker\DateTimePicker.cs">
       <Link>Primitives\DateTimePicker\DateTimePicker.cs</Link>
     </Compile>
@@ -389,6 +392,18 @@
     </BootstrapperPackage>
   </ItemGroup>
   <ItemGroup>
+    <EmbeddedResource Include="..\..\..\CommonAPI\API\ESRI.ArcGIS.Client.Toolkit\Properties\Resources.cs.resx">
+      <Link>Properties\Resources.cs.resx</Link>
+    </EmbeddedResource>
+    <EmbeddedResource Include="..\..\..\CommonAPI\API\ESRI.ArcGIS.Client.Toolkit\Properties\Resources.et.resx">
+      <Link>Properties\Resources.et.resx</Link>
+    </EmbeddedResource>
+    <EmbeddedResource Include="..\..\..\CommonAPI\API\ESRI.ArcGIS.Client.Toolkit\Properties\Resources.fi.resx">
+      <Link>Properties\Resources.fi.resx</Link>
+    </EmbeddedResource>
+    <EmbeddedResource Include="..\..\..\CommonAPI\API\ESRI.ArcGIS.Client.Toolkit\Properties\Resources.lv.resx">
+      <Link>Properties\Resources.lv.resx</Link>
+    </EmbeddedResource>
     <EmbeddedResource Include="..\..\..\CommonAPI\API\ESRI.ArcGIS.Client.Toolkit\Properties\Resources.resx">
       <Link>Properties\Resources.resx</Link>
     </EmbeddedResource>

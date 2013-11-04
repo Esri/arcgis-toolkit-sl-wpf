@@ -200,48 +200,80 @@ namespace ESRI.ArcGIS.Client.Toolkit
 			grid.SetDeleteSelectedRowsMenuButtonEnableState();	// Enable/Disable delete option.
 		}
 
-		void Graphics_CollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
+	    private bool AddItems(IEnumerable newItems)
+					{
+	        var result = false;
+	        if (newItems == null || cleanupGraphics == null) return false;
+	        
+            foreach (var item in newItems)
+						{
+	            cleanupGraphics.Add((Graphic)item);
+	            ((Graphic)item).AttributeValueChanged += Graphic_AttributeValueChanged;
+	            foreach (var attribute in ((Graphic)item).Attributes)
+	            {
+	                if (ResetRequired(attribute)) 
+                        result = true;                                                
+								ValidateAttributeType(attribute);
+						}
+					}
+	        return result;
+				}
+
+	    private void RemoveItems(IEnumerable oldItems)
+				{
+	        if (oldItems == null || cleanupGraphics == null) return;
+
+	        foreach (var item in oldItems)
+					{
+	            cleanupGraphics.Remove((Graphic)item);
+	            ((Graphic)item).AttributeValueChanged -= Graphic_AttributeValueChanged;
+					}
+				}
+
+	    private void ClearItems()
+	    {
+	        if (cleanupGraphics == null) return;
+            cleanupGraphics.ForEach(g => g.AttributeValueChanged -= Graphic_AttributeValueChanged);            
+            cleanupGraphics.Clear();
+	    }
+
+	    void Graphics_CollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
 		{
 			// if collection changes then need to check the attributes to make sure that
 			// new fields were not added. this is only for non feature layer types.
-			bool reset = false;
-			if (cleanupGraphics != null && e.Action == NotifyCollectionChangedAction.Reset)
-			{
-				foreach (var g in cleanupGraphics)
-					g.AttributeValueChanged -= Graphic_AttributeValueChanged;
-				cleanupGraphics.Clear();
+
+	        if (cleanupGraphics == null) return;
+			var reset = false;
+			if (e.Action == NotifyCollectionChangedAction.Reset)
+			{                
+                // Clear 
+                if (cleanupGraphics.Count > 0  && GraphicsLayer.Graphics.Count == 0)
+                    ClearItems();
+
+                // Remove Range 
+			    var oldItems = cleanupGraphics.Except(GraphicsLayer.Graphics);
+                RemoveItems(oldItems);
+
+                // Add Range
+			    var newItems = GraphicsLayer.Graphics.Except(cleanupGraphics);			                   
+                reset = AddItems(newItems);
 			}
-			else if (e.Action == NotifyCollectionChangedAction.Add)
+			else switch (e.Action)
 			{
-				if (e.NewItems != null)
-				{
-					foreach (var item in e.NewItems)
-					{
-						if (cleanupGraphics != null) cleanupGraphics.Add(item as Graphic);
-						(item as Graphic).AttributeValueChanged += Graphic_AttributeValueChanged;
-						foreach (var attribute in (item as Graphic).Attributes)
-						{
-							reset = ResetRequired(attribute);
-							if (reset)
-								break;
-							else
-								ValidateAttributeType(attribute);
-						}
-						if (reset) break;
-					}
-				}
+			    case NotifyCollectionChangedAction.Add: // single item added
+			        reset = AddItems(e.NewItems);
+			        break;
+			    case NotifyCollectionChangedAction.Replace: // single item replaced
+			        RemoveItems(e.OldItems);
+			        reset = AddItems(e.NewItems);
+			        break;
+			    case NotifyCollectionChangedAction.Remove: // single item removed
+			        RemoveItems(e.OldItems);
+			        break;
 			}
-			else if (e.Action == NotifyCollectionChangedAction.Remove)
-			{
-				if (e.OldItems != null)
-				{
-					foreach (var item in e.OldItems)
-					{
-						if (cleanupGraphics != null) cleanupGraphics.Remove(item as Graphic);
-						(item as Graphic).AttributeValueChanged -= Graphic_AttributeValueChanged;
-					}
-				}
-			}
+            
+            // Need to add new column because a new item had 
+            //a new attribute that we don't have a column for yet.
 			if (reset)
 				SetItemsSource(GraphicsLayer.Graphics);
 		}

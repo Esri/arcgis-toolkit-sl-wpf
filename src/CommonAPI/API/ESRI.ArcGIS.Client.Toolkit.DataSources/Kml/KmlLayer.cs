@@ -382,7 +382,7 @@ namespace ESRI.ArcGIS.Client.Toolkit.DataSources
   ///         &lt;!-- Add a KmlLayer that shows Earthquake occurrences over the last 7 days. Need to use a ProxyUrl. --&gt;
   ///         &lt;esri:KmlLayer ID="Earth Quakes" 
   ///                        Url="http://earthquake.usgs.gov/earthquakes/catalogs/eqs7day-age_src.kmz"
-  ///                        ProxyUrl="http://serverapps.esri.com/SilverlightDemos/ProxyPage/proxy.ashx"&gt;
+  ///                        ProxyUrl="http://servicesbeta3.esri.com/SilverlightDemos/ProxyPage/proxy.ashx"&gt;
   ///         &lt;/esri:KmlLayer&gt;
   ///         
   ///       &lt;/esri:LayerCollection&gt;
@@ -421,7 +421,7 @@ namespace ESRI.ArcGIS.Client.Toolkit.DataSources
   ///   theKmlLayer.Url = new Uri("http://sites.google.com/site/geined13/tours/Volcanoes_of_the_World.kmz?attredirects=0&amp;d=1");
   ///   
   ///   // Need to use a ProxyUrl on the KmlLayer since the service is not hosted locally or on a local network.
-  ///   theKmlLayer.ProxyUrl = "http://serverapps.esri.com/SilverlightDemos/ProxyPage/proxy.ashx";
+  ///   theKmlLayer.ProxyUrl = "http://servicesbeta3.esri.com/SilverlightDemos/ProxyPage/proxy.ashx";
   ///   
   ///   // Add the KmlLayer to the Map. An automaic refresh of the Map and Legend Controls will occur.
   ///   Map1.Layers.Add(theKmlLayer);
@@ -442,7 +442,7 @@ namespace ESRI.ArcGIS.Client.Toolkit.DataSources
   ///   theKmlLayer.Url = New Uri("http://sites.google.com/site/geined13/tours/Volcanoes_of_the_World.kmz?attredirects=0&amp;d=1")
   ///   
   ///   ' Need to use a ProxyUrl on the KmlLayer since the service is not hosted locally or on a local network.
-  ///   theKmlLayer.ProxyUrl = "http://serverapps.esri.com/SilverlightDemos/ProxyPage/proxy.ashx"
+  ///   theKmlLayer.ProxyUrl = "http://servicesbeta3.esri.com/SilverlightDemos/ProxyPage/proxy.ashx"
   ///   
   ///   ' Add the KmlLayer to the Map. An automaic refresh of the Map and Legend Controls will occur.
   ///   Map1.Layers.Add(theKmlLayer)
@@ -2718,7 +2718,7 @@ namespace ESRI.ArcGIS.Client.Toolkit.DataSources
 				if (_refreshInterval != value)
 				{
 					_refreshInterval = value;
-					InitRefreshTimer();
+                    StartRefreshTimer();
 					OnPropertyChanged("RefreshInterval");
 				}
 			}
@@ -2801,7 +2801,7 @@ namespace ESRI.ArcGIS.Client.Toolkit.DataSources
 		/// <param name="newValue">New map</param>
 		protected override void OnMapChanged(Map oldValue, Map newValue)
 		{
-			InitRefreshTimer(); // stopping the timer when newmap is null allows to avoid memory leak when the layer is removed from the map
+            ResetRefreshTimer();  // stopping the timer when newmap is null allows to avoid memory leak when the layer is removed from the map
 
 			if (oldValue != null)
 			{
@@ -2919,6 +2919,12 @@ namespace ESRI.ArcGIS.Client.Toolkit.DataSources
 				return;
 			}
 
+            if (ChildLayers.Any())
+            {
+                foreach (var l in ChildLayers.OfType<KmlLayer>())
+                    l.UnhookLayerEvents();
+                ChildLayers.Clear(); // for refresh case
+            }
 			InitializationFailure = null;
 			if (Url != null)
 			{
@@ -2941,8 +2947,6 @@ namespace ESRI.ArcGIS.Client.Toolkit.DataSources
 			else
 			{
 				InitializationFailure = new ArgumentException(Properties.Resources.Generic_UrlNotSet, "Url");
-				if (ChildLayers.Any())
-					ChildLayers.Clear();
 				if (!IsInitialized)
 					base.Initialize();
 			}
@@ -3209,9 +3213,6 @@ namespace ESRI.ArcGIS.Client.Toolkit.DataSources
 
         private void backgroundWorker_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
         {
-			if (ChildLayers.Any())
-				ChildLayers.Clear(); // for refresh case
- 
             if (e.Error != null)
             {
                 this.InitializationFailure = new ArgumentException(Properties.Resources.KmlLayer_DocumentParsingFailed);
@@ -3524,30 +3525,71 @@ namespace ESRI.ArcGIS.Client.Toolkit.DataSources
             return ms;
         }
 
-		private DispatcherTimer _refreshTimer; // Timer to manage the autorefresh
+        /// <summary>
+        /// Occurs when this layer is rendered.
+        /// </summary>
+        protected override void OnLoaded()
+        {
+            StartRefreshTimer();
+            base.OnLoaded();
+        }
 
 		/// <summary>
-		/// Init the timer to refresh the layer
+        /// Occurs when this layer is no longer connected to the main object tree.
 		/// </summary>
-		private void InitRefreshTimer()
+        protected override void OnUnloaded()
 		{
-			// Cancel the previous timer
 			StopRefreshTimer();
+            base.OnUnloaded();
+        }
 
+        private void UnhookLayerEvents()
+        {
+            PropertyChanged -= KmlLayer_PropertyChanged;
+            InitializationFailed -= KmlLayer_InitializationFailed;
+        }
+
+		private DispatcherTimer _refreshTimer; // Timer to manage the autorefresh
+        private DispatcherTimer RefreshTimer
+        {
+            get
+            {
+                if (_refreshTimer == null)
+                {
 			if (Map != null && RefreshInterval != TimeSpan.Zero)
 			{
 				// Create a new timer to refresh the layer
 				_refreshTimer = new DispatcherTimer() { Interval = RefreshInterval };
-				_refreshTimer.Tick += (s, e) => Refresh();
-				_refreshTimer.Start();
+                        _refreshTimer.Tick += RefreshTimer_Tick;
+                    }
 			}
+                return _refreshTimer;
+            }
+        }
+
+        void RefreshTimer_Tick(object sender, EventArgs e)
+        {
+            Refresh();
 		}
 
 		private void StopRefreshTimer()
 		{
-			if (_refreshTimer != null)
+            if (RefreshTimer != null && RefreshTimer.IsEnabled)
+                RefreshTimer.Stop();
+		}
+
+        private void StartRefreshTimer()
+        {
+            if (RefreshTimer != null && !RefreshTimer.IsEnabled)
+                RefreshTimer.Start();
+        }
+
+        private void ResetRefreshTimer()
 			{
-				_refreshTimer.Stop();
+            if (RefreshTimer != null)
+            {
+                StopRefreshTimer();
+                RefreshTimer.Tick -= RefreshTimer_Tick;
 				_refreshTimer = null;
 			}
 		}

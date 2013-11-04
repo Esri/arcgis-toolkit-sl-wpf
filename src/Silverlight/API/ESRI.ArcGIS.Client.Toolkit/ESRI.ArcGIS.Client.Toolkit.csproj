@@ -75,6 +75,10 @@
       <SpecificVersion>False</SpecificVersion>
       <Private>False</Private>
     </Reference>
+    <Reference Include="System.Json">
+      <SpecificVersion>False</SpecificVersion>
+      <Private>False</Private>
+    </Reference>
     <Reference Include="System.Windows" />
     <Reference Include="mscorlib" />
     <Reference Include="system" />
@@ -166,6 +170,9 @@
     </Compile>
     <Compile Include="..\..\..\CommonAPI\API\ESRI.ArcGIS.Client.Toolkit\Navigation\Navigation.cs">
       <Link>Navigation\Navigation.cs</Link>
+    </Compile>
+    <Compile Include="..\..\..\CommonAPI\API\ESRI.ArcGIS.Client.Toolkit\OAuthAuthorize\OAuthAuthorize.cs">
+      <Link>OAuthAuthorize\OAuthAuthorize.cs</Link>
     </Compile>
     <Compile Include="..\..\..\CommonAPI\API\ESRI.ArcGIS.Client.Toolkit\OverviewMap\OverviewMap.cs">
       <Link>OverviewMap\OverviewMap.cs</Link>
@@ -347,6 +354,18 @@
     </Resource>
   </ItemGroup>
   <ItemGroup>
+    <EmbeddedResource Include="..\..\..\CommonAPI\API\ESRI.ArcGIS.Client.Toolkit\Properties\Resources.cs.resx">
+      <Link>Properties\Resources.cs.resx</Link>
+    </EmbeddedResource>
+    <EmbeddedResource Include="..\..\..\CommonAPI\API\ESRI.ArcGIS.Client.Toolkit\Properties\Resources.et.resx">
+      <Link>Properties\Resources.et.resx</Link>
+    </EmbeddedResource>
+    <EmbeddedResource Include="..\..\..\CommonAPI\API\ESRI.ArcGIS.Client.Toolkit\Properties\Resources.fi.resx">
+      <Link>Properties\Resources.fi.resx</Link>
+    </EmbeddedResource>
+    <EmbeddedResource Include="..\..\..\CommonAPI\API\ESRI.ArcGIS.Client.Toolkit\Properties\Resources.lv.resx">
+      <Link>Properties\Resources.lv.resx</Link>
+    </EmbeddedResource>
     <EmbeddedResource Include="..\..\..\CommonAPI\API\ESRI.ArcGIS.Client.Toolkit\Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>

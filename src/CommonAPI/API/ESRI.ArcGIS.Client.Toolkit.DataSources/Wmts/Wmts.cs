@@ -144,7 +144,7 @@ namespace ESRI.ArcGIS.Client.Toolkit.DataSources
     ///         &lt;esri:WmtsLayer ID="WMTS1"
     ///                         Url="http://v2.suite.opengeo.org/geoserver/gwc/service/wmts"
     ///                         Initialized="WmtsLayer_Initialized"
-    ///                         ProxyUrl="http://serverapps.esri.com/SilverlightDemos/ProxyPage/proxy.ashx"
+    ///                         ProxyUrl="http://servicesbeta3.esri.com/SilverlightDemos/ProxyPage/proxy.ashx"
     ///                         InitializationFailed="WmtsLayer_InitializationFailed"
     ///                         ServiceMode="KVP"
     ///                         /&gt;
@@ -1444,7 +1444,7 @@ namespace ESRI.ArcGIS.Client.Toolkit.DataSources
   ///         --&gt;
   ///         &lt;esri:WmtsLayer ID="WMTS1" ServiceMode="KVP" Layer="usa:states"
   ///                         Url="http://v2.suite.opengeo.org/geoserver/gwc/service/wmts"
-  ///                         ProxyUrl="http://serverapps.esri.com/SilverlightDemos/ProxyPage/proxy.ashx"
+  ///                         ProxyUrl="http://servicesbeta3.esri.com/SilverlightDemos/ProxyPage/proxy.ashx"
   ///                         InitializationFailed="WmtsLayer_InitializationFailed"
   ///                         TileLoading="WmtsLayer_TileLoading"/&gt;
   ///       &lt;/esri:LayerCollection&gt;

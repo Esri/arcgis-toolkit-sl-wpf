@@ -790,9 +790,10 @@ namespace ESRI.ArcGIS.Client.Toolkit
 						{
 							foreach (KeyValuePair<string, FeatureTemplate> featureTemplate in layer.LayerInfo.Templates)
 							{
-								SymbolTemplate symbolTemplate = GetSymbolTemplate(editor, defaultSymbol,
+								Symbol symbol = featureTemplate.Value.GetSymbol(layer.Renderer) ?? defaultSymbol;
+								SymbolTemplate symbolTemplate = GetSymbolTemplate(editor, symbol,
 											null, featureTemplate.Value, featureTemplate.Value.Name, featureTemplate.Value.Description);
-								if (defaultSymbol != null)
+								if (symbol != null)
 									group.Templates.Add(symbolTemplate);
 							}
 						}

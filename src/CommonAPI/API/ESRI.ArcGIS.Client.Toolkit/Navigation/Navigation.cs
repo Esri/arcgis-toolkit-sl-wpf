@@ -195,7 +195,7 @@ namespace ESRI.ArcGIS.Client.Toolkit
 
         private void ZoomFullExtent_Click(object sender, RoutedEventArgs e)
         {
-            if (Map != null)
+            if (Map != null && Map.Layers != null)
                 Map.ZoomTo(Map.Layers.GetFullExtent());
         }
 

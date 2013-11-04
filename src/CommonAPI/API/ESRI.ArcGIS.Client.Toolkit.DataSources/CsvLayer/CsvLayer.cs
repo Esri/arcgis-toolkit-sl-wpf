@@ -2178,7 +2178,7 @@ namespace ESRI.ArcGIS.Client.Toolkit.DataSources
                 for (int i = 1; i < csvData.Count; i++)
                 {
                     string[] row = csvData[i];
-                    if (xCol != -1)
+                    if (xCol != -1 && xCol < row.Length) // Make sure the x column is found and this row contains it 
                     {
                         string lon = row[xCol];
                         if (lon.Contains(',') && !lon.Contains('.'))
@@ -2187,7 +2187,7 @@ namespace ESRI.ArcGIS.Client.Toolkit.DataSources
                             return CultureInfo.InvariantCulture;
                     }
 
-                    if (yCol != -1)
+                    if (yCol != -1 && yCol < row.Length) // Make sure the y column is found and this row contains it
                     {
                         string lat = row[yCol];
                         if (lat.Contains(',') && !lat.Contains('.'))

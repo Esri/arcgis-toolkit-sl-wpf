@@ -151,6 +151,9 @@
     <Compile Include="..\..\..\CommonAPI\API\ESRI.ArcGIS.Client.Toolkit.DataSources\Utilities.cs">
       <Link>Utilities.cs</Link>
     </Compile>
+    <Compile Include="..\..\..\CommonAPI\API\ESRI.ArcGIS.Client.Toolkit.DataSources\WebTiledLayer\WebTiledLayer.cs">
+      <Link>WebTiledLayer\WebTiledLayer.cs</Link>
+    </Compile>
     <Compile Include="..\..\..\CommonAPI\API\ESRI.ArcGIS.Client.Toolkit.DataSources\Wms\Wms.cs">
       <Link>Wms\Wms.cs</Link>
     </Compile>
@@ -166,6 +169,18 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
+    <EmbeddedResource Include="..\..\..\CommonAPI\API\ESRI.ArcGIS.Client.Toolkit.DataSources\Properties\Resources.cs.resx">
+      <Link>Properties\Resources.cs.resx</Link>
+    </EmbeddedResource>
+    <EmbeddedResource Include="..\..\..\CommonAPI\API\ESRI.ArcGIS.Client.Toolkit.DataSources\Properties\Resources.et.resx">
+      <Link>Properties\Resources.et.resx</Link>
+    </EmbeddedResource>
+    <EmbeddedResource Include="..\..\..\CommonAPI\API\ESRI.ArcGIS.Client.Toolkit.DataSources\Properties\Resources.fi.resx">
+      <Link>Properties\Resources.fi.resx</Link>
+    </EmbeddedResource>
+    <EmbeddedResource Include="..\..\..\CommonAPI\API\ESRI.ArcGIS.Client.Toolkit.DataSources\Properties\Resources.lv.resx">
+      <Link>Properties\Resources.lv.resx</Link>
+    </EmbeddedResource>
     <EmbeddedResource Include="..\..\..\CommonAPI\API\ESRI.ArcGIS.Client.Toolkit.DataSources\Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>

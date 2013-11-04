@@ -1,13 +1,9 @@
 ﻿
-Microsoft Visual Studio Solution File, Format Version 11.00
-# Visual Studio 2010
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2012
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ESRI.ArcGIS.Client.Toolkit", "ESRI.ArcGIS.Client.Toolkit\ESRI.ArcGIS.Client.Toolkit.csproj", "{B01EF0E0-7595-43A4-8DD1-C3F7F0170F4F}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ESRI.ArcGIS.Client.Toolkit.DataSources", "ESRI.ArcGIS.Client.Toolkit.DataSources\ESRI.ArcGIS.Client.Toolkit.DataSources.csproj", "{E4D25DB4-8388-42B2-AFBB-797AE9323535}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ESRI.ArcGIS.Client.Toolkit_SL4", "ESRI.ArcGIS.Client.Toolkit\ESRI.ArcGIS.Client.Toolkit_SL4.csproj", "{65F5AD7E-0A9C-4445-9670-86A068E0DE76}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ESRI.ArcGIS.Client.Toolkit.DataSources_SL4", "ESRI.ArcGIS.Client.Toolkit.DataSources\ESRI.ArcGIS.Client.Toolkit.DataSources_SL4.csproj", "{6F42C4A4-4470-4891-9869-222A9FAED82A}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -23,14 +19,6 @@ Global
 		{E4D25DB4-8388-42B2-AFBB-797AE9323535}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E4D25DB4-8388-42B2-AFBB-797AE9323535}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{E4D25DB4-8388-42B2-AFBB-797AE9323535}.Release|Any CPU.Build.0 = Release|Any CPU
-		{65F5AD7E-0A9C-4445-9670-86A068E0DE76}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{65F5AD7E-0A9C-4445-9670-86A068E0DE76}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{65F5AD7E-0A9C-4445-9670-86A068E0DE76}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{65F5AD7E-0A9C-4445-9670-86A068E0DE76}.Release|Any CPU.Build.0 = Release|Any CPU
-		{6F42C4A4-4470-4891-9869-222A9FAED82A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{6F42C4A4-4470-4891-9869-222A9FAED82A}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{6F42C4A4-4470-4891-9869-222A9FAED82A}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{6F42C4A4-4470-4891-9869-222A9FAED82A}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
