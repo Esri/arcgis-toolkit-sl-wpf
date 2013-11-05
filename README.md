@@ -8,45 +8,45 @@ NOTE: This library is only an extension of the ArcGIS API for Silverlight™ or 
 
 [![Example toolkit contents](https://raw.github.com/Esri/arcgis-toolkit-sl-wpf/master/arcgis-toolkit-sl-wpf.png "Example toolkit contents")](http://resources.arcgis.com/en/help/silverlight-api/samples/start.htm#Attribution)
 
-## Controls and classes
-* AttachmentEditor
-* Attribution
-* Bookmark
-* EditorWidget
-* FeatureDataForm
-* FeatureDataGrid
-* InfoWindow
-* Legend
-* Magnifier
-* MagnifyingGlass
-* MapProgressBar
-* MapTip
-* Navigation
-* OAuthAuthorize
-* OverviewMap
-* SignInDialog
-* TemplatePicker
-* TimeSlider
-
-## Data sources
-* CsvLayer
-* GeoRssLayer
-* GpsLayer
-* HeatMapLayer
-* KmlLayer
-* OpenStreetMapLayer
-* WebTiledLayer
-* WmsLayer
-* WmtsLayer
+## Features
+- Controls and classes
+ * AttachmentEditor
+ * Attribution
+ * Bookmark
+ * EditorWidget
+ * FeatureDataForm
+ * FeatureDataGrid
+ * InfoWindow
+ * Legend
+ * Magnifier
+ * MagnifyingGlass
+ * MapProgressBar
+ * MapTip
+ * Navigation
+ * OAuthAuthorize
+ * OverviewMap
+ * SignInDialog 
+ * TemplatePicker
+ * TimeSlider
+- Data sources
+ * CsvLayer
+ * GeoRssLayer
+ * GpsLayer
+ * HeatMapLayer
+ * KmlLayer
+ * OpenStreetMapLayer
+ * WebTiledLayer
+ * WmsLayer
+ * WmtsLayer
 
 ## Instructions
 
 1. Fork and then clone the repo or download the .zip file. 
-2. Download and install the ArcGIS API for Silverlight or ArcGIS Runtime SDK for WPF.  Requires an Esri Global account, which can be created for free.   
-* [ArcGIS API for Silverlight](http://www.esri.com/apps/products/download/index.cfm?fuseaction=download.main&downloadid=876) 
-* [ArcGIS Runtime SDK for WPF](http://www.esri.com/apps/products/download/index.cfm?fuseaction=download.main&downloadid=1079)
-5. In Visual Studio, open the solution for Silverlight (ESRI_Silverlight_Toolkit.sln) or WPF (ESRI_WPF_Toolkit.sln).  You may need to update the reference to the location of the core ArcGIS Silverlight or WPF assembly ESRI.ArcGIS.Client.dll.     
-6. Build the ESRI.ArcGIS.Client.Toolkit and ESRI.ArcGIS.Client.Toolkit.DataSources projects and reference the dlls in your application.  
+2. Download and install the ArcGIS API for Silverlight or ArcGIS Runtime SDK for WPF.  Login requires an Esri Global account, which can be created for free.   
+ * [ArcGIS API for Silverlight](http://www.esri.com/apps/products/download/index.cfm?fuseaction=download.main&downloadid=876) 
+ * [ArcGIS Runtime SDK for WPF](http://www.esri.com/apps/products/download/index.cfm?fuseaction=download.main&downloadid=1079)
+3. In Visual Studio, open the solution for Silverlight (ESRI_Silverlight_Toolkit.sln) or WPF (ESRI_WPF_Toolkit.sln).  You may need to update the reference to the location of the core ArcGIS Silverlight or WPF assembly ESRI.ArcGIS.Client.dll.     
+4. Build the ESRI.ArcGIS.Client.Toolkit and ESRI.ArcGIS.Client.Toolkit.DataSources projects and reference the dlls in your application.  
 
 ## Requirements
 
@@ -57,8 +57,6 @@ NOTE: This library is only an extension of the ArcGIS API for Silverlight™ or 
 
 * [ArcGIS API for Silverlight resource center](http://resources.arcgis.com/en/communities/silverlight-api/) 
 * [ArcGIS Runtime SDK for WPF resource center](http://resources.arcgis.com/en/communities/runtime-wpf/)
-* [ArcGIS Blog](http://blogs.esri.com/esri/arcgis/)
-* [@esri](http://twitter.com/esri)
 
 ## Issues
 
