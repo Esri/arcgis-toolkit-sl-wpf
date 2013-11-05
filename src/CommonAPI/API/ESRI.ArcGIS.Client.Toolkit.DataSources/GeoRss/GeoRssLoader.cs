@@ -19,6 +19,7 @@ namespace ESRI.ArcGIS.Client.Toolkit.DataSources
 		private const string _W3CGEONAMESPACE_ = "http://www.w3.org/2003/01/geo/wgs84_pos#";
 		private const string _GEORSSNAMESPACE_ = "http://www.georss.org/georss";
 		private const double _EARTHCIRCUMFERENCE_ = 6378137;
+		internal const string GeometryTypeAttribute = "_gt";
 
 		public class RssLoadedEventArgs : EventArgs
 		{
@@ -258,6 +259,16 @@ namespace ESRI.ArcGIS.Client.Toolkit.DataSources
 								if(!graphic.Attributes.ContainsKey(val.Key))
 								graphic.Attributes.Add(val.Key, val.Value);
 							
+							// Add attribute GeometryType used by renderer
+							string gt = null;
+							if (g is MapPoint)
+								gt = "point";
+							else if (g is Polyline)
+								gt = "line";
+							else if (g is Polygon || g is Envelope)
+								gt = "polygon";
+							if (gt != null)
+								graphic.Attributes.Add(GeometryTypeAttribute, gt);
 							graphics.Add(graphic);
 						}
 					}

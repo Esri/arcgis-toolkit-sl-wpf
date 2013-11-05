@@ -11,6 +11,7 @@ using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Input;
 #if !SILVERLIGHT
+using System.Collections.Generic;
 using System.Net;
 using System.IO;
 using System.Windows.Documents;
@@ -499,6 +500,11 @@ namespace ESRI.ArcGIS.Client.Toolkit
 		/// <param name="generateTokenOptions">The generate token options.</param>
 		public static void DoSignInEx(IdentityManager.CredentialRequestInfos credentialRequestInfos, Action<IdentityManager.Credential, Exception> callback, IdentityManager.GenerateTokenOptions generateTokenOptions = null)
 		{
+			// Check if IWA authentication might be OK
+			if (ChallengeIWA(credentialRequestInfos, callback))
+				return;
+
+			// Display UI for challenging
 			System.Windows.Threading.Dispatcher d = null;
 			if (Application.Current != null)
 				d = Application.Current.Dispatcher;
@@ -571,6 +577,48 @@ namespace ESRI.ArcGIS.Client.Toolkit
 			}
 
 			callback(credential, error);
+		}
+
+		// Test Windows Authentication
+		private static bool ChallengeIWA(IdentityManager.CredentialRequestInfos credentialRequestInfos,
+		                                         Action<IdentityManager.Credential, Exception> callback)
+		{
+			if (credentialRequestInfos.AuthenticationType == IdentityManager.AuthenticationType.NetworkCredential &&
+				credentialRequestInfos.ResponseHeaders != null && CredentialCache.DefaultCredentials != null)
+			{
+				// test that we didn't already try the IWA authentication
+				if (TryDone(credentialRequestInfos.Url))
+					return false;
+
+				// get the WWW-Authenticate header
+				string header = credentialRequestInfos.ResponseHeaders.Get("WWW-Authenticate");
+
+				// if the header contains NTLM the server is using Integrated Windows 
+				// Authentication (IWA), so try the current user's credentials
+				if (!string.IsNullOrEmpty(header) && header.Contains("NTLM")) // IWA
+				{
+					var credential = new IdentityManager.Credential
+					{
+						Url = credentialRequestInfos.Url,
+						Credentials = CredentialCache.DefaultCredentials
+					};
+					AddTry(credentialRequestInfos.Url);
+					callback(credential, null);
+					return true;
+				}
+			}
+			return false;
+		}
+
+		private static readonly IList<string> TryList = new List<string>(); 
+		private static bool TryDone(string url)
+		{
+			return TryList.Contains(url);
+		}
+		private static void AddTry(string url)
+		{
+			if(!TryList.Contains(url))
+				TryList.Add(url);
 		}
 
 		#endregion

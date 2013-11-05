@@ -5,5 +5,10 @@
 
 using System.Reflection;
 using System.Runtime.CompilerServices;
-[assembly: AssemblyVersion("3.1.0.*")]
-[assembly: AssemblyFileVersion("3.1.0.0")]
+#if SILVERLIGHT
+[assembly: AssemblyVersion("3.2.0.*")]
+[assembly: AssemblyFileVersion("3.2.0.0")]
+#else
+[assembly: AssemblyVersion("10.2.0.*")]
+[assembly: AssemblyFileVersion("10.2.0.0")]
+#endif

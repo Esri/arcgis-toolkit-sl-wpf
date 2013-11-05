@@ -3,8 +3,7 @@
 // Please see http://go.microsoft.com/fwlink/?LinkID=131993 for details.
 // All other rights reserved.
 
-using ESRI.ArcGIS.Client;
-using ESRI.ArcGIS.Client.Geometry;
+using System;
 using System.Windows;
 using System.Collections.Generic;
 
@@ -145,7 +144,7 @@ namespace ESRI.ArcGIS.Client.Toolkit.DataSources
 /// organization, it is required by their license agreement to provide the 
 /// <a href="http://www.openstreetmap.org/copyright">appropriate credit</a> for using their data. The credit 
 /// information for maps provided by the OpenStreetMap organization is stored in the 
-/// <see cref="ESRI.ArcGIS.Client.Toolkit.DataSources.OpenStreetMapLayer.AttributionTemplate">OpenStreetMapLayer.AttributionTemplate</see> 
+/// <see cref="WebTiledLayer.CopyrightText"/> 
 /// Property. To display the credit information in your application is most easily accomplished by adding an Esri 
 /// <see cref="T:ESRI.ArcGIS.Client.Toolkit.Attribution">Attribution</see> control to your client application 
 /// and binding the <see cref="M:ESRI.ArcGIS.Client.Toolkit.Attribution.Layers">Attribution.Layers</see> Property 
@@ -254,79 +253,32 @@ namespace ESRI.ArcGIS.Client.Toolkit.DataSources
 /// End Sub
 /// </code>
 /// </example>	
-public class OpenStreetMapLayer : TiledMapServiceLayer, IAttribution
-#if WINDOWS_PHONE
-		, ITileCache
-#endif
+	public class OpenStreetMapLayer : WebTiledLayer
 	{
 		/// <summary>Available subdomains for tiles.</summary>
-		private static string[] subDomains = { "a", "b", "c" };
+		private static readonly string[] subDomains = { "a", "b", "c" };
 		/// <summary>Base URL used in GetTileUrl.</summary>
-		private static string[] baseUrl =
+		private static readonly string[] baseUrl =
 		{
-			"http://{0}.tile.openstreetmap.org/{1}/{2}/{3}.png",			
-			"http://{0}.tile.opencyclemap.org/cycle/{1}/{2}/{3}.png",
-			"http://{0}.tile.cloudmade.com/fd093e52f0965d46bb1c6c6281022199/3/256/{1}/{2}/{3}.png",
+			"http://{subDomain}.tile.openstreetmap.org/{level}/{col}/{row}.png",
+			"http://{subDomain}.tile.opencyclemap.org/cycle/{level}/{col}/{row}.png",
+			"http://{subDomain}.tile.cloudmade.com/fd093e52f0965d46bb1c6c6281022199/3/256/{level}/{col}/{row}.png"
 		};
-		/// <summary>Simple constant used for full extent and tile origin specific to this projection.</summary>
-		private const double cornerCoordinate = 20037508.3427892;
-		/// <summary>ESRI Spatial Reference ID for Web Mercator.</summary>
-		private const int WKID = 102100;
-		private MapStyle _style = MapStyle.Mapnik; //We use this property for being able to access it from a background thread.
+
+		private TileServerList _tileServers; // for being able to access it from a background thread
 
 		/// <summary>
 		/// Initializes a new instance of the <see cref="OpenStreetMapLayer"/> class.
 		/// </summary>
 		public OpenStreetMapLayer()
 		{            
+			SubDomains = subDomains;
 			Style = MapStyle.Mapnik;
-			this.SpatialReference = new SpatialReference(WKID);
-            this.TileServers = new TileServerList();
-		}
-
-		/// <summary>
-		/// Initializes the <see cref="OpenStreetMapLayer"/> class.
-		/// </summary>
-		static OpenStreetMapLayer()
-		{
-			CreateAttributionTemplate();
-		}
-
-		/// <summary>
-		/// Initializes the resource.
-		/// </summary>
-		/// <remarks>
-		/// 	<para>Override this method if your resource requires asyncronous requests to initialize,
-		/// and call the base method when initialization is completed.</para>
-		/// 	<para>Upon completion of initialization, check the <see cref="ESRI.ArcGIS.Client.Layer.InitializationFailure"/> for any possible errors.</para>
-		/// </remarks>
-		/// <seealso cref="ESRI.ArcGIS.Client.Layer.Initialized"/>
-		/// <seealso cref="ESRI.ArcGIS.Client.Layer.InitializationFailure"/>
-		public override void Initialize()
-		{
-			//Full extent fo the layer
-			this.FullExtent = new ESRI.ArcGIS.Client.Geometry.Envelope(-cornerCoordinate,-cornerCoordinate,cornerCoordinate,cornerCoordinate)
-			{
-				SpatialReference = new SpatialReference(WKID)
-			};
-			//This layer's spatial reference
-			//Set up tile information. Each tile is 256x256px, 19 levels.
-			this.TileInfo = new TileInfo()
-			{
-				Height = 256,
-				Width = 256,
-				Origin = new MapPoint(-cornerCoordinate, cornerCoordinate) { SpatialReference = new ESRI.ArcGIS.Client.Geometry.SpatialReference(WKID) },
-				Lods = new Lod[19]
-			};
-			//Set the resolutions for each level. Each level is half the resolution of the previous one.
-			double resolution = cornerCoordinate * 2 / 256;
-			for (int i = 0; i < TileInfo.Lods.Length; i++)
-			{
-				TileInfo.Lods[i] = new Lod() { Resolution = resolution };
-				resolution /= 2;
-			}
-			//Call base initialize to raise the initialization event
-			base.Initialize();
+			TemplateUrl = baseUrl[(int)Style];
+#pragma warning disable 0618
+			TileServers = new TileServerList();
+#pragma warning restore 0618
+			CopyrightText = "Map data © OpenStreetMap contributors, CC-BY-SA";
 		}
 		
 		/// <summary>
@@ -562,23 +514,14 @@ public class OpenStreetMapLayer : TiledMapServiceLayer, IAttribution
   /// </example>
 		public override string GetTileUrl(int level, int row, int col)
 		{
-			// Select a subdomain based on level/row/column so that it will always
-			// be the same for a specific tile. Multiple subdomains allows the user
-			// to load more tiles simultaneously. To take advantage of the browser cache
-			// the following expression also makes sure that a specific tile will always 
-			// hit the same subdomain.
 			if (level + col + row < 0) return null;
-            if (TileServers != null && TileServers.Count > 0)
+			if (_tileServers != null && _tileServers.Count > 0)
             {
-                string tileServer = TileServers[(level + col + row) % TileServers.Count];                
+				string tileServer = _tileServers[(level + col + row) % _tileServers.Count];                
                 string tileServerPathFormat = (tileServer.EndsWith("/")) ? "{0}{1}/{2}/{3}.png" : "{0}/{1}/{2}/{3}.png";
                 return string.Format(tileServerPathFormat, tileServer, level, col, row);
             }
-            else
-            {
-                string subdomain = subDomains[(level + col + row) % subDomains.Length];
-                return string.Format(baseUrl[(int)_style], subdomain, level, col, row);
-            }
+			return base.GetTileUrl(level, row, col);
 		}
 
         /// <summary>
@@ -860,6 +803,7 @@ public class OpenStreetMapLayer : TiledMapServiceLayer, IAttribution
         /// End Sub
         /// </code>
         /// </example>
+		[Obsolete("Use the TemplateUrl property")]
         public TileServerList TileServers
         {
             get { return (TileServerList)GetValue(TileServersProperty); }
@@ -867,8 +811,9 @@ public class OpenStreetMapLayer : TiledMapServiceLayer, IAttribution
         }
 
         /// <summary>
-        /// Dependancy property for <see cref="ESRI.ArcGIS.Client.Toolkit.DataSources.OpenStreetMapLayer.TileServers"/>.
+        /// Dependency property for <see cref="ESRI.ArcGIS.Client.Toolkit.DataSources.OpenStreetMapLayer.TileServers"/>.
         /// </summary>
+		[Obsolete("Use the TemplateUrlProperty")]
         public static readonly DependencyProperty TileServersProperty =
             DependencyProperty.Register("TileServers", typeof(TileServerList), typeof(OpenStreetMapLayer), new PropertyMetadata(OnTileServersPropertyChanged));
       
@@ -876,6 +821,7 @@ public class OpenStreetMapLayer : TiledMapServiceLayer, IAttribution
         private static void OnTileServersPropertyChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
             OpenStreetMapLayer obj = (OpenStreetMapLayer)d;
+	        obj._tileServers = e.NewValue as TileServerList;
             if (obj.IsInitialized)
                 obj.Refresh();
         }
@@ -914,190 +860,9 @@ public class OpenStreetMapLayer : TiledMapServiceLayer, IAttribution
 
 		private static void OnStylePropertyChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
 		{
-			OpenStreetMapLayer obj = (OpenStreetMapLayer)d;
-			obj._style = (MapStyle)e.NewValue;
-			if (obj.IsInitialized && (obj.TileServers == null || obj.TileServers.Count == 0))
-				obj.Refresh();
+			var obj = (OpenStreetMapLayer)d;
+			obj.TemplateUrl = baseUrl[(int)obj.Style];
 		}
-
-		#region IAttribution Members
-		private const string template = @"<DataTemplate xmlns=""http://schemas.microsoft.com/winfx/2006/xaml/presentation"">
-			<TextBlock Text=""Map data © OpenStreetMap contributors, CC-BY-SA"" TextWrapping=""Wrap""/></DataTemplate>";
-
-		private static DataTemplate _attributionTemplate;
-		private static void CreateAttributionTemplate()
-		{
-#if SILVERLIGHT
-			_attributionTemplate = System.Windows.Markup.XamlReader.Load(template) as DataTemplate;
-#else
-			using (System.IO.MemoryStream stream = new System.IO.MemoryStream(System.Text.Encoding.UTF8.GetBytes(template)))
-			{
-				_attributionTemplate = System.Windows.Markup.XamlReader.Load(stream) as DataTemplate;
-			}
-#endif
-		}
-
-		/// <summary>
-		/// Gets the attribution template of the layer.
-		/// </summary>
-		/// <value>The attribution template.</value>
-  /// <remarks>
-  /// <para>
-  /// The AttributionTemplate Property returns a 
-  /// <a href="http://msdn.microsoft.com/en-us/library/ms589297(v=VS.95).aspx" target="_blank">DataTemplate</a> 
-  /// that allows for the display of the credit information of the OpenStreetMapLayer. 
-  /// </para>
-  /// <para>
-  /// The typical use case is to use an Esri 
-  /// <see cref="T:ESRI.ArcGIS.Client.Toolkit.Attribution">Attribution</see> Control is where the 
-  /// <see cref="ESRI.ArcGIS.Client.Map.Layers">Map.Layers</see> Property is bound to the 
-  /// <see cref="M:ESRI.ArcGIS.Client.Toolkit.Attribution.Layers">Attribution.Layers</see> Property. This will enable 
-  /// the display of the credit/CopyrightText information about various layers in a nicely formatted output with minimal 
-  /// programming effort. The ease of use for this use case becomes readily apparent when there are multiple 
-  /// layers with credit/CopyrightText information that need to be displayed and only a single binding needs to take 
-  /// place. <b>Note:</b> All layers that have an AttributionTemplate Property have the 
-  /// <see cref="ESRI.ArcGIS.Client.IAttribution">IAttribution</see> Interface implemented. 
-  /// </para>
-  /// <para>
-  /// The AttributionTemplate is read-only and is only useful to display the credit/CopyrightText information. It is 
-  /// not possible to set the credit/CopyrightText information on the client side nor is it possible to change the 
-  /// internals of the DataTemplate obtained by the AttributionTemplate. 
-  /// </para>
-  /// <para>
-  /// Any Control that has a <b>ContentTemplate</b> Property can display the information contained in the 
-  /// AttributionTemplate. These Controls can have their base Properties modified to alter the appearance of the 
-  /// credit/CopyrightText information being displayed (i.e. FontSize, Foreground, etc.). When multiple layers have 
-  /// credit/CopyrightText information that needs attributed, it takes more complex programming logic to display the 
-  /// information; consider using the ESRI Attribution Control instead.
-  /// </para>  
-  /// <para>
-  /// Whenever an OpenStreetMapLayer is used in a production application based on services from the OpenStreetMap 
-  /// organization, it is required by their license agreement to provide the 
-  /// <a href="http://www.openstreetmap.org/copyright">appropriate credit</a> for using their data. The credit 
-  /// information for maps provided by the OpenStreetMap organization is stored in the 
-  /// <see cref="ESRI.ArcGIS.Client.Toolkit.DataSources.OpenStreetMapLayer.AttributionTemplate">OpenStreetMapLayer.AttributionTemplate</see> 
-  /// Property. To display the credit information in your application is most easily accomplished by adding an Esri 
-  /// <see cref="T:ESRI.ArcGIS.Client.Toolkit.Attribution">Attribution</see> control to your client application 
-  /// and binding the <see cref="M:ESRI.ArcGIS.Client.Toolkit.Attribution.Layers">Attribution.Layers</see> Property 
-  /// to the OpenStreetMapLayer. The following is an XAML example of how to accomplish this:
-  /// </para>
-  /// <code language="XAML">
-  /// &lt;esri:Map x:Name="MyMap"&gt;
-  ///   &lt;esri:OpenStreetMapLayer Style="Mapnik" /&gt;
-  /// &lt;/esri:Map&gt;
-  /// &lt;esri:Attribution Layers="{Binding ElementName=MyMap, Path=Layers}" /&gt;
-  /// </code>
-  /// <para>
-  /// OpenStreetMap is released under the Create Commons "Attribution-Share Alike 2.0 Generic" license.
-  /// </para>
-  /// </remarks>
-  /// <example>
-  /// <para>
-  /// <b>How to use:</b>
-  /// </para>
-  /// <para>
-  /// Click the 'Display credit information' Button to display credit information in various controls.
-  /// </para>
-  /// <para>
-  /// The XAML code in this example is used in conjunction with the code-behind (C# or VB.NET) to demonstrate
-  /// the functionality.
-  /// </para>
-  /// <para>
-  /// The following screen shot corresponds to the code example in this page.
-  /// </para>
-  /// <para>
-  /// <img border="0" alt="Displaying the OpenStreetMapLayer.AttributeTemplate information in various controls." src="C:\ArcGIS\dotNET\API SDK\Main\ArcGISSilverlightSDK\LibraryReference\images\Client.Toolkit.DataSources.OpenStreetMap.AttributionTemplate.png"/>
-  /// </para>
-  /// <code title="Example XAML1" description="" lang="XAML">
-  /// &lt;Grid x:Name="LayoutRoot"&gt;
-  ///   
-  ///   &lt;!-- Add a Map Control. --&gt;
-  ///   &lt;esri:Map Background="White" HorizontalAlignment="Left" Margin="0,180,0,0" Name="Map1" 
-  ///         VerticalAlignment="Top" Height="300" Width="400" &gt;
-  ///     
-  ///     &lt;!-- Define an OpenStreetMapLayer. --&gt;
-  ///     &lt;esri:OpenStreetMapLayer Style="NoName"/&gt;
-  ///     
-  ///   &lt;/esri:Map&gt;
-  ///   
-  ///   &lt;!-- 
-  ///   Add a Button to display OpenStreetMapLayer credit information. 
-  ///   --&gt;
-  ///   &lt;Button Content="Display credit information" Height="23" 
-  ///           HorizontalAlignment="Left" Margin="12,151,0,0" Width="763" VerticalAlignment="Top" 
-  ///           Name="ButtonAttributionTemplate" Click="ButtonAttributionTemplate_Click"/&gt;
-  ///   
-  ///   &lt;!-- ESRI Attribution Control  --&gt;
-  ///   &lt;sdk:Label Height="24" HorizontalAlignment="Left" Margin="410,256,0,0" Name="Label_Attribution" 
-  ///        VerticalAlignment="Top" Width="346" Content="ESRI Attribution Control:"/&gt;
-  ///   &lt;esri:Attribution HorizontalAlignment="Left" Margin="406,279,0,0" Name="Attribution1" 
-  ///         VerticalAlignment="Top" Height="30" Width="350" /&gt;
-  ///   
-  ///   &lt;!-- A ContentControl --&gt;
-  ///   &lt;sdk:Label Height="24" HorizontalAlignment="Left" Margin="410,341,0,0" Name="Label_ContentControl" 
-  ///        VerticalAlignment="Top" Width="346" Content="Content Control:"/&gt;
-  ///   &lt;ContentControl Height="30" HorizontalAlignment="Left" Margin="410,361,0,0" 
-  ///                   Name="ContentControl1" VerticalAlignment="Top" Width="346" 
-  ///                   FontSize="20" Foreground="Red" /&gt;
-  ///   
-  ///   &lt;!-- A Button --&gt;
-  ///   &lt;sdk:Label Height="24" HorizontalAlignment="Left" Margin="410,424,0,0" Name="Label_Button" 
-  ///        VerticalAlignment="Top" Width="346" Content="Button:"/&gt;
-  ///   &lt;Button Height="30" HorizontalAlignment="Left" Margin="410,448,0,0" 
-  ///           Name="Button1" VerticalAlignment="Top" Width="346" /&gt;
-  ///   
-  ///   &lt;!-- Provide the instructions on how to use the sample code. --&gt;
-  ///   &lt;TextBlock Height="52" HorizontalAlignment="Left" Name="TextBlock1" VerticalAlignment="Top" Width="756" TextWrapping="Wrap" 
-  ///              Text="Click the 'Display credit information' Button to display credit information in various controls." /&gt;
-  ///   
-  /// &lt;/Grid&gt;
-  /// </code>
-  /// <code title="Example CS1" description="" lang="CS">
-  /// private void ButtonAttributionTemplate_Click(object sender, System.Windows.RoutedEventArgs e)
-  /// {
-  ///   // Get the OpenStreetMapLayer.
-  ///   ESRI.ArcGIS.Client.Toolkit.DataSources.OpenStreetMapLayer myOpenStreetMapLayer = null;
-  ///   myOpenStreetMapLayer = (ESRI.ArcGIS.Client.Toolkit.DataSources.OpenStreetMapLayer)(Map1.Layers[0]);
-  ///   
-  ///   // Display the OpenStreetMapLayer credit information via the ESRI Attribution Control.
-  ///   Attribution1.Layers = Map1.Layers;
-  ///   
-  ///   // Display the OpenStreetMapLayer credit information via a Microsoft ContentControl.
-  ///   ContentControl1.ContentTemplate = myOpenStreetMapLayer.AttributionTemplate;
-  ///   ContentControl1.Content = myOpenStreetMapLayer;
-  ///   
-  ///   // Display the OpenStreetMapLayer credit information via a Button.
-  ///   Button1.ContentTemplate = myOpenStreetMapLayer.AttributionTemplate;
-  ///   Button1.Content = myOpenStreetMapLayer;
-  /// }
-  /// </code>
-  /// <code title="Example VB1" description="" lang="VB.NET">
-  /// Private Sub ButtonAttributionTemplate_Click(ByVal sender As System.Object, ByVal e As System.Windows.RoutedEventArgs)
-  ///   
-  ///   ' Get the OpenStreetMapLayer.
-  ///   Dim myOpenStreetMapLayer As ESRI.ArcGIS.Client.Toolkit.DataSources.OpenStreetMapLayer
-  ///   myOpenStreetMapLayer = CType(Map1.Layers.Item(0), ESRI.ArcGIS.Client.Toolkit.DataSources.OpenStreetMapLayer)
-  ///   
-  ///   ' Display the OpenStreetMapLayer credit information via the ESRI Attribution Control.
-  ///   Attribution1.Layers = Map1.Layers
-  ///   
-  ///   ' Display the OpenStreetMapLayer credit information via a Microsoft ContentControl.
-  ///   ContentControl1.ContentTemplate = myOpenStreetMapLayer.AttributionTemplate
-  ///   ContentControl1.Content = myOpenStreetMapLayer
-  ///   
-  ///   ' Display the OpenStreetMapLayer credit information via a Button.
-  ///   Button1.ContentTemplate = myOpenStreetMapLayer.AttributionTemplate
-  ///   Button1.Content = myOpenStreetMapLayer
-  ///   
-  /// End Sub
-  /// </code>
-  /// </example>
-		public DataTemplate AttributionTemplate
-		{
-			get { return _attributionTemplate; }
-		}
-
-		#endregion
 
 		/// <summary>
 		/// MapStyle
@@ -1125,24 +890,5 @@ public class OpenStreetMapLayer : TiledMapServiceLayer, IAttribution
         public class TileServerList : List<string>
         {            
         }
-
-#if WINDOWS_PHONE
-		#region ITileCache Members
-
-		bool ITileCache.PersistCacheAcrossSessions
-		{
-			get { return true; }
-		}
-
-		string ITileCache.CacheUid
-		{
-			get
-			{
-				return string.Format("ESRI.ArcGIS.Client.Toolkit.DataSources.OpenStreetMapLayer_{0}", this.Style);
-			}
-		}
-
-		#endregion
-#endif
 	}
 }

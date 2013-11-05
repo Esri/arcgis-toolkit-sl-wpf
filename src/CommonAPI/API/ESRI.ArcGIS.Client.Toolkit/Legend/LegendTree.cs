@@ -44,9 +44,12 @@ namespace ESRI.ArcGIS.Client.Toolkit.Primitives
 			{
  				if (_legendItemTemplate != value)
 				{
+ 					bool needRefresh = _legendItemTemplate == null; // due to simplifiedlegend support, we may have to refresh the legend hierarchy when LegendItemTemplate is set
 					_legendItemTemplate = value;
 					PropagateTemplate();
 					UpdateLayerItemsOptions();
+					if (needRefresh)
+						Refresh();
 				}
 			}
 		}
@@ -278,11 +281,19 @@ namespace ESRI.ArcGIS.Client.Toolkit.Primitives
 			if (e.PropertyName == "Layers")
 			{
 				if (_oldLayers != null)
+				{
 					_oldLayers.CollectionChanged -= Layers_CollectionChanged;
+					foreach (Layer layer in _oldLayers)
+						layer.PropertyChanged -= Layer_PropertyChanged;
+				}
 
 				_oldLayers = map.Layers;
 				if (_oldLayers != null)
+				{
 					_oldLayers.CollectionChanged += Layers_CollectionChanged;
+					foreach (Layer layer in _oldLayers)
+						layer.PropertyChanged += Layer_PropertyChanged;
+				}
 
 				UpdateMapLayerItems();
 			}
@@ -391,7 +402,7 @@ namespace ESRI.ArcGIS.Client.Toolkit.Primitives
 					if (mapLayerItem == null) // else reuse existing map layer item to avoid query again the legend and to keep the current state (selected, expansed, ..)
 					{
 						// Create a new map layer item
-						mapLayerItem = new MapLayerItem(layer) { LegendTree = this };
+						mapLayerItem = new MapLayerItem(layer) { LegendTree = this, LayerItemsOptions = LegendTree.LayerItemsOptions};
 						mapLayerItem.Refresh();
 					}
 

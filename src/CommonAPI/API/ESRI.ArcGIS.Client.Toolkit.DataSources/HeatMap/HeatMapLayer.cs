@@ -26,9 +26,7 @@ namespace ESRI.ArcGIS.Client.Toolkit.DataSources
 		private BackgroundWorker renderThread; //background thread used for generating the heat map
 		private ESRI.ArcGIS.Client.Geometry.PointCollection heatMapPoints;
 		private Envelope fullExtent; //cached value of the calculated full extent
-		private Envelope enqueueExtent;
-		private int enqueueWidth;
-		private int enqueueHeight;
+        private DynamicLayer.ImageParameters enqueueExport;
 		private DynamicLayer.OnImageComplete enqueueOnComplete;
 		
 		private struct HeatPoint
@@ -185,25 +183,23 @@ namespace ESRI.ArcGIS.Client.Toolkit.DataSources
 		/// Gets the source image to display in the dynamic layer. Override this to generate
 		/// or modify images.
 		/// </summary>
-		/// <param name="extent">The extent of the image being requested.</param>
-		/// <param name="width">The width of the image being requested.</param>
-		/// <param name="height">The height of the image being requested.</param>
+        /// <param name="properties">The image export properties.</param>
 		/// <param name="onComplete">The method to call when the image is ready.</param>
 		/// <seealso cref="ESRI.ArcGIS.Client.DynamicLayer.OnProgress"/>
-		protected override void GetSource(Envelope extent, int width, int height, DynamicLayer.OnImageComplete onComplete)
+        protected override void GetSource(DynamicLayer.ImageParameters properties, DynamicLayer.OnImageComplete onComplete)
 		{
 			if (!IsInitialized || HeatMapPoints == null || HeatMapPoints.Count == 0)
 			{
-				onComplete(null, -1, -1, null);
+				onComplete(null, null);
 				return;
 			}
-
+            Envelope extent = properties.Extent;
+            int width = properties.Width;
+            int height = properties.Height;
 			if (renderThread != null && renderThread.IsBusy)
 			{
 				renderThread.CancelAsync(); //render already running. Cancel current process, and queue up new
-				enqueueExtent = extent;
-				enqueueWidth = width;
-				enqueueHeight = height;
+                enqueueExport = new ImageParameters(extent, width, height);
 				enqueueOnComplete = onComplete;
 				return;
 			}
@@ -269,7 +265,7 @@ namespace ESRI.ArcGIS.Client.Toolkit.DataSources
 		/// </summary>
 		protected override void Cancel()
 		{
-			enqueueExtent = null;
+            enqueueExport = null;
 			enqueueOnComplete = null;
 			if (renderThread != null && renderThread.IsBusy)
 			{
@@ -372,15 +368,15 @@ namespace ESRI.ArcGIS.Client.Toolkit.DataSources
 		{
 			if (e.Cancelled)
 			{
-				if (enqueueExtent != null) //cancelled because new image was requested. Create new image
+				if (enqueueExport != null) //cancelled because new image was requested. Create new image
 				{
-					GetSource(enqueueExtent, enqueueWidth, enqueueHeight, enqueueOnComplete);
-					enqueueExtent = null;
+                    GetSource(enqueueExport, enqueueOnComplete);
+                    enqueueExport = null;
 					enqueueOnComplete = null;
 				}
 				return;
 			}
-			enqueueExtent = null;
+            enqueueExport = null;
 			enqueueOnComplete = null;
 			if (e.Result == null)
 				return;
@@ -404,7 +400,7 @@ namespace ESRI.ArcGIS.Client.Toolkit.DataSources
 			int stride = width * (pf.BitsPerPixel / 8);
 			BitmapSource image = BitmapSource.Create(width, height, 96, 96, pf, palette, (int[])result[0], stride);
 #endif
-			onComplete(image, width, height, extent);
+			onComplete(image, new ImageResult(extent));
 		}
 
 		/// <summary>
@@ -569,10 +565,10 @@ namespace ESRI.ArcGIS.Client.Toolkit.DataSources
 
 #if !SILVERLIGHT
 
-		void ISupportsDynamicImageByteRequests.GetImageData(Envelope extent, int width, int height, OnImageDataReceived onImageDataReceived)
+        void ISupportsDynamicImageByteRequests.GetImageData(DynamicLayer.ImageParameters properties, OnImageDataReceived onImageDataReceived)
 		{
 			OnImageComplete onImageComplete =
-				(image, imageWidth, imageHeight, imageExtent) =>
+				(image, props) =>
 					{
 						BitmapSource bitmapSource = image as BitmapSource;
 
@@ -586,10 +582,10 @@ namespace ESRI.ArcGIS.Client.Toolkit.DataSources
 							stream.Seek(0, SeekOrigin.Begin);
 						}
 
-						onImageDataReceived(stream, imageWidth, imageHeight, imageExtent);
+						onImageDataReceived(stream, props);
 					};
 
-			GetSource(extent, width, height, onImageComplete);
+			GetSource(properties, onImageComplete);
 		}
 
 #endif

@@ -85,6 +85,8 @@ namespace ESRI.ArcGIS.Client.Toolkit.Primitives
 	/// and adds a binding for the <see cref="P:System.Windows.Controls.TreeViewItem.IsExpanded"/>
 	/// and <see cref="P:System.Windows.Controls.TreeViewItem.IsSelected"/> properties
 	/// </summary>
+	/// <exclude/>
+	[System.ComponentModel.EditorBrowsable(System.ComponentModel.EditorBrowsableState.Never)]
 	public sealed class TreeViewItemExtended : TreeViewItem
 	{
 		#region protected override DependencyObject GetContainerForItemOverride()

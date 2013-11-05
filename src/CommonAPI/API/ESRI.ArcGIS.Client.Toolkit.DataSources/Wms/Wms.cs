@@ -185,6 +185,16 @@ namespace ESRI.ArcGIS.Client.Toolkit.DataSources
 
 		#endregion
 
+		/// <summary>
+		/// Sets the full extent.
+		/// This method is useful only if <see cref="SkipGetCapabilities"/> is true otherwise the full extent is set by the metadata.
+		/// </summary>
+		/// <param name="fullExtent">The full extent.</param>
+		public void SetFullExtent(Envelope fullExtent)
+		{
+			FullExtent = fullExtent;
+		}
+
 		#region IAttribution Members
 
 		private static DataTemplate _attributionTemplate;
@@ -336,7 +346,14 @@ namespace ESRI.ArcGIS.Client.Toolkit.DataSources
 			internal bool Visible { get; set; }
 			internal double MaximumScale { get; set; }
 			internal double MinimumScale { get; set; }
-			internal string LegendUrl { get; set; }
+
+			/// <summary>
+			/// Gets the legend URL.
+			/// </summary>
+			/// <value>
+			/// The legend URL.
+			/// </value>
+			public string LegendUrl { get; internal set; }
 
 			/// <summary>
 			/// Initializes a new instance of the <see cref="LayerInfo"/> class.
@@ -414,6 +431,23 @@ namespace ESRI.ArcGIS.Client.Toolkit.DataSources
 				layerInfo.Attribution.Title = attribution.Element(XName.Get("Title", ns)) == null ? inheritedAttribution : attribution.Element(XName.Get("Title", ns)).Value;
 			else
 				layerInfo.Attribution.Title = inheritedAttribution;
+
+			var extentElement = layer.Element(XName.Get("BoundingBox", ns));
+			if (extentElement != null)
+			{
+				bool lowerThan13 = LowerThan13Version();
+				string key = lowerThan13 ? "SRS" : "CRS";
+					if (extentElement.Attribute(key) != null && extentElement.Attribute(key).Value.StartsWith("EPSG:"))
+					{
+						try
+						{
+							int srid = int.Parse(extentElement.Attribute(key).Value.Replace("EPSG:", ""), CultureInfo.InvariantCulture);
+							var sr = new SpatialReference(srid);
+							layerInfo.Extent = GetEnvelope(extentElement, sr, lowerThan13);
+						}
+						catch { }
+					}
+			}
 
 			layerInfo.ChildLayers = CreateLayerInfos(layer, ns, layerInfo.Attribution.Title); // recursive call for sublayers
 
@@ -666,9 +700,7 @@ namespace ESRI.ArcGIS.Client.Toolkit.DataSources
 		/// <summary>
 		/// Gets the URL. Override from DynamicMapServiceLayer
 		/// </summary>
-		/// <param name="extent">The extent.</param>
-		/// <param name="width">The width.</param>
-		/// <param name="height">The height.</param>
+        /// <param name="properties">The image export properties.</param>
 		/// <param name="onComplete">OnUrlComplete delegate.</param>
 		/// <remarks>
 		/// The Map has a private method loadLayerInView which calls Layer.Draw.   
@@ -677,11 +709,20 @@ namespace ESRI.ArcGIS.Client.Toolkit.DataSources
 		/// The last parameter is the OnUrlComplete delegate, which is used to pass the appropriate values 
 		/// (url, width, height, envelope) to the private DynamicMapServiceLayer.getUrlComplete method.
 		/// </remarks>
-		public override void GetUrl(ESRI.ArcGIS.Client.Geometry.Envelope extent, int width, int height,
+        public override void GetUrl(DynamicLayer.ImageParameters properties,
 			DynamicMapServiceLayer.OnUrlComplete onComplete)
 		{
+            Envelope extent = properties.Extent;
+            int width = properties.Width;
+            int height = properties.Height;
+			
 			int extentWKID = (extent.SpatialReference != null) ? extent.SpatialReference.WKID : 0;
 			string baseUrl = MapUrl ?? Url;
+			if (baseUrl == null)
+			{
+				onComplete(null, null);
+				return;
+			}
 			StringBuilder mapURL = new StringBuilder(baseUrl);
 
 			if (!baseUrl.Contains("?"))
@@ -731,13 +772,13 @@ namespace ESRI.ArcGIS.Client.Toolkit.DataSources
 						"&BBOX={0},{1},{2},{3}", extent.XMin, extent.YMin, extent.XMax, extent.YMax);
 			}
 
-			onComplete(Utilities.PrefixProxy(ProxyUrl, mapURL.ToString()).AbsoluteUri, width, height, new ESRI.ArcGIS.Client.Geometry.Envelope()
+			onComplete(Utilities.PrefixProxy(ProxyUrl, mapURL.ToString()).AbsoluteUri, new ImageResult(new ESRI.ArcGIS.Client.Geometry.Envelope()
 			{
 				XMin = extent.XMin,
 				YMin = extent.YMin,
 				XMax = extent.XMax,
 				YMax = extent.YMax
-			});
+			}));
 		}
 
 		private static bool UseLatLon(int extentWKID)
