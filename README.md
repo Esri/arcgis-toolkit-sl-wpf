@@ -4,7 +4,7 @@ This project contains the source code and libraries for the Esri ArcGIS Silverli
 
 NOTE: This library is only an extension of the ArcGIS API for Silverlight™ or the ArcGIS Runtime SDK for WPF™.   In order to build a complete mapping application, you will also need to install the respective products on which they are built.  See below for instructions on how to get started.
 
-[View it live](http://resources.arcgis.com/en/help/silverlight-api/samples/start.htm#Attribution)
+[View it live in Silverlight](http://resources.arcgis.com/en/help/silverlight-api/samples/start.htm#Attribution)
 
 [![Example toolkit contents](https://raw.github.com/Esri/arcgis-toolkit-sl-wpf/master/arcgis-toolkit-sl-wpf.png "Example toolkit contents")](http://resources.arcgis.com/en/help/silverlight-api/samples/start.htm#Attribution)
 
