@@ -8,37 +8,55 @@ NOTE: This library is only an extension of the ArcGIS API for Silverlight™ or 
 
 [![Example toolkit contents](https://raw.github.com/Esri/arcgis-toolkit-sl-wpf/master/arcgis-toolkit-sl-wpf.png "Example toolkit contents")](http://resources.arcgis.com/en/help/silverlight-api/samples/start.htm#Attribution)
 
-## Features
+## Controls and classes
 * AttachmentEditor
-* Editor
+* Attribution
 * Bookmark
+* EditorWidget
 * FeatureDataForm
 * FeatureDataGrid
+* InfoWindow
 * Legend
+* Magnifier
+* MagnifyingGlass
+* MapProgressBar
 * MapTip
+* Navigation
+* OAuthAuthorize
+* OverviewMap
 * SignInDialog
-* Themes
+* TemplatePicker
+* TimeSlider
+
+## Data sources
+* CsvLayer
+* GeoRssLayer
+* GpsLayer
+* HeatMapLayer
+* KmlLayer
+* OpenStreetMapLayer
+* WebTiledLayer
+* WmsLayer
+* WmtsLayer
 
 ## Instructions
 
 1. Fork and then clone the repo or download the .zip file. 
-2. Download the ArcGIS API/SDK product for Silverlight or WPF: 
-3. Download the ArcGIS API for Silverlight 
-or Download the ArcGIS Runtime SDK for WPF - minimum requirement, Esri Developer Network (EDN) license
-4. Download the source code by clicking the download button to the right, or the Download link under the Source Code or Downloads tab.   Unzip the downloaded file to a location of your choice.  You'll see the source code for Silverlight and WPF in separate folders.  
-5. In Visual Studio, open the solution for Silverlight or WPF.  You'll be prompted to go offline (source code for the toolkit is managed in TFS), click OK.   You may need to update the reference to the location of the core ArcGIS Silverlight or WPF assembly ESRI.ArcGIS.Client.dll.     
+2. Download and install the ArcGIS API for Silverlight or ArcGIS Runtime SDK for WPF.  Requires an Esri Global account, which can be created for free.   
+* [ArcGIS API for Silverlight](http://www.esri.com/apps/products/download/index.cfm?fuseaction=download.main&downloadid=876) 
+* [ArcGIS Runtime SDK for WPF](http://www.esri.com/apps/products/download/index.cfm?fuseaction=download.main&downloadid=1079)
+5. In Visual Studio, open the solution for Silverlight (ESRI_Silverlight_Toolkit.sln) or WPF (ESRI_WPF_Toolkit.sln).  You may need to update the reference to the location of the core ArcGIS Silverlight or WPF assembly ESRI.ArcGIS.Client.dll.     
 6. Build the ESRI.ArcGIS.Client.Toolkit and ESRI.ArcGIS.Client.Toolkit.DataSources projects and reference the dlls in your application.  
 
 ## Requirements
 
-* ArcGIS API for Silverlight
-* ArcGIS Runtime SDK for WPF
-
-See instructions above.
+* [ArcGIS API for Silverlight system requirements](http://resources.arcgis.com/en/help/silverlight-api/concepts/#/System_requirements/01660000000t000000/) 
+* [ArcGIS Runtime SDK for WPF system requirements](http://resources.arcgis.com/en/help/runtime-wpf/concepts/index.html#/System_requirements/0170000000p3000000/)
 
 ## Resources
 
-* [ArcGIS API for Silverlight Resource Center](http://http://resources.arcgis.com/en/communities/arcgis-toolkit-sl-wpf/index.html)
+* [ArcGIS API for Silverlight resource center](http://resources.arcgis.com/en/communities/silverlight-api/) 
+* [ArcGIS Runtime SDK for WPF resource center](http://resources.arcgis.com/en/communities/runtime-wpf/)
 * [ArcGIS Blog](http://blogs.esri.com/esri/arcgis/)
 * [@esri](http://twitter.com/esri)
 
@@ -67,5 +85,5 @@ limitations under the License.
 
 A copy of the license is available in the repository's [license.txt]( https://raw.github.com/Esri/arcgis-toolkit-sl-wpf/master/license.txt) file.
 
-[](Esri Tags: ArcGIS Web Mapping Toolkit Wpf WP7)
+[](Esri Tags: ArcGIS toolkit wpf silverlight)
 [](Esri Language: Silverlight)
