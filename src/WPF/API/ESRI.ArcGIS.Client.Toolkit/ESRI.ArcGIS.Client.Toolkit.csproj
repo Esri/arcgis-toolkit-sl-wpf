@@ -68,6 +68,7 @@
     <Reference Include="System.Core">
       <RequiredTargetFramework>3.5</RequiredTargetFramework>
     </Reference>
+    <Reference Include="System.Runtime.Serialization" />
     <Reference Include="System.Security" />
     <Reference Include="System.Xaml" />
     <Reference Include="System.Xml.Linq">
@@ -125,6 +126,7 @@
     <Compile Include="..\..\..\CommonAPI\API\ESRI.ArcGIS.Client.Toolkit\ValueConverters\DateTimeFormatConverter.cs">
       <Link>ValueConverters\DateTimeFormatConverter.cs</Link>
     </Compile>
+    <Compile Include="AttachmentEditor\AddAttachmentExtension.cs" />
     <Compile Include="FeatureDataGrid\FeatureDataGrid.WPF.cs" />
     <Compile Include="..\..\..\CommonAPI\API\ESRI.ArcGIS.Client.Toolkit\InfoWindow\InfoWindow.cs">
       <Link>InfoWindow\InfoWindow.cs</Link>

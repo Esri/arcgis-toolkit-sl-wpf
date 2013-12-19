@@ -1634,6 +1634,7 @@ namespace ESRI.ArcGIS.Client.Toolkit
                 VisualStateManager.GoToState(this, "Busy", true);
 
                 FileInfo fileInfo = null;
+                Stream stream = null;
 
                 Action<AttachmentResult> add = null;
                 Action<Exception> error = (Action<Exception>)delegate(Exception result)
@@ -1643,6 +1644,8 @@ namespace ESRI.ArcGIS.Client.Toolkit
                 };
                 add = delegate(AttachmentResult result)
                 {
+                    if (stream != null)
+                        stream.Dispose(); // Dispose previous attachment
                     if (result != null && !result.Success)
                     {
                         OnUploadFailed(new UploadFailedEventArgs(new Exception(Properties.Resources.AttachmentEditor_FileUploadFailed)));  // Raise UploadFailed error event
@@ -1650,10 +1653,12 @@ namespace ESRI.ArcGIS.Client.Toolkit
                     if (files.Count > 0)
                     {
                         fileInfo = files.Dequeue();
-                        using (Stream stream = fileInfo.OpenRead())
-                        {
-                            this.FeatureLayer.AddAttachment(oid, stream, fileInfo.Name, add, error);
-                        };
+	                    stream = fileInfo.OpenRead();
+#if SILVERLIGHT
+                        this.FeatureLayer.AddAttachment(oid, stream, fileInfo.Name, add, error);
+#else
+                        AddAttachmentExtension.AddAttachment(this.FeatureLayer, oid, stream, fileInfo.Name, add, error);
+#endif
                     }
                     else
                     {
