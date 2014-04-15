@@ -5,6 +5,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Globalization;
 using System.Linq;
 using System.Net;
@@ -968,7 +969,7 @@ namespace ESRI.ArcGIS.Client.Toolkit.DataSources
 		/// Gets or sets the layer identifier displayed by the WMTS service.
 		/// </summary>
 		/// <remarks>
-		/// If the layer is not set explicitely, the first layer respecting the TileMatrixSet will be used.</remarks>
+		/// If the layer is not set explicitly, the first layer respecting the TileMatrixSet will be used.</remarks>
 		/// <value>The layer.</value>
 		public string Layer
 		{
@@ -995,7 +996,7 @@ namespace ESRI.ArcGIS.Client.Toolkit.DataSources
 		/// It defines the tileMatrixSet the layer will use. 
 		/// </summary>
 		/// <remarks>
-		/// If the tile matric set is not set explicitely, the first tile matrix set supported by the WMTS will be used.</remarks>
+		/// If the tile matrix set is not set explicitly, the first tile matrix set supported by the WMTS will be used.</remarks>
 		/// <value>The tile matrix set.</value>
 		public string TileMatrixSet
 		{
@@ -1162,6 +1163,49 @@ namespace ESRI.ArcGIS.Client.Toolkit.DataSources
 		} 
 		#endregion
 
+		#region Dimensions
+
+		private WmtsDimensionValueCollection _dimensionValues;
+
+		/// <summary>
+		///  Gets or sets the dimensional value(s) used by the WMTS layer to request the tiles.
+		/// </summary>
+		/// <para>Examples of dimensions are Time, Elevation and Band but the service can define any other dimension property that exists in the multidimensional layer collection being served.</para>
+		/// <para>If the DimensionValues collection doesn't specify the value for a dimension supported by the service, the following value will be used by order of priority:
+		/// <list type="bullet">
+		/// <item>the <see cref="WmtsDimensionInfo.Default"/> value if not null.</item>
+		/// <item>the 'current' value if the dimension <see cref="WmtsDimensionInfo.SupportsCurrent">supports a current value</see>.</item>
+		/// <item>the first value in <see cref="WmtsDimensionInfo.Values"/>.</item>
+		/// </list>
+		/// </para>
+		public WmtsDimensionValueCollection DimensionValues
+		{
+			get { return _dimensionValues; }
+			set
+			{
+				if (_dimensionValues != value)
+				{
+					if (_dimensionValues != null)
+						_dimensionValues.CollectionChanged -= DimensionValuesOnCollectionChanged;
+					_dimensionValues = value;
+					OnPropertyChanged("DimensionValues");
+					SetCurrentDimensionValues();
+					if (IsInitialized)
+						Refresh(); 
+					if (_dimensionValues != null)
+						_dimensionValues.CollectionChanged += DimensionValuesOnCollectionChanged;
+				}
+			}
+		}
+
+		void DimensionValuesOnCollectionChanged(object sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
+		{
+			if (IsInitialized)
+				Refresh();
+		}
+
+		#endregion
+
 		#region WmtsLayerInfo class
 		/// <summary>
 		/// Information about a WMTS layer.
@@ -1206,6 +1250,14 @@ namespace ESRI.ArcGIS.Client.Toolkit.DataSources
 			{
 				get { return TileMatrixSetLinks.Select(tmsl => tmsl.TileMatrixSet); }
 			}
+
+			/// <summary>
+			/// Gets the extra dimensions for a tile request.
+			/// </summary>
+			/// <value>
+			/// The extra dimensions supported by the layer.
+			/// </value>
+			public IEnumerable<WmtsDimensionInfo> DimensionInfos { get; internal set; } 
 
 			/// <summary>
 			/// Gets the extent of the layer.
@@ -1698,6 +1750,13 @@ namespace ESRI.ArcGIS.Client.Toolkit.DataSources
 				if (!string.IsNullOrEmpty(Token))
 					sb.AppendFormat("&token={0}", Token);
 
+				// Add the dimensional parameters
+				if (CurrentDimensionValues != null)
+				{
+					foreach (var dimensionValue in CurrentDimensionValues)
+						sb.AppendFormat("&{0}={1}", dimensionValue.Key, dimensionValue.Value);
+				}
+
 				url = sb.ToString();
 			}
 			else
@@ -1726,6 +1785,13 @@ namespace ESRI.ArcGIS.Client.Toolkit.DataSources
 			url = ReplaceParameter(url, "TileRow", row.ToString());
 			url = ReplaceParameter(url, "TileCol", col.ToString());
 			// Note : the template is depending on the layer and on the format, so they are not parameters
+
+			// Add the dimensional parameters
+			if (CurrentDimensionValues != null)
+			{
+				foreach (var dimensionValue in CurrentDimensionValues)
+					url = ReplaceParameter(url, dimensionValue.Key, dimensionValue.Value);
+			}
 
 			return url;
 		}
@@ -1768,10 +1834,11 @@ namespace ESRI.ArcGIS.Client.Toolkit.DataSources
 					if (_currentLayer != null)
 						Layer = _currentLayer.Identifier;
 
-					// Changing the layer can change the format, the style and the tileMatrixSet
+					// Changing the layer can change the format, the style, the tileMatrixSet and the dimensions values
 					SetCurrentTileMatrixSet();
 					SetCurrentFormat();
 					SetCurrentStyle();
+					SetCurrentDimensionValues();
 
 					OnPropertyChanged("Description");
 					OnPropertyChanged("Title");
@@ -1881,6 +1948,40 @@ namespace ESRI.ArcGIS.Client.Toolkit.DataSources
 				currentStyle = CurrentLayer.Styles.FirstOrDefault();
 			}
 			Style = currentStyle;
+		}
+
+		private IDictionary<string, string> CurrentDimensionValues { get; set; }
+
+		private void SetCurrentDimensionValues()
+		{
+			// Add the default values and the 'current' keywords to the values provided as DimensionValues
+			if (CurrentLayer == null)
+				return;
+
+			var currentDimensionValues = new Dictionary<string, string>();
+
+			if (CurrentLayer.DimensionInfos != null)
+			{
+				foreach (WmtsDimensionInfo dimensionInfo in CurrentLayer.DimensionInfos)
+				{
+					string value = null;
+					WmtsDimensionValue wmtsDimensionValue = DimensionValues == null ? null : DimensionValues.FirstOrDefault(dv => dv.Identifier == dimensionInfo.Identifier);
+					if (wmtsDimensionValue != null) // value specified
+						value = wmtsDimensionValue.Value;
+					else // Use default or current value or first value
+					{
+						if (!string.IsNullOrEmpty(dimensionInfo.Default))
+							value = dimensionInfo.Default;
+						else if (dimensionInfo.SupportsCurrent)
+							value = "current"; // keywords
+						else if (dimensionInfo.Values != null)
+							value = dimensionInfo.Values.FirstOrDefault();
+					}
+					if (!string.IsNullOrEmpty(value))
+						currentDimensionValues.Add(dimensionInfo.Identifier, value);
+				}
+			}
+			CurrentDimensionValues = currentDimensionValues;
 		}
 
 		private void SetCurrentFormat()
@@ -2170,6 +2271,11 @@ namespace ESRI.ArcGIS.Client.Toolkit.DataSources
 				// TileMatrixSetLink
 				TileMatrixSetLinks = layerElement.Elements(XName.Get("TileMatrixSetLink", nsname)).Select(element => ParseTileMatrixSetLink(element, nsname)).ToList(),
 
+				// Dimensions
+				DimensionInfos = layerElement.Elements(XName.Get("Dimension", nsname))
+								.Select(element => ParseDimension(element, owsnsname, nsname))
+								.ToList(),
+
 				// Resource URLs
 				ResourceUrls = layerElement.Elements(XName.Get("ResourceURL", nsname)).Select(ParseResourceUrl).ToList()
 			};
@@ -2293,9 +2399,65 @@ namespace ESRI.ArcGIS.Client.Toolkit.DataSources
 			return new Envelope(lowerCorner, upperCorner) { SpatialReference = sref };
 		}
 
+		private static WmtsDimensionInfo ParseDimension(XElement element, string owsnsname, string nsname)
+		{
+			if (element == null)
+				return null;
+
+			return new WmtsDimensionInfo
+			{
+				Identifier = element.Element(XName.Get("Identifier", owsnsname)).GetValue(),
+				Abstract = element.Element(XName.Get("Abstract", owsnsname)).GetValue(),
+				Title = element.Element(XName.Get("Title", owsnsname)).GetValue(),
+				Default = element.Element(XName.Get("Default", nsname)).GetValue(),
+				SupportsCurrent = element.Element(XName.Get("Current", nsname)).GetBoolValue(),
+				Values = element.Elements(XName.Get("Value", nsname)).Select(elt => elt.GetValue()).ToList()
+			};
+		}
+
 		#endregion
 
-		#region Infos Classes
+		#region WmtsDimensionInfo Class
+		/// <summary>
+		/// WMTS Metadata about a particular dimension that the tiles of a layer are available.
+		/// </summary>
+		/// <seealso cref="WmtsLayerInfo.DimensionInfos"/>>
+		public sealed class WmtsDimensionInfo
+		{
+			/// <summary>
+			/// Gets the name of dimensional axis.
+			/// </summary>
+			public string Identifier { get; internal set; }
+
+			/// <summary>
+			/// Gets the title of this dimension.
+			/// </summary>
+			public string Title { get; internal set; }
+
+			/// <summary>
+			/// Gets the brief narrative description of this dimension.
+			/// </summary>
+			public string Abstract { get; internal set; }
+
+			/// <summary>
+			/// Gets the Default value that will be used if a tile request does not specify a value or uses the keyword 'default'.
+			/// </summary>
+			public string Default { get; internal set; }
+
+			/// <summary>
+			/// Gets a flag indicating whether that temporal data are normally kept current and that the request value of this dimension accepts the keyword 'current'.
+			/// </summary>
+			public Boolean  SupportsCurrent { get; internal set; }
+
+			/// <summary>
+			/// Gets the available value for this dimension..
+			/// </summary>
+			public IEnumerable<string> Values { get; internal set; } 
+		}
+
+		#endregion
+
+		#region Internal Infos Classes
 
 		internal sealed class StyleInfo
 		{
@@ -2358,6 +2520,72 @@ namespace ESRI.ArcGIS.Client.Toolkit.DataSources
 		}
 		#endregion
 
+	}
+
+
+	/// <summary>
+	/// Represents one dimensional value used by the WMTS layer for requesting the tiles.
+	/// </summary>
+	/// <para>Examples of dimensions are Time, Elevation and Band but the service can define any other dimension property that exists in the multidimensional layer collection being served.</para>
+	/// <seealso cref="WmtsLayer.DimensionValues"/>
+	/// <seealso cref="WmtsDimensionValueCollection"/>
+	public sealed class WmtsDimensionValue
+	{
+		/// <summary>
+		/// Initializes a new instance of the <see cref="WmtsDimensionValue"/> class.
+		/// </summary>
+		/// <param name="identifier">The identifier.</param>
+		/// <param name="value">The value.</param>
+		public WmtsDimensionValue(string identifier, string value)
+		{
+			Identifier = identifier;
+			Value = value;
+		}
+		/// <summary>
+		/// Initializes a new instance of the <see cref="WmtsDimensionValue"/> class.
+		/// </summary>
+		public WmtsDimensionValue()
+		{
+		}
+
+		/// <summary>
+		/// Gets or sets the dimension identifier.
+		/// </summary>
+		/// <value>
+		/// The dimension identifier.
+		/// </value>
+		public string Identifier { get; set; }
+
+		/// <summary>
+		/// Gets or sets the value for the dimension.
+		/// </summary>
+		/// <value>
+		/// The dimension value.
+		/// </value>
+		public string Value { get; set; }
+	}
+
+	/// <summary>
+	/// Holds a collection of <see cref="WmtsDimensionValue"/>.
+	/// </summary>
+	/// <seealso cref="WmtsLayer.DimensionValues"/>
+	public class WmtsDimensionValueCollection : ObservableCollection<WmtsDimensionValue>
+	{
+		/// <summary>
+		/// Initializes a new instance of the <see cref="WmtsDimensionValueCollection"/> class.
+		/// </summary>
+		public WmtsDimensionValueCollection()
+		{
+		}
+
+		/// <summary>
+		/// Initializes a new instance of the <see cref="WmtsDimensionValueCollection"/> class.
+		/// </summary>
+		/// <param name="dimensions">The dimension values.</param>
+		public WmtsDimensionValueCollection(IEnumerable<WmtsDimensionValue> dimensions)
+			: base(dimensions)
+		{
+		}
 	}
 
 	#region internal static class XmlExtension
@@ -2442,6 +2670,12 @@ namespace ESRI.ArcGIS.Client.Toolkit.DataSources
 				int.TryParse(element.GetValue(), NumberStyles.None, CultureInfo.InvariantCulture, out ret);
 
 			return ret;
+		}
+
+		public static bool GetBoolValue(this XElement element)
+		{
+			string val = GetValue(element);
+			return !string.IsNullOrEmpty(val) && (val.Equals("true", StringComparison.OrdinalIgnoreCase) || val == "1");
 		}
 
 		public static SpatialReference GetSpatialReference(this XElement element)
