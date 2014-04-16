@@ -342,10 +342,10 @@ namespace ESRI.ArcGIS.Client.Toolkit.DataSources
 			/// <value>The child layers.</value>
 			public IList<LayerInfo> ChildLayers { get; internal set; }
 
-			internal int SubLayerID { get; set; }
-			internal bool Visible { get; set; }
-			internal double MaximumScale { get; set; }
-			internal double MinimumScale { get; set; }
+            public int SubLayerID { get; internal set; }
+            public bool Visible { get; internal set; }
+            public double MaximumScale { get; internal set; }
+            public double MinimumScale { get; internal set; }
 
 			/// <summary>
 			/// Gets the legend URL.
