@@ -1773,6 +1773,8 @@ namespace ESRI.ArcGIS.Client.Toolkit.DataSources
 					SetCurrentFormat();
 					SetCurrentStyle();
 
+                    DisplayName = Title; //ksz-mod
+
 					OnPropertyChanged("Description");
 					OnPropertyChanged("Title");
 				}

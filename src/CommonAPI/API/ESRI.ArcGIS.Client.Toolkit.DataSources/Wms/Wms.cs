@@ -342,10 +342,10 @@ namespace ESRI.ArcGIS.Client.Toolkit.DataSources
 			/// <value>The child layers.</value>
 			public IList<LayerInfo> ChildLayers { get; internal set; }
 
-			internal int SubLayerID { get; set; }
-			internal bool Visible { get; set; }
-			internal double MaximumScale { get; set; }
-			internal double MinimumScale { get; set; }
+            public int SubLayerID { get; internal set; }
+            public bool Visible { get; internal set; }
+            public double MaximumScale { get; internal set; }
+            public double MinimumScale { get; internal set; }
 
 			/// <summary>
 			/// Gets the legend URL.
@@ -376,6 +376,9 @@ namespace ESRI.ArcGIS.Client.Toolkit.DataSources
 
 		internal void client_DownloadStringCompleted(object sender, DownloadStringCompletedEventArgs e)
 		{
+            //ksz-mod: try ... catch
+            try
+            {
 			if (!CheckForError(e))
 			{
 				// Process capabilities file
@@ -390,7 +393,13 @@ namespace ESRI.ArcGIS.Client.Toolkit.DataSources
 				XDocument xDoc = XDocument.Parse(e.Result);
 #endif
 				ParseCapabilities(xDoc);
-			}
+            }
+            }
+            catch (Exception failure)
+            {
+                failure.Data["GetCapabilities"] = e.Result; //todo: add OGC exception info returned from WMS Service
+                InitializationFailure = failure;
+            }
 
 			// Call initialize regardless of error
 			base.Initialize();
@@ -549,7 +558,8 @@ namespace ESRI.ArcGIS.Client.Toolkit.DataSources
 			foreach (var layerInfo in Descendants(LayerList))
 				layerInfo.SubLayerID = subLayerID++;
 
-			// Init Visibility from the list of Layers
+            // Init Visibility from the list of Layers
+            Layers = Descendants(LayerList).Select(l => l.Name).ToArray(); //ksz-mod: display all layers at startup
 			SetVisibleLayers();
 
 			try
