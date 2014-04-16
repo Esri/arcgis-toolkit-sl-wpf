@@ -549,7 +549,8 @@ namespace ESRI.ArcGIS.Client.Toolkit.DataSources
 			foreach (var layerInfo in Descendants(LayerList))
 				layerInfo.SubLayerID = subLayerID++;
 
-			// Init Visibility from the list of Layers
+            // Init Visibility from the list of Layers
+            Layers = Descendants(LayerList).Select(l => l.Name).ToArray(); //ksz-mod: display all layers at startup
 			SetVisibleLayers();
 
 			try
