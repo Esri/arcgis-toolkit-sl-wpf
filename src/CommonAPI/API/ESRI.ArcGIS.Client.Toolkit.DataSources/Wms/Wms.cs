@@ -376,6 +376,9 @@ namespace ESRI.ArcGIS.Client.Toolkit.DataSources
 
 		internal void client_DownloadStringCompleted(object sender, DownloadStringCompletedEventArgs e)
 		{
+            //ksz-mod: try ... catch
+            try
+            {
 			if (!CheckForError(e))
 			{
 				// Process capabilities file
@@ -390,7 +393,13 @@ namespace ESRI.ArcGIS.Client.Toolkit.DataSources
 				XDocument xDoc = XDocument.Parse(e.Result);
 #endif
 				ParseCapabilities(xDoc);
-			}
+            }
+            }
+            catch (Exception failure)
+            {
+                failure.Data["GetCapabilities"] = e.Result; //todo: add OGC exception info returned from WMS Service
+                InitializationFailure = failure;
+            }
 
 			// Call initialize regardless of error
 			base.Initialize();
