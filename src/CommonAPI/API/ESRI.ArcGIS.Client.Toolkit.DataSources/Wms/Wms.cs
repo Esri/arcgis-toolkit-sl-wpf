@@ -376,21 +376,29 @@ namespace ESRI.ArcGIS.Client.Toolkit.DataSources
 
 		internal void client_DownloadStringCompleted(object sender, DownloadStringCompletedEventArgs e)
 		{
-			if (!CheckForError(e))
-			{
-				// Process capabilities file
-#if WINDOWS_PHONE
-				System.Xml.XmlReaderSettings settings = new System.Xml.XmlReaderSettings(); 
-				settings.DtdProcessing = System.Xml.DtdProcessing.Ignore;
-				XDocument xDoc = null;
-				using (System.Xml.XmlReader reader = System.Xml.XmlReader.Create(
-					new System.IO.StringReader(e.Result), settings))
-					xDoc = XDocument.Load(reader);
-#else
-				XDocument xDoc = XDocument.Parse(e.Result);
-#endif
-				ParseCapabilities(xDoc);
-			}
+            try
+            {
+			    if (!CheckForError(e))
+			    {
+				    // Process capabilities file
+    #if WINDOWS_PHONE
+				    System.Xml.XmlReaderSettings settings = new System.Xml.XmlReaderSettings(); 
+				    settings.DtdProcessing = System.Xml.DtdProcessing.Ignore;
+				    XDocument xDoc = null;
+				    using (System.Xml.XmlReader reader = System.Xml.XmlReader.Create(
+					    new System.IO.StringReader(e.Result), settings))
+					    xDoc = XDocument.Load(reader);
+    #else
+				    XDocument xDoc = XDocument.Parse(e.Result);
+    #endif
+				    ParseCapabilities(xDoc);
+                }
+            }
+            catch (Exception failure)
+            {
+                failure.Data["GetCapabilities"] = e.Result; //todo: add OGC exception info returned from WMS Service
+                InitializationFailure = failure;
+            }
 
 			// Call initialize regardless of error
 			base.Initialize();
