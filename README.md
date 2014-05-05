@@ -64,7 +64,7 @@ Find a bug or want to request a new feature?  Please let us know by submitting a
 
 ## Contributing
 
-Anyone and everyone is welcome to contribute. 
+Anyone and everyone is welcome to [contribute](CONTRIBUTING.md). 
 
 ## Licensing
 Copyright 2013 Esri
@@ -81,7 +81,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
-A copy of the license is available in the repository's [license.txt]( https://raw.github.com/Esri/arcgis-toolkit-sl-wpf/master/license.txt) file.
+A copy of the license is available in the repository's [license.txt](https://raw.github.com/Esri/arcgis-toolkit-sl-wpf/master/license.txt) file.
 
 [](Esri Tags: ArcGIS toolkit wpf silverlight c-sharp)
 [](Esri Language: Silverlight)
