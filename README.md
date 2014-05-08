@@ -1,6 +1,6 @@
 # arcgis-toolkit-sl-wpf
 
-This project contains the source code and libraries for the Esri ArcGIS Silverlight Toolkit SDK. The library is an extension of the ArcGIS API for Silverlight™ and the ArcGIS Runtime SDK for WPF™. Included are a number of controls, classes, and data sources you can use to enhance your applications. 
+This project contains the source code and libraries for the ArcGIS Runtime SDK Toolkit for Silverlight/WPF. The library is an extension of the ArcGIS API for Silverlight™ and the ArcGIS Runtime SDK for WPF™. Included are a number of controls, classes, and data sources you can use to enhance your applications. 
 
 NOTE: This library is only an extension of the ArcGIS API for Silverlight™ or the ArcGIS Runtime SDK for WPF™.   In order to build a complete mapping application, you will also need to install the respective products on which they are built.  See the instructions below on how to get started.
 
