@@ -1,7 +1,7 @@
 Esri welcomes contributions from anyone and everyone. Please see our
 [guidelines for contributing](https://github.com/esri/contributing).
 
-# Contributing to the ArcGIS Runtime SDK Toolkit for Silverlight/WPF
+## Contributing to the ArcGIS Runtime SDK Toolkit for Silverlight/WPF
 
 This guide describes how you can contribute improvements to the ArcGIS Runtime SDK Toolkit for Silverlight\WPF source code.
 
