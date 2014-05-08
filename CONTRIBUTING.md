@@ -25,9 +25,12 @@ This guide describes how you can contribute improvements to the ArcGIS Runtime S
 3. In the pull request comments, add a reference to the issue the pull request resolves.  For example, if the pull request resolves issue 45, add a comment to the pull request that includes "#45" (no quotes).    
 
 ### Code reviews
-Expect a good amount of feedback as part of any pull request.  Pull requests will be reviewed and tested, and may be rejected for various reasons, some permanent (eg breaking change, feature is out of scope), some temporary (failed code review or testing).  
- 
+Expect a good amount of feedback as part of any pull request.  Pull requests will be reviewed and tested, and may be rejected for various reasons.  If rejected because it would cause a breaking change or includes a feature that is out of scope, it will be closed permanently.  If rejected because the proposed changes failed code review or testing, please review feedback, fix and reopen as necessary.  
 
 ### License
-Unless you explicitly state otherwise, any contribution intentionally submitted for inclusion in this repo shall be under the terms and conditions of the [Ms-PL](license.txt) license, without any additional terms or conditions.   
+By contributing your code, you agree to license your contribution under the terms of the [Ms-PL](license.txt) license.      
+
+Your contributions should be an original work of authorship by you, including any modifications or additions to an existing work, that is intentionally submitted for inclusion in this repo.  Contributions that require an additional third-party license or have other restrictions (including, but not limited to, related patents and trademarks) will be rejected.   
+
+  
 
