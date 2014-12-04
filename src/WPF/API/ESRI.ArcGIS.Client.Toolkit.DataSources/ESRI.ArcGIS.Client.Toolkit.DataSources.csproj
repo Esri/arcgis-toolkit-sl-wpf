@@ -121,6 +121,9 @@
     <Compile Include="..\..\..\CommonAPI\API\ESRI.ArcGIS.Client.Toolkit.DataSources\Kml\KmlToFeatureDefinition.cs">
       <Link>Kml\KmlToFeatureDefinition.cs</Link>
     </Compile>
+    <Compile Include="..\..\..\CommonAPI\API\ESRI.ArcGIS.Client.Toolkit.DataSources\Kml\MultiplyBlendEffect.cs">
+      <Link>Kml\MultiplyBlendEffect.cs</Link>
+    </Compile>
     <Compile Include="..\..\..\CommonAPI\API\ESRI.ArcGIS.Client.Toolkit.DataSources\OpenStreetMap\OpenStreetMap.cs">
       <Link>OpenStreetMap\OpenStreetMap.cs</Link>
     </Compile>
@@ -165,6 +168,9 @@
       <DependentUpon>Settings.settings</DependentUpon>
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
     </Compile>
+    <Resource Include="..\..\..\CommonAPI\API\ESRI.ArcGIS.Client.Toolkit.DataSources\Kml\MultiplyBlend.cso">
+      <Link>Kml\MultiplyBlend.cso</Link>
+    </Resource>
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
@@ -277,6 +283,11 @@
     <EmbeddedResource Include="..\..\..\CommonAPI\API\ESRI.ArcGIS.Client.Toolkit.DataSources\Properties\Resources.zh-Hans.resx">
       <Link>Properties\Resources.zh-Hans.resx</Link>
     </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\..\CommonAPI\API\ESRI.ArcGIS.Client.Toolkit.DataSources\Kml\MultiplyBlend.fx">
+      <Link>Kml\MultiplyBlend.fx</Link>
+    </None>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

@@ -68,6 +68,11 @@ namespace ESRI.ArcGIS.Client.Toolkit.DataSources.Kml
         public double IconHeading { get; set; }
 
         /// <summary>
+        /// The icon color.
+        /// </summary>
+        public Color IconColor { get; set; }
+
+        /// <summary>
         /// The scale of the point image.
         /// </summary>
         public double IconScale { get; set; }
@@ -136,6 +141,7 @@ namespace ESRI.ArcGIS.Client.Toolkit.DataSources.Kml
             this.PolyOutline = from.PolyOutline;
             this.PolyFillColor = from.PolyFillColor;
             this.BalloonText = from.BalloonText;
+            this.IconColor = from.IconColor;
         }
 
         public KMLStyle()
@@ -156,11 +162,12 @@ namespace ESRI.ArcGIS.Client.Toolkit.DataSources.Kml
             // By default, colors should be NOT transparent and white
             this.LineColor = Color.FromArgb(255, 255, 255, 255);
             this.PolyFillColor = Color.FromArgb(255, 255, 255, 255);
+            this.IconColor = Color.FromArgb(255, 255, 255, 255);
 
             this.BalloonText = null;
         }
     }
-    
+
     /// <summary>
     /// Abstract base class used for each type of symbol descriptor.
     /// </summary>
@@ -196,37 +203,37 @@ namespace ESRI.ArcGIS.Client.Toolkit.DataSources.Kml
                     sym.SetValue(KmlPlaceMarkerSymbol.HeadingProperty, style.IconHeading);
                 }
                 if (style.IconScale != 1.0)
-				{
-					sym.SetValue(KmlPlaceMarkerSymbol.ScaleProperty, style.IconScale);
-				}
+                {
+                    sym.SetValue(KmlPlaceMarkerSymbol.ScaleProperty, style.IconScale);
+                }
             }
             else
             {
-				sym = GetDefaultSymbol();
+                sym = GetDefaultSymbol();
             }
 
             return sym;
         }
 
-		internal static KmlPlaceMarkerSymbol GetDefaultSymbol()
-		{
-			var bmp = new BitmapImage();
-			var defaultIconSource = new MemoryStream(Convert.FromBase64String("iVBORw0KGgoAAAANSUhEUgAAAA4AAAAQCAMAAAARSr4IAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAA9QTFRF/xkAkpOSzMzMAAAA////5g9v4AAAADFJREFUeNpiYEQBDIwsCMDETDqXgQGCYbIMDCAeQjGYh0MWXS+5zmBCAswMzCgAIMAAMR8Cl/k132AAAAAASUVORK5CYII="));
+        internal static KmlPlaceMarkerSymbol GetDefaultSymbol()
+        {
+            var bmp = new BitmapImage();
+            var defaultIconSource = new MemoryStream(Convert.FromBase64String("iVBORw0KGgoAAAANSUhEUgAAAA4AAAAQCAMAAAARSr4IAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAA9QTFRF/xkAkpOSzMzMAAAA////5g9v4AAAADFJREFUeNpiYEQBDIwsCMDETDqXgQGCYbIMDCAeQjGYh0MWXS+5zmBCAswMzCgAIMAAMR8Cl/k132AAAAAASUVORK5CYII="));
 #if SILVERLIGHT
-			bmp.SetSource(defaultIconSource);
+            bmp.SetSource(defaultIconSource);
 #else
-			bmp.BeginInit();
-			bmp.StreamSource = defaultIconSource;
-			bmp.EndInit();
-#endif			
-			return new KmlPlaceMarkerSymbol() { Height = 40, Width = 40, Fill = new ImageBrush() { ImageSource = bmp } };
-		}
+            bmp.BeginInit();
+            bmp.StreamSource = defaultIconSource;
+            bmp.EndInit();
+#endif
+            return new KmlPlaceMarkerSymbol() { Height = 40, Width = 40, Fill = new ImageBrush() { ImageSource = bmp } };
+        }
     }
 
     /// <summary>
     /// Concrete class for line geometry symbols.
     /// </summary>
-	internal class LineSymbolDescriptor : SymbolDescriptor
+    internal class LineSymbolDescriptor : SymbolDescriptor
     {
         /// <summary>
         /// Method to create proper symbology for each feature type.
@@ -255,7 +262,7 @@ namespace ESRI.ArcGIS.Client.Toolkit.DataSources.Kml
     /// <summary>
     /// Concrete class for polygon geometry symbols.
     /// </summary>
-	internal class PolygonSymbolDescriptor : SymbolDescriptor
+    internal class PolygonSymbolDescriptor : SymbolDescriptor
     {
         /// <summary>
         /// Method to create proper symbology for each feature type.
@@ -292,7 +299,7 @@ namespace ESRI.ArcGIS.Client.Toolkit.DataSources.Kml
     /// <summary>
     /// Metadata storage for each placemark, assigned by KML engine.
     /// </summary>
-	internal class PlacemarkDescriptor
+    internal class PlacemarkDescriptor
     {
         /// <summary>
         /// Information that defines the feature geometry and its location.
@@ -309,13 +316,13 @@ namespace ESRI.ArcGIS.Client.Toolkit.DataSources.Kml
         /// </summary>
         public Dictionary<string, object> Attributes { get; set; }
 
-		/// <summary>
-		/// Gets or sets the time extent associated with the feature.
-		/// </summary>
-		/// <value>
-		/// The time extent.
-		/// </value>
-		public TimeExtent TimeExtent { get; set; }
+        /// <summary>
+        /// Gets or sets the time extent associated with the feature.
+        /// </summary>
+        /// <value>
+        /// The time extent.
+        /// </value>
+        public TimeExtent TimeExtent { get; set; }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="PlacemarkDescriptor"/> class.
@@ -331,82 +338,82 @@ namespace ESRI.ArcGIS.Client.Toolkit.DataSources.Kml
         }
     }
 
-	/// <summary>
-	/// NetworkLinkControl infos
-	/// </summary>
-	internal class NetworkLinkControl
-	{
-		public double MinRefreshPeriod { get; set; }
-	}
+    /// <summary>
+    /// NetworkLinkControl infos
+    /// </summary>
+    internal class NetworkLinkControl
+    {
+        public double MinRefreshPeriod { get; set; }
+    }
 
 
-	/// <summary>
-	/// Metadata storage for each ground overlay, assigned by KML engine.
-	/// </summary>
-	internal class GroundOverlayDescriptor
-	{
-		public Envelope Envelope { get; set; }
-		public double Rotation { get; set; }
-		public string IconHref { get; set; }
-		public Color Color { get; set; }
-		public TimeExtent TimeExtent { get; set; }
-	}
+    /// <summary>
+    /// Metadata storage for each ground overlay, assigned by KML engine.
+    /// </summary>
+    internal class GroundOverlayDescriptor
+    {
+        public Envelope Envelope { get; set; }
+        public double Rotation { get; set; }
+        public string IconHref { get; set; }
+        public Color Color { get; set; }
+        public TimeExtent TimeExtent { get; set; }
+    }
 
     /// <summary>
     /// Metadata storage for all elements in a KML file.
     /// </summary>
-	internal class FeatureDefinition
+    internal class FeatureDefinition
     {
         #region Private Members
         // The list of placemarks extracted from the KML XElement
         internal List<PlacemarkDescriptor> placemarks;
 
-		// The list of groundoverlays extracted from the KML XElement
-		internal List<GroundOverlayDescriptor> groundOverlays;
+        // The list of groundoverlays extracted from the KML XElement
+        internal List<GroundOverlayDescriptor> groundOverlays;
 
-		// The networklinkcontrol extracted from the KML XElement (only existing at the root level)
-		internal NetworkLinkControl networkLinkControl;
+        // The networklinkcontrol extracted from the KML XElement (only existing at the root level)
+        internal NetworkLinkControl networkLinkControl;
 
         // The list of styles extracted from the KML file
         public Dictionary<string, KMLStyle> styles;
 
-		// List of containers
-    	internal List<ContainerInfo> containers;
+        // List of containers
+        internal List<ContainerInfo> containers;
 
-		// The name of the XElement
-    	internal string name;
+        // The name of the XElement
+        internal string name;
 
-		// The base URI for accessing images with relative path
-		private Uri _baseUri;
+        // The base URI for accessing images with relative path
+        private Uri _baseUri;
 
-		// A root container has been collapsed in order not to be shown
-    	internal bool hasRootContainer;
+        // A root container has been collapsed in order not to be shown
+        internal bool hasRootContainer;
 
-		private static string GetImageBrushKey(DependencyObject bitmapImage)
-		{
-			return (string)bitmapImage.GetValue(BitmapImageKeyProperty);
-		}
+        private static string GetImageBrushKey(DependencyObject bitmapImage)
+        {
+            return (string)bitmapImage.GetValue(BitmapImageKeyProperty);
+        }
 
-		private static void SetImageBrushKey(DependencyObject bitmapImage, string key)
-		{
-			bitmapImage.SetValue(BitmapImageKeyProperty, key);
-		}
+        private static void SetImageBrushKey(DependencyObject bitmapImage, string key)
+        {
+            bitmapImage.SetValue(BitmapImageKeyProperty, key);
+        }
 
-		private static readonly DependencyProperty FeaturePlacemarkerDescriptorProperty =
-			DependencyProperty.RegisterAttached("FeaturePlacemarkerDescriptor", typeof(PlacemarkDescriptor), typeof(FeatureDefinition), new PropertyMetadata(null));
+        private static readonly DependencyProperty FeaturePlacemarkerDescriptorProperty =
+            DependencyProperty.RegisterAttached("FeaturePlacemarkerDescriptor", typeof(PlacemarkDescriptor), typeof(FeatureDefinition), new PropertyMetadata(null));
 
-		private static PlacemarkDescriptor GetFeaturePlacemarkerDescriptor(DependencyObject graphic)
-		{
+        private static PlacemarkDescriptor GetFeaturePlacemarkerDescriptor(DependencyObject graphic)
+        {
             return (PlacemarkDescriptor)graphic.GetValue(FeaturePlacemarkerDescriptorProperty);
-		}
+        }
 
-		private static void SetFeaturePlacemarkerDescriptor(DependencyObject graphic, PlacemarkDescriptor feature)
-		{
-			graphic.SetValue(FeaturePlacemarkerDescriptorProperty, feature);
-		}
+        private static void SetFeaturePlacemarkerDescriptor(DependencyObject graphic, PlacemarkDescriptor feature)
+        {
+            graphic.SetValue(FeaturePlacemarkerDescriptorProperty, feature);
+        }
 
-		private static readonly DependencyProperty BitmapImageKeyProperty =
-			DependencyProperty.RegisterAttached("BitmapImageKey", typeof(string), typeof(FeatureDefinition), new PropertyMetadata(null));
+        private static readonly DependencyProperty BitmapImageKeyProperty =
+            DependencyProperty.RegisterAttached("BitmapImageKey", typeof(string), typeof(FeatureDefinition), new PropertyMetadata(null));
         #endregion
 
         #region Constructors
@@ -416,10 +423,10 @@ namespace ESRI.ArcGIS.Client.Toolkit.DataSources.Kml
         public FeatureDefinition(Uri baseUri)
         {
             placemarks = new List<PlacemarkDescriptor>();
-			groundOverlays = new List<GroundOverlayDescriptor>();
+            groundOverlays = new List<GroundOverlayDescriptor>();
             styles = new Dictionary<string, KMLStyle>();
-			containers = new List<ContainerInfo>();
-        	_baseUri = baseUri;
+            containers = new List<ContainerInfo>();
+            _baseUri = baseUri;
         }
         #endregion
 
@@ -431,10 +438,10 @@ namespace ESRI.ArcGIS.Client.Toolkit.DataSources.Kml
         public void Clear()
         {
             placemarks.Clear();
-			groundOverlays.Clear();
-			networkLinkControl = null;
-			containers.Clear();
-			styles.Clear();
+            groundOverlays.Clear();
+            networkLinkControl = null;
+            containers.Clear();
+            styles.Clear();
         }
 
         /// <summary>
@@ -453,55 +460,55 @@ namespace ESRI.ArcGIS.Client.Toolkit.DataSources.Kml
         /// <param name="style">Style description.</param>
         public void AddStyle(string key, KMLStyle style)
         {
-			if (styles.ContainsKey(key))
-				styles[key] = style;
-			else
-				styles.Add(key, style);
-		}
+            if (styles.ContainsKey(key))
+                styles[key] = style;
+            else
+                styles.Add(key, style);
+        }
 
-		/// <summary>
-		/// Adds a container to the list.
-		/// </summary>
-		/// <param name="container">The container.</param>
-		public void AddContainer(ContainerInfo container)
-		{
-			containers.Add(container);
-		}
+        /// <summary>
+        /// Adds a container to the list.
+        /// </summary>
+        /// <param name="container">The container.</param>
+        public void AddContainer(ContainerInfo container)
+        {
+            containers.Add(container);
+        }
 
-		/// <summary>
-		/// Adds a grounoaverlay to the list.
-		/// </summary>
-		/// <param name="fd">The groundoverlay descriptor.</param>
-		public void AddGroundOverlay(GroundOverlayDescriptor fd)
-		{
-			groundOverlays.Add(fd);
-		}
+        /// <summary>
+        /// Adds a grounoaverlay to the list.
+        /// </summary>
+        /// <param name="fd">The groundoverlay descriptor.</param>
+        public void AddGroundOverlay(GroundOverlayDescriptor fd)
+        {
+            groundOverlays.Add(fd);
+        }
 
 
-		/// <summary>
-		/// Returns the bitmap image brush associated with the icon href for the point feature.
-		/// </summary>
-		/// <param name="IconHref">Value used to obtain image from remote server via HTTP or key for image dictionary.</param>
-		/// <returns>
-		/// A bitmap image brush or null if not found.
-		/// </returns>
+        /// <summary>
+        /// Returns the bitmap image brush associated with the icon href for the point feature.
+        /// </summary>
+        /// <param name="IconHref">Value used to obtain image from remote server via HTTP or key for image dictionary.</param>		
+        /// <returns>
+        /// A bitmap image brush or null if not found.
+        /// </returns>
         private ImageBrush GetIconImage(string IconHref)
-		{
-			Uri imageUri = KmlLayer.GetUri(IconHref, _baseUri);
+        {
+            Uri imageUri = KmlLayer.GetUri(IconHref, _baseUri);
 
-			// If the imageUri is OK then use it. Otherwise return null
-			// so that a SimpleMarkerSymbol is created.
-			if (imageUri != null
+            // If the imageUri is OK then use it. Otherwise return null
+            // so that a SimpleMarkerSymbol is created.
+            if (imageUri != null
 #if SILVERLIGHT
 				&& (imageUri.Scheme == "http" || imageUri.Scheme == "https")
 #endif
 )
-			{
-				// Since this is accessing a remote server which may be down or otherwise inaccessible, use
-				// exception handling to consume the error and fail quietly, falling through to fallback logic
-				// and returning null otherwise.
-				try
-				{				
+            {
+                // Since this is accessing a remote server which may be down or otherwise inaccessible, use
+                // exception handling to consume the error and fail quietly, falling through to fallback logic
+                // and returning null otherwise.
+                try
+                {
 #if SILVERLIGHT
                     // Create bitmap image, set creation options to None so image creation is not delayed
                     // and use URI to get image.
@@ -510,48 +517,48 @@ namespace ESRI.ArcGIS.Client.Toolkit.DataSources.Kml
                     bi.CreateOptions = BitmapCreateOptions.None;
 					bi.UriSource = imageUri;
                     return new ImageBrush { ImageSource = bi };
-#else					
-					BitmapImage bi = new BitmapImage(imageUri);
-					bi.SetValue(BitmapImageKeyProperty, IconHref);	
-					return new ImageBrush { ImageSource = bi };
+#else
+                    BitmapImage bi = new BitmapImage(imageUri);
+                    bi.SetValue(BitmapImageKeyProperty, IconHref);
+                    return new ImageBrush { ImageSource = bi };
 #endif
-				}
-				catch
-				{
-				}
-			}
+                }
+                catch
+                {
+                }
+            }
 
-			return null;
-		}
+            return null;
+        }
 
-    	/// <summary>
-    	/// Creates graphic elements and adds them to the graphics layer.
-    	/// </summary>
-    	/// <param name="layer">Graphics layer that will have features added to it.</param>
-    	/// <param name="images">Dictionary of images coming from kmz content or from previous parsing</param>
-		public void CreateGraphics(KmlGraphicsLayer layer, IDictionary<string, ImageBrush> images)
-		{
-			if (layer == null) return;
+        /// <summary>
+        /// Creates graphic elements and adds them to the graphics layer.
+        /// </summary>
+        /// <param name="layer">Graphics layer that will have features added to it.</param>
+        /// <param name="images">Dictionary of images coming from kmz content or from previous parsing</param>
+        public void CreateGraphics(KmlGraphicsLayer layer, IDictionary<string, ImageBrush> images)
+        {
+            if (layer == null) return;
 
-			GraphicCollection graphics = new GraphicCollection();
-			UniqueValueRenderer renderer = new UniqueValueRenderer(); // dummy renderer used to create the legend items (since creation of the swatches from the symbol is not that obvious) 
-			
-			// Process each metadata feature in the list
-			foreach (PlacemarkDescriptor feature in placemarks)
-			{
-				KMLStyle style = feature.Symbol.style;
+            GraphicCollection graphics = new GraphicCollection();
+            UniqueValueRenderer renderer = new UniqueValueRenderer(); // dummy renderer used to create the legend items (since creation of the swatches from the symbol is not that obvious) 
 
-				if (style.ZipFile != null)
-				{
-					// Look for the image in the zip file
-					if (style.IconImage == null && !String.IsNullOrEmpty(style.IconHref))
-					{
-						style.IconImage = GetIconImage(style.ZipFile, style.IconHref.ToLower());
-					}
+            // Process each metadata feature in the list
+            foreach (PlacemarkDescriptor feature in placemarks)
+            {
+                KMLStyle style = feature.Symbol.style;
 
-					style.ZipFile.Dispose();
-					style.ZipFile = null;
-				}
+                if (style.ZipFile != null)
+                {
+                    // Look for the image in the zip file
+                    if (style.IconImage == null && !String.IsNullOrEmpty(style.IconHref))
+                    {
+                        style.IconImage = GetIconImage(style.ZipFile, style.IconHref.ToLower());
+                    }
+
+                    style.ZipFile.Dispose();
+                    style.ZipFile = null;
+                }
 
                 //Define handlers upfront so we can unhook from them
 #if SILVERLIGHT
@@ -567,19 +574,19 @@ namespace ESRI.ArcGIS.Client.Toolkit.DataSources.Kml
 #endif
  imageFailed = null;
 
-				// If the style has an HREF then it is associated with an image
-				if (style.IconImage == null && !String.IsNullOrEmpty(style.IconHref))
-				{
-					// If the image is already loaded in the image dictionary, use it
-					if (images.ContainsKey(style.IconHref.ToLower()))
-						style.IconImage = images[style.IconHref.ToLower()];
-					else
-					{
-						// Get the image using the HREF and store the image in the images dictionary so that if
-						// other features reference it, it is cached
+                // If the style has an HREF then it is associated with an image
+                if (style.IconImage == null && !String.IsNullOrEmpty(style.IconHref))
+                {
+                    // If the image is already loaded in the image dictionary, use it
+                    if (images.ContainsKey(style.IconHref.ToLower()))
+                        style.IconImage = images[style.IconHref.ToLower()];
+                    else
+                    {
+                        // Get the image using the HREF and store the image in the images dictionary so that if
+                        // other features reference it, it is cached
                         style.IconImage = GetIconImage(style.IconHref);
                         if (style.IconImage != null && (style.IconImage as ImageBrush).ImageSource != null)
-							{
+                        {
                             var bi = (style.IconImage as ImageBrush).ImageSource as BitmapImage;
                             if (bi != null)
                             {
@@ -594,10 +601,10 @@ namespace ESRI.ArcGIS.Client.Toolkit.DataSources.Kml
                                     if (imageFailed != null) b.DownloadFailed -= imageFailed;
 #endif
                                     var key = b.GetValue(BitmapImageKeyProperty) as string;
-								layer.Dispatcher.BeginInvoke((Action)delegate
-								{								
-									UpdateGraphicsAndRenderer(layer, renderer, key);
-								});
+                                    layer.Dispatcher.BeginInvoke((Action)delegate
+                                    {
+                                        UpdateGraphicsAndRenderer(layer, renderer, key);
+                                    });
                                 };
 
 #if SILVERLIGHT                                    
@@ -607,50 +614,51 @@ namespace ESRI.ArcGIS.Client.Toolkit.DataSources.Kml
 #endif
                             }
                         }
-						images.Add(style.IconHref.ToLower(), style.IconImage);
-					}
-				}
+                        images.Add(style.IconHref.ToLower(), style.IconImage);
+                    }
+                }
 
-				// Create a new graphic from the metadata and construct the symbol using polymorphism
-				Graphic g = new Graphic()
-				{
-					Geometry = feature.Geometry,
-					Symbol = feature.Symbol.CreateSymbol(),
-					TimeExtent = feature.TimeExtent
-				};
-				g.SetValue(FeaturePlacemarkerDescriptorProperty, feature);
-				// Create legend entry
-				string label;
-				string description;
-				GetRendererInfo(feature, style, out label, out description);
+                // Create a new graphic from the metadata and construct the symbol using polymorphism
+                Graphic g = new Graphic()
+                {
+                    Geometry = feature.Geometry,
+                    Symbol = feature.Symbol.CreateSymbol(),
+                    TimeExtent = feature.TimeExtent
+                };
+                g.SetValue(FeaturePlacemarkerDescriptorProperty, feature);
+                // Create legend entry
+                string label;
+                string description;
+                GetRendererInfo(feature, style, out label, out description);
 
-				if (!string.IsNullOrEmpty(label) && !renderer.Infos.Any(info => info.Label == label))
-					renderer.Infos.Add(new UniqueValueInfo { Label = label, Description = description, Symbol = g.Symbol });
+                if (!string.IsNullOrEmpty(label) && !renderer.Infos.Any(info => info.Label == label))
+                    renderer.Infos.Add(new UniqueValueInfo { Label = label, Description = description, Symbol = g.Symbol });
 
-				// Adjust and assign picture marker symbol properties
-				if (g.Geometry is ESRI.ArcGIS.Client.Geometry.MapPoint && g.Symbol is KmlPlaceMarkerSymbol)
-				{
-					try
-					{
-						KmlPlaceMarkerSymbol ms = g.Symbol as KmlPlaceMarkerSymbol;
+                // Adjust and assign picture marker symbol properties
+                if (g.Geometry is ESRI.ArcGIS.Client.Geometry.MapPoint && g.Symbol is KmlPlaceMarkerSymbol)
+                {
+                    try
+                    {
+                        KmlPlaceMarkerSymbol ms = g.Symbol as KmlPlaceMarkerSymbol;
 
-						// To match sizing of Google Earth, default size of point images is 40x40
-						ms.Height = 40;
-						ms.Width = 40;
+                        // To match sizing of Google Earth, default size of point images is 40x40
+                        ms.Height = 40;
+                        ms.Width = 40;
 
-						ms.Fill = style.IconImage as ImageBrush;
+                        ms.Fill = style.IconImage;
+                        ms.IconColor = style.IconColor;
 
-						// Default to half the pixel size (width and height) if symbol offsets are 0 (supported in wpf and sl3)
-						ImageBrush ib = ms.Fill;
-						BitmapImage bi = ib.ImageSource as BitmapImage;
+                        // Default to half the pixel size (width and height) if symbol offsets are 0 (supported in wpf and sl3)
+                        ImageBrush ib = ms.Fill;
+                        BitmapImage bi = ib.ImageSource as BitmapImage;
 #if SILVERLIGHT
 						if (bi.PixelHeight == 0 || bi.PixelWidth == 0)
 #else
-						if (bi.IsDownloading)
+                        if (bi.IsDownloading)
 #endif
-						{
+                        {
                             imageCompleted = (s, e) =>
-							{
+                            {
                                 var b = s as BitmapImage;
 #if SILVERLIGHT                                    
                                 if (imageCompleted != null) b.ImageOpened -= imageCompleted;
@@ -660,92 +668,92 @@ namespace ESRI.ArcGIS.Client.Toolkit.DataSources.Kml
                                 if (imageFailed != null) b.DownloadFailed -= imageFailed;
 #endif
                                 ComputeIconTranslationValues(style, ms, b);
-							};
+                            };
 #if SILVERLIGHT   
                             bi.ImageOpened += imageCompleted;
 #else
                             bi.DownloadCompleted += imageCompleted;
 #endif
                         }
-						else
-						{
-							ComputeIconTranslationValues(style, ms, bi);
-						}
+                        else
+                        {
+                            ComputeIconTranslationValues(style, ms, bi);
+                        }
 
-					}
-					catch
-					{
-						g.Symbol = PointSymbolDescriptor.GetDefaultSymbol();
-						ComputeIconTranslationValues(style, g.Symbol as KmlPlaceMarkerSymbol, ((g.Symbol as KmlPlaceMarkerSymbol).Fill as ImageBrush).ImageSource as BitmapImage);
-						var info = renderer.Infos.FirstOrDefault(i => i.Label == label);
-						if (info != null)
-						{
-							info.Symbol = g.Symbol;
-						}
-					}
-				}
+                    }
+                    catch
+                    {
+                        g.Symbol = PointSymbolDescriptor.GetDefaultSymbol();
+                        ComputeIconTranslationValues(style, g.Symbol as KmlPlaceMarkerSymbol, ((g.Symbol as KmlPlaceMarkerSymbol).Fill as ImageBrush).ImageSource as BitmapImage);
+                        var info = renderer.Infos.FirstOrDefault(i => i.Label == label);
+                        if (info != null)
+                        {
+                            info.Symbol = g.Symbol;
+                        }
+                    }
+                }
 
-				// Copy attributes values from metadata to graphic
-				foreach (var attribute in feature.Attributes)
-				{
-					g.Attributes.Add(attribute.Key, attribute.Value);
-				}
+                // Copy attributes values from metadata to graphic
+                foreach (var attribute in feature.Attributes)
+                {
+                    g.Attributes.Add(attribute.Key, attribute.Value);
+                }
 
-				// If the balloontext property has been assigned a value in the style associated with this
-				// graphic feature, then add it to the attributes collection.
-				if (!String.IsNullOrEmpty(style.BalloonText))
-				{
-					g.Attributes.Add("balloonText", style.BalloonText);
-				}
+                // If the balloontext property has been assigned a value in the style associated with this
+                // graphic feature, then add it to the attributes collection.
+                if (!String.IsNullOrEmpty(style.BalloonText))
+                {
+                    g.Attributes.Add("balloonText", style.BalloonText);
+                }
 
-				// Add graphic to graphics layer
-				graphics.Add(g);
-			}
+                // Add graphic to graphics layer
+                graphics.Add(g);
+            }
 
-			layer.Graphics = graphics;
+            layer.Graphics = graphics;
 
-			// keep the renderer for further usage (when QueryLegendInfos is called)
-			layer.RendererBasedOnStyle = renderer;
-		}
+            // keep the renderer for further usage (when QueryLegendInfos is called)
+            layer.RendererBasedOnStyle = renderer;
+        }
 
-		private static void UpdateGraphicsAndRenderer(KmlGraphicsLayer layer, UniqueValueRenderer renderer, string key)
-		{
-			foreach (var graphic in layer.Graphics)
-			{
-				var f = (PlacemarkDescriptor)graphic.GetValue(FeaturePlacemarkerDescriptorProperty);
-				if (f.Symbol.style.IconHref != null && f.Symbol.style.IconHref.ToLower() == key)
-				{
-					graphic.Symbol = PointSymbolDescriptor.GetDefaultSymbol();
-					ComputeIconTranslationValues(f.Symbol.style, graphic.Symbol as KmlPlaceMarkerSymbol, ((graphic.Symbol as KmlPlaceMarkerSymbol).Fill as ImageBrush).ImageSource as BitmapImage);
-					string l = null, d = null;
-					GetRendererInfo(f, f.Symbol.style, out l, out d);
-					var info = renderer.Infos.FirstOrDefault(i => i.Label == l);
-					if (info != null)
-					{
-						info.Symbol = graphic.Symbol;
-					}
-				}
-			}
-		}
+        private static void UpdateGraphicsAndRenderer(KmlGraphicsLayer layer, UniqueValueRenderer renderer, string key)
+        {
+            foreach (var graphic in layer.Graphics)
+            {
+                var f = (PlacemarkDescriptor)graphic.GetValue(FeaturePlacemarkerDescriptorProperty);
+                if (f.Symbol.style.IconHref != null && f.Symbol.style.IconHref.ToLower() == key)
+                {
+                    graphic.Symbol = PointSymbolDescriptor.GetDefaultSymbol();
+                    ComputeIconTranslationValues(f.Symbol.style, graphic.Symbol as KmlPlaceMarkerSymbol, ((graphic.Symbol as KmlPlaceMarkerSymbol).Fill as ImageBrush).ImageSource as BitmapImage);
+                    string l = null, d = null;
+                    GetRendererInfo(f, f.Symbol.style, out l, out d);
+                    var info = renderer.Infos.FirstOrDefault(i => i.Label == l);
+                    if (info != null)
+                    {
+                        info.Symbol = graphic.Symbol;
+                    }
+                }
+            }
+        }
 
-		private static void GetRendererInfo(PlacemarkDescriptor feature, KMLStyle style, out string label, out string description)
-		{
-			label = null;
-			description = null;
-			if (string.IsNullOrEmpty(style.StyleId))
-			{
-				//if the feature is not using a shared style -> create an entry by graphic with the name as ident
-				if (feature.Attributes.ContainsKey("name"))
-					label = feature.Attributes["name"].ToString();
-				if (feature.Attributes.ContainsKey("description"))
-					description = feature.Attributes["description"].ToString();
-			}
-			else
-			{
-				//if the feature is using a shared style -> create an entry for the style
-				label = style.StyleId;
-			}
-		}
+        private static void GetRendererInfo(PlacemarkDescriptor feature, KMLStyle style, out string label, out string description)
+        {
+            label = null;
+            description = null;
+            if (string.IsNullOrEmpty(style.StyleId))
+            {
+                //if the feature is not using a shared style -> create an entry by graphic with the name as ident
+                if (feature.Attributes.ContainsKey("name"))
+                    label = feature.Attributes["name"].ToString();
+                if (feature.Attributes.ContainsKey("description"))
+                    description = feature.Attributes["description"].ToString();
+            }
+            else
+            {
+                //if the feature is using a shared style -> create an entry for the style
+                label = style.StyleId;
+            }
+        }
 
         private ImageBrush GetIconImage(ZipFile zipFile, string imageName)
         {
@@ -757,8 +765,8 @@ namespace ESRI.ArcGIS.Client.Toolkit.DataSources.Kml
 #if SILVERLIGHT
             System.IO.Stream ms = zipFile.GetFileStream(filename);
 #else
-			MemoryStream ms = new MemoryStream();
-			zipFile.Extract(filename, ms);
+            MemoryStream ms = new MemoryStream();
+            zipFile.Extract(filename, ms);
 #endif
             if (ms == null)
                 return null;
@@ -775,92 +783,111 @@ namespace ESRI.ArcGIS.Client.Toolkit.DataSources.Kml
                 thumbnailBitmap.StreamSource = ms;
                 thumbnailBitmap.EndInit();
 #endif
-                ib = new ImageBrush {ImageSource = thumbnailBitmap};
+                ib = new ImageBrush { ImageSource = thumbnailBitmap };
             }
-            catch { ib = null;}
+            catch { ib = null; }
 
             return ib;
         }
 
 
-	    /// <summary>
-	    /// Createsground overlays and adds them to the element layer.
-	    /// </summary>
-	    /// <param name="layer">Element layer that will have overlays added to it.</param>
-	    /// <param name="images">Dictionary of images coming from kmz content or from previous parsing</param>
-	    /// <param name="map">The map the KML layer belongs to (useful to know the SR) </param>
-	    public void CreateGroundOverlays(ElementLayer layer, IDictionary<string, ImageBrush> images, Map map)
-		{
-			if (layer == null)
-				return;
+        /// <summary>
+        /// Createsground overlays and adds them to the element layer.
+        /// </summary>
+        /// <param name="layer">Element layer that will have overlays added to it.</param>
+        /// <param name="images">Dictionary of images coming from kmz content or from previous parsing</param>
+        /// <param name="map">The map the KML layer belongs to (useful to know the SR) </param>
+        public void CreateGroundOverlays(ElementLayer layer, IDictionary<string, ImageBrush> images, Map map)
+        {
+            if (layer == null)
+                return;
 
-			// Process each metadata feature in the list
-			foreach (GroundOverlayDescriptor feature in groundOverlays)
-			{
-				UIElement uiElement;
+            // Process each metadata feature in the list
+            foreach (GroundOverlayDescriptor feature in groundOverlays)
+            {
+                UIElement uiElement;
 
-				if (!String.IsNullOrEmpty(feature.IconHref))
-				{
-					ImageSource imageSource;
+                if (!String.IsNullOrEmpty(feature.IconHref))
+                {
+                    ImageSource imageSource;
 
-					// If the image is provided in kmz content, use it
-					if (images.ContainsKey(feature.IconHref.ToLower()))
-					{
-						imageSource = images[feature.IconHref.ToLower()].ImageSource;
-					}
-					else
-					{
-						// Get the image using the HREF
-						imageSource = new BitmapImage(KmlLayer.GetUri(feature.IconHref, _baseUri));
-					}
-					double opacity = (double)feature.Color.A/byte.MaxValue;
-					uiElement = new Image
-					            	{
-					            		Source = imageSource,
-					            		Stretch = Stretch.Fill,
-					            		Opacity = opacity
-					            	};
-				}
-				else
-				{
-					// Just add a rectangle
-					uiElement = new Rectangle { Fill = new SolidColorBrush(feature.Color)};
-				}
+                    // If the image is provided in kmz content, use it
+                    if (images.ContainsKey(feature.IconHref.ToLower()))
+                    {
+                        imageSource = images[feature.IconHref.ToLower()].ImageSource;
+                    }
+                    else
+                    {
+                        // Get the image using the HREF
+                        imageSource = new BitmapImage(KmlLayer.GetUri(feature.IconHref, _baseUri));
+                    }
 
-				// Set the time extent
-				if (feature.TimeExtent != null)
-					ElementLayer.SetTimeExtent(uiElement, feature.TimeExtent);
+                    // If feature color is White with an alpha channel, this can be managed with Opacity, else we need the to blend the color with the icon
+                    double opacity;
+                    bool needBlendEffect;
 
-				// Set the rotation
-				if (feature.Rotation != 0.0)
-				{
-					uiElement.RenderTransformOrigin = new Point(0.5, 0.5);
-					uiElement.RenderTransform = new RotateTransform {Angle = -feature.Rotation}; // KML rotations are specified in a counterclockwise direction
-				}
+                    if (feature.Color.R == byte.MaxValue && feature.Color.G == byte.MaxValue && feature.Color.B == byte.MaxValue)
+                    {
+                        opacity = (double)feature.Color.A / byte.MaxValue;
+                        needBlendEffect = false;
+                    }
+                    else
+                    {
+                        opacity = 1.0;
+                        needBlendEffect = true;
+                    }
 
-				// Set the envelope
-				var elementLayerEnvelopeProperty = ElementLayer.EnvelopeProperty;
-				var envelope = feature.Envelope;
+                    uiElement = new Image
+                    {
+                        Source = imageSource,
+                        Stretch = Stretch.Fill,
+                        Opacity = opacity
+                    };
+                    if (needBlendEffect)
+                    {
+                        uiElement.Effect = new MultiplyBlendEffect{BlendColor = feature.Color};
+                    }
+                }
+                else
+                {
+                    // Just add a rectangle
+                    uiElement = new Rectangle { Fill = new SolidColorBrush(feature.Color) };
+                }
 
-				// If the map is based on WebMercatore coordinates, project the envelope (weird at small scale but acceptable at large scale)
-				if (map != null && map.SpatialReference != null && IsWebMercator(map.SpatialReference)
-					&& envelope.SpatialReference != null && envelope.SpatialReference.WKID == 4326) // should always be the case
-				{
-					envelope = (new Projection.WebMercator()).FromGeographic(envelope) as Envelope;
-				}
-				uiElement.SetValue(elementLayerEnvelopeProperty, envelope);
+                // Set the time extent
+                if (feature.TimeExtent != null)
+                    ElementLayer.SetTimeExtent(uiElement, feature.TimeExtent);
 
-				// Add element to element layer
-				layer.Children.Add(uiElement);
-			}
-		}
+                // Set the rotation
+                if (feature.Rotation != 0.0)
+                {
+                    uiElement.RenderTransformOrigin = new Point(0.5, 0.5);
+                    uiElement.RenderTransform = new RotateTransform { Angle = -feature.Rotation }; // KML rotations are specified in a counterclockwise direction
+                }
+
+                // Set the envelope
+                var elementLayerEnvelopeProperty = ElementLayer.EnvelopeProperty;
+                var envelope = feature.Envelope;
+
+                // If the map is based on WebMercatore coordinates, project the envelope (weird at small scale but acceptable at large scale)
+                if (map != null && map.SpatialReference != null && IsWebMercator(map.SpatialReference)
+                    && envelope.SpatialReference != null && envelope.SpatialReference.WKID == 4326) // should always be the case
+                {
+                    envelope = (new Projection.WebMercator()).FromGeographic(envelope) as Envelope;
+                }
+                uiElement.SetValue(elementLayerEnvelopeProperty, envelope);
+
+                // Add element to element layer
+                layer.Children.Add(uiElement);
+            }
+        }
 
         private static void ComputeIconTranslationValues(KMLStyle style, KmlPlaceMarkerSymbol ms, BitmapImage bi)
         {
-            if (bi.PixelWidth > 0)
-                ms.Width = bi.PixelWidth;
-            if (bi.PixelHeight > 0)
-                ms.Height = bi.PixelHeight;
+            // To match sizing of Google Earth, default size of point images is 40x40
+            // Note: the iconScale will be applied later globally to the symbol
+            ms.Height = 40;
+            ms.Width = 40;
 
             switch (style.IconHotspotUnitsX)
             {
@@ -869,7 +896,7 @@ namespace ESRI.ArcGIS.Client.Toolkit.DataSources.Kml
                     break;
 
                 case HotSpotUnitType.Fraction:
-                    ms.TranslateX = (bi.PixelWidth * style.IconHotspotX) * -1;
+                    ms.TranslateX = (ms.Width * style.IconHotspotX) * -1;
                     break;
             }
 
@@ -880,16 +907,16 @@ namespace ESRI.ArcGIS.Client.Toolkit.DataSources.Kml
                     break;
 
                 case HotSpotUnitType.Fraction:
-                    ms.TranslateY = (bi.PixelHeight * style.IconHotspotY) * -1;
+                    ms.TranslateY = (ms.Height * style.IconHotspotY) * -1;
                     break;
             }
         }
 
-		private static readonly SpatialReference WebMercatorSR = new SpatialReference(102100);
-		private static bool IsWebMercator(SpatialReference spatialReference)
-		{
-			return WebMercatorSR.Equals(spatialReference);
-		}
+        private static readonly SpatialReference WebMercatorSR = new SpatialReference(102100);
+        private static bool IsWebMercator(SpatialReference spatialReference)
+        {
+            return WebMercatorSR.Equals(spatialReference);
+        }
         #endregion
     }
 }

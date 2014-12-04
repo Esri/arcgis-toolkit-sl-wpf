@@ -136,6 +136,9 @@
     <Compile Include="..\..\..\CommonAPI\API\ESRI.ArcGIS.Client.Toolkit.DataSources\Kml\KmlToFeatureDefinition.cs">
       <Link>Kml\KmlToFeatureDefinition.cs</Link>
     </Compile>
+    <Compile Include="..\..\..\CommonAPI\API\ESRI.ArcGIS.Client.Toolkit.DataSources\Kml\MultiplyBlendEffect.cs">
+      <Link>Kml\MultiplyBlendEffect.cs</Link>
+    </Compile>
     <Compile Include="..\..\..\CommonAPI\API\ESRI.ArcGIS.Client.Toolkit.DataSources\Kml\SurrogateBinder.cs">
       <Link>Kml\SurrogateBinder.cs</Link>
     </Compile>
@@ -167,6 +170,11 @@
       <DependentUpon>Resources.resx</DependentUpon>
       <Link>Properties\Resources.Designer.cs</Link>
     </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="..\..\..\CommonAPI\API\ESRI.ArcGIS.Client.Toolkit.DataSources\Kml\MultiplyBlend.cso">
+      <Link>Kml\MultiplyBlend.cso</Link>
+    </Resource>
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="..\..\..\CommonAPI\API\ESRI.ArcGIS.Client.Toolkit.DataSources\Properties\Resources.cs.resx">
@@ -257,6 +265,11 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Resource>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\..\CommonAPI\API\ESRI.ArcGIS.Client.Toolkit.DataSources\Kml\MultiplyBlend.fx">
+      <Link>Kml\MultiplyBlend.fx</Link>
+    </None>
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\Silverlight\$(SilverlightVersion)\Microsoft.Silverlight.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
