@@ -101,11 +101,11 @@ namespace ESRI.ArcGIS.Client.Toolkit.DataSources
  /// <see cref="ESRI.ArcGIS.Client.Layer.VisibleTimeExtent">VisibleTimeExtent</see>. The possibilities are only limited 
  /// to your ideas and programming experience.
  /// </para>
- /// <ESRISILVERLIGHT><para>Although ArcGIS Server is not required to host a CSV file web service you may experience the similar hosting issues of accessing the web service as described in the ArcGIS Resource Center blog entitled <a href="http://blogs.esri.com/esri/arcgis/2009/08/24/troubleshooting-blank-layers/" target="_blank">Troubleshooting blank layers</a>. Specifically, you may need to make sure that a correct <a href="http://msdn.microsoft.com/EN-US/LIBRARY/CC197955(VS.95).ASPX" target="_blank">cilentaccesspolicy.xml or crossdomain.xml</a> file is in place on the web servers root. If a clientaccesspolicy.xml or crossdomainpolicy.xml file cannot be used on your web server for situations like <a href="http://resources.arcgis.com/en/help/silverlight-api/concepts/index.html#/Secure_services/016600000022000000/" target="_blank">secure services</a> you may need to use a <a href="http://resources.arcgis.com/en/help/silverlight-api/concepts/0166/other/SLProxyPage.zip">proxy page</a> on your web server and make use of the <b>CsvLayer.ProxyUrl</b> Property.</para></ESRISILVERLIGHT>
+    /// <ESRISILVERLIGHT><para>Although ArcGIS Server is not required to host a CSV file web service you may experience the similar hosting issues of accessing the web service as described in the ArcGIS Resource Center blog entitled <a href="http://blogs.esri.com/esri/arcgis/2009/08/24/troubleshooting-blank-layers/" target="_blank">Troubleshooting blank layers</a>. Specifically, you may need to make sure that a correct <a href="http://msdn.microsoft.com/EN-US/LIBRARY/CC197955(VS.95).ASPX" target="_blank">cilentaccesspolicy.xml or crossdomain.xml</a> file is in place on the web servers root. If a clientaccesspolicy.xml or crossdomainpolicy.xml file cannot be used on your web server for situations like <a href="javascript:ApiToConcept('secure-services', '01n700000022000000', '011v0000000n000000')" target="_top">secure services</a> you may need to use a <a href="http://resources.arcgis.com/en/help/silverlight-api/concepts/0166/other/SLProxyPage.zip">proxy page</a> on your web server and make use of the <b>CsvLayer.ProxyUrl</b> Property.</para></ESRISILVERLIGHT>
  /// <para>
  /// The bare minimum settings that need to be specified to create and display a CsvLayer in a Map are the 
  /// <see cref="ESRI.ArcGIS.Client.Toolkit.DataSources.CsvLayer.Url">Url</see> and 
- /// <see cref="ESRI.ArcGIS.Client.GraphicsLayer.Renderer">Renderer</see> Properties (Url methadology) OR the 
+ /// <see cref="ESRI.ArcGIS.Client.GraphicsLayer.Renderer">Renderer</see> Properties (Url methodology) OR the 
  /// <see cref="ESRI.ArcGIS.Client.Toolkit.DataSources.CsvLayer.SetSource">SetSource</see> and 
  /// <see cref="ESRI.ArcGIS.Client.GraphicsLayer.Renderer">Renderer</see> Properties (Stream methodology). 
  /// NOTE: This assumes that default spatial coordinate information field names are used and the delimiter for the 
@@ -121,6 +121,10 @@ namespace ESRI.ArcGIS.Client.Toolkit.DataSources
  /// a Url using the 'file://' or 'pack://' keywords. The development platform you are coding in will determine which 
  /// style of Url is appropriate. See the documentation for your particular development platform to decide which type 
  /// of string can be used in the the Url construction.
+ /// </para>
+ /// <para>
+ /// Supported text character encodings of the CSV file should be based on Unicode/UTF-8. If other character encodings are desired, download the source code 
+ /// for the Toolkit on CodePlex and modify as necessary.
  /// </para>
  /// </remarks>
  /// <example>
@@ -1320,7 +1324,7 @@ namespace ESRI.ArcGIS.Client.Toolkit.DataSources
   /// rather than the <b>Url</b> Property use the <see cref="ESRI.ArcGIS.Client.Toolkit.DataSources.CsvLayer.SetSource">SetSource</see> 
   /// Method.
   /// </para>
-  /// <ESRISILVERLIGHT><para>Although ArcGIS Server is not required to host a CSV file web service you may experience the similar hosting issues of accessing the web service as described in the ArcGIS Resource Center blog entitled <a href="http://blogs.esri.com/esri/arcgis/2009/08/24/troubleshooting-blank-layers/">Troubleshooting blank layers</a>. Specifically, you may need to make sure that a correct <a href="http://msdn.microsoft.com/EN-US/LIBRARY/CC197955(VS.95).ASPX" target="_blank">cilentaccesspolicy.xml or crossdomain.xml</a> file is in place on the web servers root. If a clientaccesspolicy.xml or crossdomainpolicy.xml file cannot be used on your web server for situations like <a href="http://resources.arcgis.com/en/help/silverlight-api/concepts/index.html#/Secure_services/016600000022000000/">secure services</a> you may need to use a <a href="http://resources.arcgis.com/en/help/silverlight-api/concepts/0166/other/SLProxyPage.zip">proxy page</a> on your web server and make use of the <b>CsvLayer.ProxyUrl</b> Property.</para></ESRISILVERLIGHT>
+        /// <ESRISILVERLIGHT><para>Although ArcGIS Server is not required to host a CSV file web service you may experience the similar hosting issues of accessing the web service as described in the ArcGIS Resource Center blog entitled <a href="http://blogs.esri.com/esri/arcgis/2009/08/24/troubleshooting-blank-layers/">Troubleshooting blank layers</a>. Specifically, you may need to make sure that a correct <a href="http://msdn.microsoft.com/EN-US/LIBRARY/CC197955(VS.95).ASPX" target="_blank">cilentaccesspolicy.xml or crossdomain.xml</a> file is in place on the web servers root. If a clientaccesspolicy.xml or crossdomainpolicy.xml file cannot be used on your web server for situations like <a href="javascript:ApiToConcept('secure-services', '01n700000022000000', '011v0000000n000000')" target="_top">secure services</a> you may need to use a <a href="http://resources.arcgis.com/en/help/silverlight-api/concepts/0166/other/SLProxyPage.zip">proxy page</a> on your web server and make use of the <b>CsvLayer.ProxyUrl</b> Property.</para></ESRISILVERLIGHT>
   /// <para>
   /// The bare minimum settings that need to be specified to create and display a CsvLayer in a Map are the 
   /// <b>Url</b> and <see cref="ESRI.ArcGIS.Client.GraphicsLayer.Renderer">Renderer</see> Properties (Url methadology) OR 
@@ -1799,7 +1803,7 @@ namespace ESRI.ArcGIS.Client.Toolkit.DataSources
   /// <a href="http://msdn.microsoft.com/EN-US/LIBRARY/CC197955(VS.95).ASPX" target="_blank">cilentaccesspolicy.xml or crossdomain.xml</a> 
   /// file is in place on the web servers root. If a clientaccesspolicy.xml or crossdomainpolicy.xml file cannot be 
   /// used on your web server for situations like 
-  /// <a href="http://resources.arcgis.com/en/help/silverlight-api/concepts/index.html#/Secure_services/016600000022000000/">secure services</a> 
+  /// <a href="javascript:ApiToConcept('secure-services', '01n700000022000000', '011v0000000n000000')" target="_top">secure services</a> 
   /// you may need to use a 
   /// <a href="http://resources.arcgis.com/en/help/silverlight-api/concepts/0166/other/SLProxyPage.zip">proxy page</a> 
   /// on your web server and make use of the <b>ProxyUrl</b> Property.
@@ -2324,7 +2328,7 @@ namespace ESRI.ArcGIS.Client.Toolkit.DataSources
   /// product can export and import CSV files. It is not required that a CSV source file contain the extension .csv; 
   /// the file can contain any extension (ex: .txt) or none at all.
   /// </para>
-  /// <ESRISILVERLIGHT><para>Although ArcGIS Server is not required to host a CSV file web service you may experience the similar hosting issues of accessing the web service as described in the ArcGIS Resource Center blog entitled <a href="http://blogs.esri.com/esri/arcgis/2009/08/24/troubleshooting-blank-layers/">Troubleshooting blank layers</a>. Specifically, you may need to make sure that a correct <a href="http://msdn.microsoft.com/EN-US/LIBRARY/CC197955(VS.95).ASPX" target="_blank">cilentaccesspolicy.xml or crossdomain.xml</a> file is in place on the web servers root. If a clientaccesspolicy.xml or crossdomainpolicy.xml file cannot be used on your web server for situations like <a href="http://resources.arcgis.com/en/help/silverlight-api/concepts/index.html#/Secure_services/016600000022000000/">secure services</a> you may need to use a <a href="http://resources.arcgis.com/en/help/silverlight-api/concepts/0166/other/SLProxyPage.zip">proxy page</a> on your web server and make use of the <b>CsvLayer.ProxyUrl</b> Property.</para></ESRISILVERLIGHT>
+  /// <ESRISILVERLIGHT><para>Although ArcGIS Server is not required to host a CSV file web service you may experience the similar hosting issues of accessing the web service as described in the ArcGIS Resource Center blog entitled <a href="http://blogs.esri.com/esri/arcgis/2009/08/24/troubleshooting-blank-layers/">Troubleshooting blank layers</a>. Specifically, you may need to make sure that a correct <a href="http://msdn.microsoft.com/EN-US/LIBRARY/CC197955(VS.95).ASPX" target="_blank">cilentaccesspolicy.xml or crossdomain.xml</a> file is in place on the web servers root. If a clientaccesspolicy.xml or crossdomainpolicy.xml file cannot be used on your web server for situations like <a href="javascript:ApiToConcept('secure-services', '01n700000022000000', '011v0000000n000000')" target="_top">secure services</a> you may need to use a <a href="http://resources.arcgis.com/en/help/silverlight-api/concepts/0166/other/SLProxyPage.zip">proxy page</a> on your web server and make use of the <b>CsvLayer.ProxyUrl</b> Property.</para></ESRISILVERLIGHT>
   /// <para>
   /// The bare minimum settings that need to be specified to create and display a CsvLayer in a Map are the 
   /// <see cref="ESRI.ArcGIS.Client.Toolkit.DataSources.CsvLayer.Url">Url</see> and 

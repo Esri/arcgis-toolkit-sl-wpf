@@ -51,7 +51,6 @@ namespace ESRI.ArcGIS.Client.Toolkit
 		private FeatureLayer featureLayer = null;
 		private Dictionary<string, string> fieldAliasMapping = null;    // Mapping between actual header titles and the titles changed to field aliases
 		private string columnForCellBeingEdited = null;
-		private Dictionary<string, object[]> rangeDomainInfo = null;
 		private DispatcherTimer throttler = null;
 		private DateTime startTime;
 
@@ -71,6 +70,7 @@ namespace ESRI.ArcGIS.Client.Toolkit
 			throttler = new DispatcherTimer();
 			throttler.Interval = new TimeSpan(0, 0, 0, 0, 500);
 			throttler.Tick += DispatcherTimer_Tick;			
+			Language = System.Windows.Markup.XmlLanguage.GetLanguage(System.Globalization.CultureInfo.CurrentCulture.Name);
 		}
 
 		void DispatcherTimer_Tick(object sender, EventArgs e)
@@ -377,21 +377,20 @@ namespace ESRI.ArcGIS.Client.Toolkit
 
 				if (featureLayer.LayerInfo != null)
 				{
-					fieldInfo = FieldDomainUtils.SetFieldInfo(featureLayerInfo, out rangeDomainInfo, out fieldProps);
+					fieldInfo = FieldDomainUtils.SetFieldInfo(featureLayerInfo, out fieldProps);
 					uniqueID = featureLayerInfo.ObjectIdField;
 				}
 			}
 			else
 			{
 				fieldInfo = null;
-				rangeDomainInfo = null;
 			}
 			// Indicate that the ItemsSource is about to be created by setting the isCreatingItemsSource flag.
 			// We have to do this for both Silverlight and WPF as PagedCollectionView and CollectionViewSource 
 			// always add the first object to their selection:
 			isCreatingItemsSource = true;
 
-			var enumerableGraphics = graphics.ToDataSource(fieldInfo, rangeDomainInfo, fieldProps, uniqueID, FilterSource, out objectType) as IEnumerable<object>;
+            var enumerableGraphics = graphics.ToDataSource(featureLayerInfo, fieldInfo, fieldProps, uniqueID, FilterSource, out objectType) as IEnumerable<object>;
 			if (enumerableGraphics.Count<object>() == 0)
 			{
 				// use this when collection is empty, because it shows the column headers. 
@@ -624,8 +623,7 @@ namespace ESRI.ArcGIS.Client.Toolkit
 					if (graphicAttributes[prop.Name] != null && !graphicAttributes[prop.Name].GetType().IsOfType(prop.PropertyType))	// data types NOT the same?
 					{
 						RegisterGraphicCollectionEventHandlers();
-						throw new InvalidCastException(string.Format(Properties.Resources.FeatureDataGrid_MixedAttributeTypesNotAllowed,
-																	 prop.PropertyType, prop.Name));
+                        return false;
 					}
 				}
 			}
@@ -712,7 +710,7 @@ namespace ESRI.ArcGIS.Client.Toolkit
 								{
 									if (graphic.Selected)														
 										selected.Add(graphic);									
-									ItemsSource.AddToDataSource(graphic, objectType);
+									ItemsSource.AddToDataSource(featureLayerInfo, graphic, objectType);
 									graphic.AttributeValueChanged += Graphic_AttributeValueChanged;
 								}
 							}							
@@ -874,8 +872,7 @@ namespace ESRI.ArcGIS.Client.Toolkit
 				{
 					if (!e.AddedItems[0].Equals(datePicker.DataContext.GetType().GetProperty(columnForCellBeingEdited).GetValue(datePicker.DataContext, null)))
 					{
-						DataSourceCreator.SetProperty(e.AddedItems[0], datePicker.DataContext,
-													  datePicker.DataContext.GetType().GetProperty(columnForCellBeingEdited));
+						DataSourceCreator.SetProperty(e.AddedItems[0], datePicker.DataContext, datePicker.DataContext.GetType().GetProperty(columnForCellBeingEdited));
 						Graphic correspondingGraphic = DataSourceCreator.GetGraphicSibling(datePicker.DataContext);
 						if (correspondingGraphic != null &&
 							correspondingGraphic.Attributes.ContainsKey(columnForCellBeingEdited))
@@ -889,7 +886,7 @@ namespace ESRI.ArcGIS.Client.Toolkit
 							correspondingGraphic.Attributes[columnForCellBeingEdited] = dateToSet;
 							if (wasDatePickerDataContextNull)
 							{
-								correspondingGraphic.RefreshRow(ItemsSource, GetGraphicIndexInGraphicsCollection(correspondingGraphic), objectType);
+								correspondingGraphic.RefreshRow(ItemsSource, GetGraphicIndexInGraphicsCollection(correspondingGraphic), objectType, featureLayerInfo);
 								datePickerDataContext = null;
 							}
 							// Subscribing back to the graphic's AttributeValueChanged event:

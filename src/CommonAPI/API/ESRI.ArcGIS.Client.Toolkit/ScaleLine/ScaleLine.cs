@@ -576,7 +576,7 @@ namespace ESRI.ArcGIS.Client.Toolkit
 				else if (noFrac > 1)
 				{
 					rounded = noFrac;
-					var len = noFrac.ToString().Length;
+					var len = noFrac.ToString("F0").Length; // Format F0 prevents from using exponential notation for big numbers
 					if (len <= 2)
 					{
 						// single/double digits ... make it a multiple of 5 ..or 1,2,3,4

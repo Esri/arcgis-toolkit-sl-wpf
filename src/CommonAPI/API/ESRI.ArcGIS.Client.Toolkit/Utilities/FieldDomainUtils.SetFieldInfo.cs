@@ -10,19 +10,20 @@ namespace ESRI.ArcGIS.Client.Toolkit.Utilities
 		/// Sets the field information in the feature layer.
 		/// </summary>
 		/// <param name="featureLayerInfo">The feature layer info.</param>
-		/// <param name="rangeDomainInfo">The range domain info.</param>
 		/// <param name="fieldProps">The properties associated with the field.</param>
 		/// <returns>Dictionary of field types keyed by their actual names. Also, populates range domain information and field properties if any.</returns>
-		internal static Dictionary<string, Type> SetFieldInfo(FeatureLayerInfo featureLayerInfo, out Dictionary<string, object[]> rangeDomainInfo, out Dictionary<string, Field> fieldProps)
+		internal static Dictionary<string, Type> SetFieldInfo(FeatureLayerInfo featureLayerInfo, out Dictionary<string, Field> fieldProps)
 		{
 			Dictionary<string, Type> fieldInfo = null;
-			rangeDomainInfo = null;
 			fieldProps = new Dictionary<string, Field>();
 			if (featureLayerInfo != null)
 			{
 				fieldInfo = new Dictionary<string, Type>();
 				foreach (Field field in featureLayerInfo.Fields)
 				{
+                    if (fieldInfo.ContainsKey(field.Name))
+                        continue;
+
 					Type fieldType = typeof(object);
 					switch (field.Type)
 					{
@@ -39,7 +40,6 @@ namespace ESRI.ArcGIS.Client.Toolkit.Utilities
 							fieldType = typeof(int);
 							break;
 						case Field.FieldType.Geometry:
-						case Field.FieldType.GUID:
 						case Field.FieldType.Blob:
 						case Field.FieldType.Raster:
 						case Field.FieldType.Unknown:
@@ -56,63 +56,14 @@ namespace ESRI.ArcGIS.Client.Toolkit.Utilities
 						case Field.FieldType.XML:
 							fieldType = typeof(string);
 							break;
+                        case Field.FieldType.GUID:
+                            fieldType = typeof(Guid);
+                            break;
 						default:
 							throw new NotSupportedException(string.Format(Properties.Resources.FieldDomain_FieldTypeNotSupported, fieldType.GetType()));
 					}
 					fieldInfo.Add(field.Name, fieldType);
 					fieldProps.Add(field.Name, field);
-					// Populating the range domain info if any:
-					if (field.Domain != null)
-					{
-						switch (field.Type)
-						{
-							case Field.FieldType.Date:
-								RangeDomain<DateTime> dateTimeRangeDomain = field.Domain as RangeDomain<DateTime>;
-								if (dateTimeRangeDomain != null)
-								{
-									if (rangeDomainInfo == null)
-										rangeDomainInfo = new Dictionary<string, object[]>();
-									rangeDomainInfo.Add(field.Name, new object[] { dateTimeRangeDomain.MinimumValue, dateTimeRangeDomain.MaximumValue });
-								}
-								break;
-							case Field.FieldType.Double:
-								RangeDomain<double> doubleRangeDomain = field.Domain as RangeDomain<double>;
-								if (doubleRangeDomain != null)
-								{
-									if (rangeDomainInfo == null)
-										rangeDomainInfo = new Dictionary<string, object[]>();
-									rangeDomainInfo.Add(field.Name, new object[] { doubleRangeDomain.MinimumValue, doubleRangeDomain.MaximumValue });
-								}
-								break;
-							case Field.FieldType.Integer:
-								RangeDomain<int> intRangeDomain = field.Domain as RangeDomain<int>;
-								if (intRangeDomain != null)
-								{
-									if (rangeDomainInfo == null)
-										rangeDomainInfo = new Dictionary<string, object[]>();
-									rangeDomainInfo.Add(field.Name, new object[] { intRangeDomain.MinimumValue, intRangeDomain.MaximumValue });
-								}
-								break;
-							case Field.FieldType.Single:
-								RangeDomain<Single> singleRangeDomain = field.Domain as RangeDomain<Single>;
-								if (singleRangeDomain != null)
-								{
-									if (rangeDomainInfo == null)
-										rangeDomainInfo = new Dictionary<string, object[]>();
-									rangeDomainInfo.Add(field.Name, new object[] { singleRangeDomain.MinimumValue, singleRangeDomain.MaximumValue });
-								}
-								break;
-							case Field.FieldType.SmallInteger:
-								RangeDomain<short> shortRangeDomain = field.Domain as RangeDomain<short>;
-								if (shortRangeDomain != null)
-								{
-									if (rangeDomainInfo == null)
-										rangeDomainInfo = new Dictionary<string, object[]>();
-									rangeDomainInfo.Add(field.Name, new object[] { shortRangeDomain.MinimumValue, shortRangeDomain.MaximumValue });
-								}
-								break;
-						}
-					}
 				}
 			}
 			return fieldInfo;

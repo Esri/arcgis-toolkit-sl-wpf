@@ -24,6 +24,8 @@ namespace ESRI.ArcGIS.Client.Toolkit.DataSources
 	{
 		private string[] _layersArray;
 		private string _proxyUrl;
+		private List<int> _useCrsFormat; // Wkids for which we have to use OGC SR format because format EPSG:xxxxx is not supported 
+
 		private static Version highestSupportedVersion = new Version(1, 3);
 		// Coordinate system WKIDs in WMS 1.3 where X,Y (Long,Lat) is switched to Y,X (Lat,Long)
 		private static int[,] LatLongCRSRanges = new int[,] { { 4001, 4999 },
@@ -101,6 +103,16 @@ namespace ESRI.ArcGIS.Client.Toolkit.DataSources
 		/// Each id is a string value.  At least one layer id must be defined.   
 		/// </summary>
 		/// <value>A string array of layer ids.</value>
+        /// <remarks>
+        /// <ESRISILVERLIGHT><para><b>KNOWN ISSUE:</b> Specifically in Visual Studio 10 (including SP1), properties that are based on arrays of primitives (ex: int, string, etc.) do not work as expected in XAML for Silverlight. When you try to use a property based on an array of primitives in XAML, a blue squiggly line to appears under the property and the following error will occur within the Visual Studio 2010 IDE:</para></ESRISILVERLIGHT>
+        /// <ESRISILVERLIGHT><para>Unable to cast object of type 'Microsoft.Expression.DesignModel.DocumentModel.DocumentPrimitiveNode' to type 'Microsoft.Expression.DesignModel.DocumentModel.DocumentCompositeNode'.</para></ESRISILVERLIGHT>
+        /// <ESRISILVERLIGHT><para>The following is a list of all ArcGIS Silverlight API properties based on an array of primitives for which this issue occurs:</para></ESRISILVERLIGHT>
+        /// <ESRISILVERLIGHT><list type="bullet"><item><see cref="P:ESRI.ArcGIS.Client.ArcGISDynamicMapServiceLayer.VisibleLayers">ESRI.ArcGIS.Client.ArcGISDynamicMapServiceLayer.VisibleLayers</see> Property</item><item><see cref="P:ESRI.ArcGIS.Client.ArcGISImageServiceLayer.BandIds">ESRI.ArcGIS.Client.ArcGISImageServiceLayer.BandIds</see> Property</item><item><see cref="P:ESRI.ArcGIS.Client.Editor.LayerIDs">ESRI.ArcGIS.Client.Editor.LayerIDs</see> Property</item><item><see cref="P:ESRI.ArcGIS.Client.QueryDataSource.OIDFields">ESRI.ArcGIS.Client.QueryDataSource.OIDFields</see> Property</item><item><see cref="P:ESRI.ArcGIS.Client.Toolkit.DataSources.WmsLayer.Layers">ESRI.ArcGIS.Client.Toolkit.DataSources.WmsLayer.Layers</see> Property</item><item><see cref="P:ESRI.ArcGIS.Client.Toolkit.EditorWidget.LayerIDs">ESRI.ArcGIS.Client.Toolkit.EditorWidget.LayerIDs</see> Property</item><item><see cref="P:ESRI.ArcGIS.Client.Toolkit.Legend.LayerIDs">ESRI.ArcGIS.Client.Toolkit.Legend.LayerIDs</see> Property</item><item><see cref="P:ESRI.ArcGIS.Client.Toolkit.TemplatePicker.LayerIDs">ESRI.ArcGIS.Client.Toolkit.TemplatePicker.LayerIDs</see> Property</item></list></ESRISILVERLIGHT>
+        /// <ESRISILVERLIGHT><para>Although you can run the application, this error locks up the Visual Studio 2010 Design tab for the .xaml page. It is recommended that developers use properties based on an array of primitives only in the code-behind.</para></ESRISILVERLIGHT>
+        /// <ESRISILVERLIGHT><para>Performing a re-build of the application which causes a refresh of the Design view results in a similar error message (NOTE: This error message and screen shot are for the ArcGISDynamicMapServiceLayer.VisibleLayers property; it will look slightly different for the properties based upon an array of primitives):<br/>InvalidCastException was thrown on "ArcGISDynamicMapServiceLayer": Unable to cast object of type 'Microsoft.Expression.DesignModel.DocumentModel.DocumentPrimitiveNode' to type 'Microsoft.Expression.DesignModel.DocumentModel.DocumentCompositeNode'.<br/>at Microsoft.Expression.DesignModel.InstanceBuilders.ArrayInstanceBuilder.InstantiateTargetType(IInstanceBuilderContext context, ViewNode viewNode)<br/>at Microsoft.Expression.DesignModel.InstanceBuilders.ClrObjectInstanceBuilder.Instantiate(IInstanceBuilderContext context, ViewNode viewNode)<br/>at Microsoft.Expression.DesignModel.Core.ViewNodeManager.Instantiate(ViewNode viewNode)<br/></para></ESRISILVERLIGHT>
+        /// <ESRISILVERLIGHT><para><img border="0" alt="Visual Studio interger array XAML limitation issue." src="C:\ArcGIS\dotNET\API SDK\Main\ArcGISSilverlightSDK\LibraryReference\images\Client.ArcGISDynamicMapServiceLayer.VisibleLayers3.png"/></para></ESRISILVERLIGHT>
+        /// <ESRISILVERLIGHT><para><b>This issue of using properties based on an array of primitives (ex: int, string, etc.) in XAML was corrected by Microsoft in Visual Studio version 2012 and higher.</b></para></ESRISILVERLIGHT>
+        /// </remarks>
 		[System.ComponentModel.TypeConverter(typeof(StringToStringArrayConverter))]
 		public string[] Layers
 		{
@@ -378,21 +390,21 @@ namespace ESRI.ArcGIS.Client.Toolkit.DataSources
 		{
             try
             {
-			    if (!CheckForError(e))
-			    {
-				    // Process capabilities file
-    #if WINDOWS_PHONE
-				    System.Xml.XmlReaderSettings settings = new System.Xml.XmlReaderSettings(); 
-				    settings.DtdProcessing = System.Xml.DtdProcessing.Ignore;
-				    XDocument xDoc = null;
-				    using (System.Xml.XmlReader reader = System.Xml.XmlReader.Create(
-					    new System.IO.StringReader(e.Result), settings))
-					    xDoc = XDocument.Load(reader);
-    #else
-				    XDocument xDoc = XDocument.Parse(e.Result);
-    #endif
-				    ParseCapabilities(xDoc);
-                }
+			if (!CheckForError(e))
+			{
+				// Process capabilities file
+#if WINDOWS_PHONE
+				System.Xml.XmlReaderSettings settings = new System.Xml.XmlReaderSettings(); 
+				settings.DtdProcessing = System.Xml.DtdProcessing.Ignore;
+				XDocument xDoc = null;
+				using (System.Xml.XmlReader reader = System.Xml.XmlReader.Create(
+					new System.IO.StringReader(e.Result), settings))
+					xDoc = XDocument.Load(reader);
+#else
+				XDocument xDoc = XDocument.Parse(e.Result);
+#endif
+				ParseCapabilities(xDoc);
+			}
             }
             catch (Exception failure)
             {
@@ -440,21 +452,11 @@ namespace ESRI.ArcGIS.Client.Toolkit.DataSources
 			else
 				layerInfo.Attribution.Title = inheritedAttribution;
 
+			bool lowerThan13 = LowerThan13Version();
 			var extentElement = layer.Element(XName.Get("BoundingBox", ns));
 			if (extentElement != null)
 			{
-				bool lowerThan13 = LowerThan13Version();
-				string key = lowerThan13 ? "SRS" : "CRS";
-					if (extentElement.Attribute(key) != null && extentElement.Attribute(key).Value.StartsWith("EPSG:"))
-					{
-						try
-						{
-							int srid = int.Parse(extentElement.Attribute(key).Value.Replace("EPSG:", ""), CultureInfo.InvariantCulture);
-							var sr = new SpatialReference(srid);
-							layerInfo.Extent = GetEnvelope(extentElement, sr, lowerThan13);
-						}
-						catch { }
-					}
+				layerInfo.Extent = GetEnvelope(extentElement, lowerThan13);
 			}
 
 			layerInfo.ChildLayers = CreateLayerInfos(layer, ns, layerInfo.Attribution.Title); // recursive call for sublayers
@@ -482,7 +484,7 @@ namespace ESRI.ArcGIS.Client.Toolkit.DataSources
 				}
 			}
 
-			if (LowerThan13Version())
+			if (lowerThan13)
 			{
 				// Deal with ScaleHint
 				var scaleHint = layer.Element(XName.Get("ScaleHint", ns));
@@ -608,79 +610,66 @@ namespace ESRI.ArcGIS.Client.Toolkit.DataSources
 			List<int> supportedIDs = new List<int>();
 			string key = lowerThan13 ? "SRS" : "CRS";
 			IEnumerable<XElement> SRSs = xDoc.Descendants(XName.Get(key, ns));
+			_useCrsFormat = new List<int>{4326, 4269, 4267}; // initialize with all wkid that supports crs and remove from the list when an EPSG:xxxx format is supported (prefered format for backward compatibility reason)
 			foreach (var element in SRSs)
 			{
-				if (element.Value != null && element.Value.StartsWith("EPSG:"))
-				{
-					try
-					{
-						int srid = int.Parse(element.Value.Replace("EPSG:", ""), CultureInfo.InvariantCulture);
-						if (!supportedIDs.Contains(srid))
-							supportedIDs.Add(srid);
-					}
-					catch { }
-				}
+				string value = element.Value;
+				if (value == "EPSG:4326")
+					_useCrsFormat.Remove(4326);
+				else if (value == "EPSG:4269")
+					_useCrsFormat.Remove(4269);
+				else if (value == "EPSG:4267")
+					_useCrsFormat.Remove(4267);
+				var sref = GetSpatialReference(value);
+				if (sref != null && !supportedIDs.Contains(sref.WKID))
+					supportedIDs.Add(sref.WKID);
 			}
 			SupportedSpatialReferenceIDs = supportedIDs.ToArray();
 
 			//Get the full extent of all layers
 			IEnumerable<XElement> elements = xDoc.Descendants(XName.Get("BoundingBox", ns));
-			if (!elements.GetEnumerator().MoveNext() && lowerThan13)
+			if (elements.Any())
 			{
+				FullExtent = GetEnvelope(elements.First(), lowerThan13);
+				if (FullExtent != null)
+					SpatialReference = FullExtent.SpatialReference;
+			}
+			else if (lowerThan13)
+			{
+				// Get Extent from former "LatLonBoundingBox" element
 				var element = xDoc.Descendants(XName.Get("LatLonBoundingBox", ns)).First();
-				this.SpatialReference = new Geometry.SpatialReference(4326);
-				this.FullExtent = GetEnvelope(element, this.SpatialReference, true);
-			}
-			if (this.SpatialReference == null)
-			{
-				foreach (var element in elements)
-				{
-					if (element.Attribute(key) != null && element.Attribute(key).Value.StartsWith("EPSG:"))
-					{
-						try
-						{
-							int srid = int.Parse(element.Attribute(key).Value.Replace("EPSG:", ""), CultureInfo.InvariantCulture);
-							this.SpatialReference = new Geometry.SpatialReference(srid);
+				SpatialReference = new SpatialReference(4326);
+				FullExtent = GetEnvelope(element, true);
+				if (FullExtent != null)
+					FullExtent.SpatialReference = SpatialReference;
 						}
-						catch { }
-						this.FullExtent = GetEnvelope(element, this.SpatialReference, lowerThan13);
-						break;
 					}
-				}
-				if (this.FullExtent == null) //EPSG code not found. Default to first CRS
-				{
-					var element = elements.First();
-					if (element.Attribute(key) != null)
-					{
-						string value = element.Attribute(key).Value;
-						int idx = value.LastIndexOf(":");
-						if (idx > -1) value = value.Substring(idx);
-						try
-						{
-							int srid = int.Parse(value, CultureInfo.InvariantCulture);
-							this.SpatialReference = new SpatialReference(srid);
-						}
-						catch { }
-					}
-					this.FullExtent = GetEnvelope(element, this.SpatialReference, lowerThan13);
-				}
-			}
-		}
 
-		private static Envelope GetEnvelope(XElement element, SpatialReference sref, bool lowerThan13)
-		{
-			bool useLatLon = !lowerThan13 && sref != null && UseLatLon(sref.WKID);
-			Envelope extent = new Envelope(
+		// Parse envelope from a XElement
+		private static Envelope GetEnvelope(XElement element, bool lowerThan13)
+				{
+			System.Diagnostics.Debug.Assert(element != null);
+			string key = lowerThan13 ? "SRS" : "CRS";
+			Envelope envelope;
+
+						try
+						{
+				var sref = GetSpatialReference(element.Attribute(key));
+				bool useLatLon = !lowerThan13 && UseLatLon(element);
+				var extent = new Envelope(
 			   element.Attribute("minx") == null ? double.MinValue : double.Parse(element.Attribute("minx").Value, CultureInfo.InvariantCulture),
 			   element.Attribute("miny") == null ? double.MinValue : double.Parse(element.Attribute("miny").Value, CultureInfo.InvariantCulture),
 			   element.Attribute("maxx") == null ? double.MaxValue : double.Parse(element.Attribute("maxx").Value, CultureInfo.InvariantCulture),
 			   element.Attribute("maxy") == null ? double.MaxValue : double.Parse(element.Attribute("maxy").Value, CultureInfo.InvariantCulture)
 			) { SpatialReference = sref };
 
-			if (useLatLon)
-				return new Envelope(extent.YMin, extent.XMin, extent.YMax, extent.XMax) { SpatialReference = sref };
-			else
-				return extent;
+				envelope = useLatLon ? new Envelope(extent.YMin, extent.XMin, extent.YMax, extent.XMax) { SpatialReference = sref } : extent;
+			}
+			catch
+			{
+				envelope = null;
+			}
+			return envelope;
 		}
 
 		private bool CheckForError(DownloadStringCompletedEventArgs e)
@@ -763,16 +752,18 @@ namespace ESRI.ArcGIS.Client.Toolkit.DataSources
 						extentWKID = 900913;
 				}
 			}
+
+			bool useCrsFormat = _useCrsFormat != null && _useCrsFormat.Contains(extentWKID); // Need to use CRS:xx format ==> x,y order
 			if (LowerThan13Version())
 			{
-				mapURL.AppendFormat("&SRS=EPSG:{0}", extentWKID);
+				mapURL.AppendFormat("&SRS={0}", useCrsFormat ? CrsFromSR(extentWKID) : string.Format("EPSG:{0}", extentWKID));
 				mapURL.AppendFormat(CultureInfo.InvariantCulture,
 						"&bbox={0},{1},{2},{3}", extent.XMin, extent.YMin, extent.XMax, extent.YMax);
 			}
 			else
 			{
-				mapURL.AppendFormat("&CRS=EPSG:{0}", extentWKID);
-				if (UseLatLon(extentWKID))
+				mapURL.AppendFormat("&CRS={0}", useCrsFormat ? CrsFromSR(extentWKID) : string.Format("EPSG:{0}", extentWKID));
+				if (!useCrsFormat && !LowerThan13Version() && UseLatLon(extentWKID))
 					mapURL.AppendFormat(CultureInfo.InvariantCulture,
 						"&BBOX={0},{1},{2},{3}", extent.YMin, extent.XMin, extent.YMax, extent.XMax);
 				else
@@ -789,6 +780,19 @@ namespace ESRI.ArcGIS.Client.Toolkit.DataSources
 			}));
 		}
 
+		private static bool UseLatLon(XElement crsElement)
+		{
+			bool useLatLon = false;
+			string crs = crsElement.GetValue();
+			if (crs != null && crs.Contains("EPSG:")) // else if SR is defined by CRS:84, CRS:83 or CRS:27 --> use x,y
+			{
+				var sref = GetSpatialReference(crsElement);
+				if (sref != null)
+					useLatLon = UseLatLon(sref.WKID);
+			}
+			return useLatLon;
+		}
+
 		private static bool UseLatLon(int extentWKID)
 		{
 			int length = LatLongCRSRanges.Length / 2;
@@ -798,6 +802,47 @@ namespace ESRI.ArcGIS.Client.Toolkit.DataSources
 					return true;
 			}
 			return false;
+		}
+
+		private static SpatialReference GetSpatialReference(string crs)
+		{
+			int wkid = 0;
+			if (!string.IsNullOrEmpty(crs))
+			{
+				if (crs.Contains("EPSG:"))
+				{
+					int.TryParse(crs.Split(':').Last(), NumberStyles.None, CultureInfo.InvariantCulture, out wkid);
+				}
+				else if (crs == "CRS:84") // WGS84
+					wkid = 4326;
+				else if (crs == "CRS:83") // NAD83
+					wkid = 4269;
+				else if (crs == "CRS:27") // NAD27
+					wkid = 4267;
+			}
+
+			return wkid > 0 ? new SpatialReference(wkid) : null;
+		}
+
+		private static string CrsFromSR(int wkid)
+		{
+			if (wkid == 4326)
+				return "CRS:84";
+			if (wkid == 4269)
+				return "CRS:83";
+			if (wkid == 4267)
+				return "CRS:27";
+			return null;
+		}
+
+		private static SpatialReference GetSpatialReference(XAttribute att)
+		{
+			return att == null ? null : GetSpatialReference(att.Value);
+		}
+
+		private static SpatialReference GetSpatialReference(XElement element)
+		{
+			return element == null ? null : GetSpatialReference(element.Value);
 		}
 
 

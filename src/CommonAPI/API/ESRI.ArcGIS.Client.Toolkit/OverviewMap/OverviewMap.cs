@@ -90,7 +90,7 @@ namespace ESRI.ArcGIS.Client.Toolkit
 						UpdateExtentToMaixumExtent();
 					ZoomToNewExtent(); 
 				};
-				if (this.Layer != null)
+				if (this.Layer != null && !OVMapImage.Layers.Contains(this.Layer))
 					this.OVMapImage.Layers.Add(this.Layer);				
 			}
 
@@ -138,7 +138,7 @@ namespace ESRI.ArcGIS.Client.Toolkit
 			{
 				newMap.ExtentChanged += ovmap.UpdateOVMap;
 				newMap.RotationChanged += ovmap.map_RotationChanged;
-				if (ovmap.Layer != null && ovmap.OVMapImage != null)
+				if (ovmap.Layer != null && ovmap.OVMapImage != null && !ovmap.OVMapImage.Layers.Contains(ovmap.Layer))
 					ovmap.OVMapImage.Layers.Add(ovmap.Layer);
 				ovmap.UpdateOVMap();
 			}			
@@ -309,8 +309,6 @@ namespace ESRI.ArcGIS.Client.Toolkit
 				else
 					fullExtent = OVMapImage.Layers.GetFullExtent();
 				
-				OVMapImage.MinimumResolution = double.Epsilon;
-				OVMapImage.MaximumResolution = double.MaxValue;
 				if(fullExtent != null)
 				{
 					maxWidth = fullExtent.Width;

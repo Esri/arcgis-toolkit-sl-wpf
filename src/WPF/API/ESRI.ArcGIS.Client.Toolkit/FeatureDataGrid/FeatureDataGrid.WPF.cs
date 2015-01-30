@@ -6,6 +6,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
@@ -59,8 +60,6 @@ namespace ESRI.ArcGIS.Client.Toolkit
 						graphicCollection.CollectionChanged += Graphics_CollectionChanged;
 						foreach (var g in graphicCollection)
 						{
-							foreach (var attribute in g.Attributes)
-								ValidateAttributeType(attribute);
 							g.AttributeValueChanged += Graphic_AttributeValueChanged;
 						}
 					}
@@ -144,6 +143,13 @@ namespace ESRI.ArcGIS.Client.Toolkit
 				grid.UpdateRecordsText();
 		}
 
+        /// <summary>
+        /// Used to Attached FeatureCollectionView schema information to a DataGridColumn for easy reference 
+        /// useful to validate column and cell data such as DataType and FieldName.
+        /// </summary>
+        private static readonly DependencyProperty KeyColumnProperty =
+            DependencyProperty.RegisterAttached("KeyColumn", typeof(KeyValuePair<string,DataType>), typeof(DataGridColumn), null);
+
 		#endregion
 
 		#region Public Properties
@@ -209,11 +215,16 @@ namespace ESRI.ArcGIS.Client.Toolkit
 						{
 	            cleanupGraphics.Add((Graphic)item);
 	            ((Graphic)item).AttributeValueChanged += Graphic_AttributeValueChanged;
+                if (result == false)
+                {
 	            foreach (var attribute in ((Graphic)item).Attributes)
 	            {
 	                if (ResetRequired(attribute)) 
+                        {
                         result = true;                                                
-								ValidateAttributeType(attribute);
+                            break;
+                        }                        
+                    }
 						}
 					}
 	        return result;
@@ -275,7 +286,7 @@ namespace ESRI.ArcGIS.Client.Toolkit
             // Need to add new column because a new item had 
             //a new attribute that we don't have a column for yet.
 			if (reset)
-				SetItemsSource(GraphicsLayer.Graphics);
+				SetItemsSource(GraphicsLayer != null ? GraphicsLayer.Graphics : null);
 		}
 
 		private void CreateAnAttributeTypeLookup()
@@ -294,32 +305,20 @@ namespace ESRI.ArcGIS.Client.Toolkit
 				UniqueAttributes.Add(attribute.Key, attribute.Value == null ? typeof(string) : attribute.Value.GetType());
 				return true;
 			}
-			return false;
-		}
-
-		private void ValidateAttributeType(KeyValuePair<string, object> attribute)
+            else if(featureLayer == null)
 		{
-			if (attribute.Value == null)
-			{
-				if (UniqueAttributes[attribute.Key] != typeof(string))
-				{
-					throw new InvalidCastException(string.Format(Properties.Resources.FeatureDataGrid_MixedAttributeTypesNotAllowed,
-																		 UniqueAttributes[attribute.Key], attribute.Key));
-				}
-
+                var fcv = ItemsSource as FeatureCollectionView;
+                if(fcv != null)                
+                   return fcv.IsResetRequired(attribute.Key, attribute.Value);                
 			}
-			else if (attribute.Value.GetType() != UniqueAttributes[attribute.Key])
-			{
-				throw new InvalidCastException(string.Format(Properties.Resources.FeatureDataGrid_MixedAttributeTypesNotAllowed,
-																		 UniqueAttributes[attribute.Key], attribute.Key));
-			}
+			return false;
 		}
 
 		void Graphic_AttributeValueChanged(object sender, Graphics.DictionaryChangedEventArgs e)
 		{
 			var attribute = new KeyValuePair<string, object>(e.Key, e.NewValue);
-			if (!ResetRequired(attribute))
-				ValidateAttributeType(attribute);
+            if (e.Action == NotifyCollectionChangedAction.Add || e.Action == NotifyCollectionChangedAction.Remove)
+                SetItemsSource(GraphicsLayer != null ? GraphicsLayer.Graphics : null);
 		}
 
 		void FeatureLayer_UpdateCompleted(object sender, EventArgs e)
@@ -328,7 +327,7 @@ namespace ESRI.ArcGIS.Client.Toolkit
 			if (outFields != this.OutFields)
 			{
 				this.OutFields = outFields;
-				SetItemsSource(GraphicsLayer.Graphics);
+				SetItemsSource(GraphicsLayer != null ? GraphicsLayer.Graphics : null);
 			}
 		}		
 
@@ -336,11 +335,12 @@ namespace ESRI.ArcGIS.Client.Toolkit
 		{
 			if (e.PropertyName == "Graphics")
 			{
+                var graphics = GraphicsLayer != null ? GraphicsLayer.Graphics : null;
 				if (GraphicCollection != null)
 				{
-					GraphicCollection = GraphicsLayer.Graphics;
+					GraphicCollection = graphics;
 				} 
-				SetItemsSource(GraphicsLayer.Graphics);		// Update the ItemsSource
+				SetItemsSource(graphics);		// Update the ItemsSource
 			}
 			else if (e.PropertyName == "HasEdits")
 				SetSubmitButtonEnableState();
@@ -391,6 +391,7 @@ namespace ESRI.ArcGIS.Client.Toolkit
 			base.OnCellEditEnding(e);
 			if (e.EditAction == DataGridEditAction.Commit)
 			{
+                System.Globalization.CultureInfo culture = Language.GetSpecificCulture();
 				if (GraphicsLayer is FeatureLayer)
 				{
 					// This handles coded value domain fields.
@@ -404,7 +405,9 @@ namespace ESRI.ArcGIS.Client.Toolkit
 					bool isValidChange = true;
 					if (field != null)
 					{
+                        bool isDynamicField = FieldDomainUtils.IsDynamicDomain(field, featureLayer.LayerInfo);						                        
 						bool isRangeDomain = field.Domain != null && !(field.Domain is CodedValueDomain);
+
 						FrameworkElement element = e.EditingElement;
 						if (element != null)
 						{
@@ -417,7 +420,18 @@ namespace ESRI.ArcGIS.Client.Toolkit
 									if (datepicker == null)
 										return;
 									value = datepicker.SelectedDate;
-									if (isRangeDomain)
+									if (isDynamicField)
+									{										 
+                                            var dynamicRangeDateDomains = FieldDomainUtils.BuildDynamicRangeDomain<DateTime>(field, featureLayer.LayerInfo);
+											if (dynamicRangeDateDomains != null)
+                                            {
+												var rangeDomain = FieldDomainUtils.GetRangeDomain<DateTime>(featureLayer.LayerInfo.TypeIdField, graphic, dynamicRangeDateDomains);
+                                                if(rangeDomain != null)
+                                                    isValidChange = RangeDomainValidationRule.isValid(rangeDomain.MinimumValue, rangeDomain.MaximumValue, value, out errorContent);                                                
+                                            }
+                                            break;
+									}
+									else if (isRangeDomain)
 									{
 										var rangeDomain = field.Domain as RangeDomain<DateTime>;										
 										isValidChange = RangeDomainValidationRule.isValid(rangeDomain.MinimumValue, rangeDomain.MaximumValue, value, out errorContent);
@@ -435,13 +449,54 @@ namespace ESRI.ArcGIS.Client.Toolkit
 									value = control.Text;
 
 									// Attempt to convert string to field type primitive
-									value = StringToPrimitiveTypeConverter.ConvertToType(field.Type, value);
+									value = StringToPrimitiveTypeConverter.ConvertToType(field.Type, null, value, culture);
 
 									// Validate field type and validate if it can be nullable type																		
-									isValidChange = FeatureValidationRule.IsValid(field.Type, field.Nullable, value, out errorContent);
+									isValidChange = FeatureValidationRule.IsValid(field.Type, null, field.Nullable, value, culture, out errorContent);
 
-									// if still valid value after first validation check move to next validation check
-									if (isValidChange && isRangeDomain)
+                                    if(isValidChange && isDynamicField)
+                                    {
+                                        switch (field.Type)
+                                        {
+                                            case Field.FieldType.Double:
+                                                var dynamicRangeDoubleDomains = FieldDomainUtils.BuildDynamicRangeDomain<double>(field, featureLayer.LayerInfo);
+                                                if (dynamicRangeDoubleDomains != null)
+                                                {
+                                                    var rangeDomain = FieldDomainUtils.GetRangeDomain<double>(featureLayer.LayerInfo.TypeIdField, graphic, dynamicRangeDoubleDomains);
+                                                    if(rangeDomain != null)                                                    
+                                                        isValidChange = RangeDomainValidationRule.isValid(rangeDomain.MinimumValue, rangeDomain.MaximumValue, value, out errorContent);                                                    
+                                                }
+                                                break;
+                                            case Field.FieldType.Integer:
+                                                var dynamicRangeIntegerDomains = FieldDomainUtils.BuildDynamicRangeDomain<int>(field, featureLayer.LayerInfo);
+                                                if (dynamicRangeIntegerDomains != null)
+                                                {
+                                                    var rangeDomain = FieldDomainUtils.GetRangeDomain<int>(featureLayer.LayerInfo.TypeIdField, graphic, dynamicRangeIntegerDomains);
+                                                    if(rangeDomain != null)                                                   
+                                                        isValidChange = RangeDomainValidationRule.isValid(rangeDomain.MinimumValue, rangeDomain.MaximumValue, value, out errorContent);                                                    
+                                                }
+                                                break;
+                                            case Field.FieldType.Single:
+                                               var dynamicRangeSingleDomains = FieldDomainUtils.BuildDynamicRangeDomain<float>(field, featureLayer.LayerInfo);
+                                               if (dynamicRangeSingleDomains != null)
+                                                {
+                                                    var rangeDomain = FieldDomainUtils.GetRangeDomain<float>(featureLayer.LayerInfo.TypeIdField, graphic, dynamicRangeSingleDomains);
+                                                    if(rangeDomain != null)
+                                                        isValidChange = RangeDomainValidationRule.isValid(rangeDomain.MinimumValue, rangeDomain.MaximumValue, value, out errorContent);                                                    
+                                                }
+                                                break;
+                                            case Field.FieldType.SmallInteger:
+                                               var dynamicRangeShortDomains = FieldDomainUtils.BuildDynamicRangeDomain<short>(field, featureLayer.LayerInfo);
+                                               if (dynamicRangeShortDomains != null)
+                                                {
+                                                    var rangeDomain = FieldDomainUtils.GetRangeDomain<short>(featureLayer.LayerInfo.TypeIdField, graphic, dynamicRangeShortDomains);
+                                                    if(rangeDomain != null)
+                                                        isValidChange = RangeDomainValidationRule.isValid(rangeDomain.MinimumValue, rangeDomain.MaximumValue, value, out errorContent);                                                    
+                                                }
+                                                break;
+                                        }                                        
+                                    }									
+                                    else if (isValidChange && isRangeDomain)
 									{										
 										switch (field.Type)
 										{
@@ -475,6 +530,59 @@ namespace ESRI.ArcGIS.Client.Toolkit
 						}
 					}
 				}
+                else if (GraphicsLayer is GraphicsLayer)
+                {
+                    bool isValidChange = true;
+                    var kvp = (KeyValuePair<string, DataType>)e.Column.GetValue(KeyColumnProperty);
+                    FrameworkElement element = e.EditingElement;
+                    var fcv = ItemsSource as FeatureCollectionView;
+                    if (element != null && fcv != null)
+                    {
+                        var fieldName = kvp.Key;
+                        var dataType = kvp.Value;
+                        var graphic = e.Row.DataContext as Graphic;
+                        string errorContent = null;
+                        object value = null;
+                        switch (dataType)
+                        {
+                            case DataType.DateTime:
+                                var datepicker = FindChild<DateTimePicker>(element) as DateTimePicker;
+                                if (datepicker == null)
+                                    return;
+                                value = datepicker.SelectedDate;                                
+                                break;
+                            case DataType.String:
+                            case DataType.Int16:
+                            case DataType.Int32:
+                            case DataType.Int64:
+                            case DataType.Decimal:
+                            case DataType.Single:
+                            case DataType.Double:
+                            case DataType.UInt16:
+                            case DataType.UInt32:
+                            case DataType.UInt64:
+                                var control = FindChild<TextBox>(element) as TextBox;
+                                if (control == null)
+                                    return;
+
+                                value = control.Text;
+
+                                // Attempt to convert string to field type primitive
+                                value = StringToPrimitiveTypeConverter.ConvertToType(null, dataType, value, culture);
+
+                                // Validate field type and validate if it can be nullable type																		
+                                isValidChange = FeatureValidationRule.IsValid(null, dataType, true, value, culture, out errorContent);                                
+                                break;
+                            default:
+                                return; // none of the types we are looking for
+                        }
+                        // if all validation was passes then commit the value to the graphic
+                        // if validation has failed DataGrid control will properly handle the
+                        // validation error
+                        if (isValidChange && graphic.Attributes.ContainsKey(fieldName))
+                            graphic.Attributes[fieldName] = value;
+                    }
+                }                
 			}
 		}
 
@@ -611,6 +719,8 @@ namespace ESRI.ArcGIS.Client.Toolkit
 				if (field != null)
 					result = field.Alias;
 			}
+			if (result.Contains('_'))
+				result = result.Replace("_", "__"); // else _ are not displayed 
 			return result;
 		}
 		/// <summary>
@@ -733,6 +843,133 @@ namespace ESRI.ArcGIS.Client.Toolkit
 		#endregion Private methods																						
 	}	
 
+
+    /// <summary>
+    /// This class is used to validate subtypes 
+    /// that have range domain validation.
+    /// </summary>        
+    internal sealed class DynamicRangeDomainValidationRule : ValidationRule
+    {
+        /// <summary>
+        /// Gets or sets the field info. Used to 
+        /// determine what type to use in validation.
+        /// </summary>		
+        public Field Field { get; set; }
+
+        /// <summary>
+        /// Gets or sets the feature layer info. Used to dynamically
+        /// selected the range domain need (if any) based on the sub
+        /// type value.
+        /// </summary>
+        public FeatureLayerInfo LayerInfo { get; set; }
+
+        /// <summary>
+        /// Gets or sets the graphic being validated.
+        /// </summary>
+        public Graphic Graphic { get; set; }
+
+        /// <summary>
+		/// When overridden in a derived class, performs validation checks on a value.
+		/// </summary>
+		/// <param name="value">The value from the binding target to check.</param>
+		/// <param name="cultureInfo">The culture to use in this rule.</param>		
+		public override System.Windows.Controls.ValidationResult Validate(object value, System.Globalization.CultureInfo cultureInfo)
+		{						
+			string errorContent = null;
+			return new System.Windows.Controls.ValidationResult(isValid(this.Field, this.LayerInfo, this.Graphic, value, out errorContent), errorContent);
+		}
+
+		internal static bool isValid(Field field, FeatureLayerInfo layerInfo, Graphic graphic,  object value, out string errorMessage)
+		{
+            bool isValidChange = true;         
+            bool isRangeDomain = (field.Domain != null && !(field.Domain is CodedValueDomain));
+			bool isSubType = FieldDomainUtils.IsDynamicDomain(field, layerInfo);
+            errorMessage = null;
+
+            if (value == null)
+                return field.Nullable;
+
+			if (isSubType)
+			{
+				switch (field.Type)
+				{
+					case ESRI.ArcGIS.Client.Field.FieldType.Double:
+						var dynamicRangeDoubleDomains = FieldDomainUtils.BuildDynamicRangeDomain<double>(field, layerInfo);
+						if (dynamicRangeDoubleDomains != null)
+						{
+							var rangeDomain = FieldDomainUtils.GetRangeDomain<double>(layerInfo.TypeIdField, graphic, dynamicRangeDoubleDomains);
+							if (rangeDomain != null)															
+								isValidChange = RangeDomainValidationRule.isValid(rangeDomain.MinimumValue, rangeDomain.MaximumValue, value, out errorMessage);							
+						}
+						break;
+					case ESRI.ArcGIS.Client.Field.FieldType.Integer:
+						var dynamicRangeIntegerDomains = FieldDomainUtils.BuildDynamicRangeDomain<int>(field, layerInfo);
+						if (dynamicRangeIntegerDomains != null)
+						{
+							var rangeDomain = FieldDomainUtils.GetRangeDomain<int>(layerInfo.TypeIdField, graphic, dynamicRangeIntegerDomains);
+							if (rangeDomain != null)							
+								isValidChange = RangeDomainValidationRule.isValid(rangeDomain.MinimumValue, rangeDomain.MaximumValue, value, out errorMessage);							
+						}
+						break;
+					case ESRI.ArcGIS.Client.Field.FieldType.Single:
+						var dynamicRangeSingleDomains = FieldDomainUtils.BuildDynamicRangeDomain<float>(field, layerInfo);
+						if (dynamicRangeSingleDomains != null)
+						{
+							var rangeDomain = FieldDomainUtils.GetRangeDomain<float>(layerInfo.TypeIdField, graphic, dynamicRangeSingleDomains);
+							if (rangeDomain != null)							
+								isValidChange = RangeDomainValidationRule.isValid(rangeDomain.MinimumValue, rangeDomain.MaximumValue, value, out errorMessage);							
+						}
+						break;
+					case ESRI.ArcGIS.Client.Field.FieldType.SmallInteger:
+						var dynamicRangeShortDomains = FieldDomainUtils.BuildDynamicRangeDomain<short>(field, layerInfo);
+						if (dynamicRangeShortDomains != null)
+						{
+							var rangeDomain = FieldDomainUtils.GetRangeDomain<short>(layerInfo.TypeIdField, graphic, dynamicRangeShortDomains);
+							if (rangeDomain != null)							
+								isValidChange = RangeDomainValidationRule.isValid(rangeDomain.MinimumValue, rangeDomain.MaximumValue, value, out errorMessage);							
+						}
+						break;
+					case ESRI.ArcGIS.Client.Field.FieldType.Date:
+						var dynamicRangeDateDomains = FieldDomainUtils.BuildDynamicRangeDomain<DateTime>(field, layerInfo);
+						if (dynamicRangeDateDomains != null)
+						{
+							var rangeDomain = FieldDomainUtils.GetRangeDomain<DateTime>(layerInfo.TypeIdField, graphic, dynamicRangeDateDomains);
+							if (rangeDomain != null)
+								isValidChange = RangeDomainValidationRule.isValid(rangeDomain.MinimumValue, rangeDomain.MaximumValue, value, out errorMessage);
+						}
+						break;
+				}
+			}
+            else if (isRangeDomain)
+			{										
+				switch (field.Type)
+				{
+					case ESRI.ArcGIS.Client.Field.FieldType.Double:
+						var rangeDomainDouble = field.Domain as RangeDomain<double>;
+                        isValidChange = RangeDomainValidationRule.isValid(rangeDomainDouble.MinimumValue, rangeDomainDouble.MaximumValue, value, out errorMessage);
+						break;
+					case ESRI.ArcGIS.Client.Field.FieldType.Integer:
+						var rangeDomainInteger = field.Domain as RangeDomain<int>;
+                        isValidChange = RangeDomainValidationRule.isValid(rangeDomainInteger.MinimumValue, rangeDomainInteger.MaximumValue, value, out errorMessage);
+						break;
+					case ESRI.ArcGIS.Client.Field.FieldType.Single:
+						var rangeDomainSingle = field.Domain as RangeDomain<float>;
+                        isValidChange = RangeDomainValidationRule.isValid(rangeDomainSingle.MinimumValue, rangeDomainSingle.MaximumValue, value, out errorMessage);
+						break;
+					case ESRI.ArcGIS.Client.Field.FieldType.SmallInteger:
+						var rangeDomainShort = field.Domain as RangeDomain<short>;
+                        isValidChange = RangeDomainValidationRule.isValid(rangeDomainShort.MinimumValue, rangeDomainShort.MaximumValue, value, out errorMessage);
+						break;
+					case ESRI.ArcGIS.Client.Field.FieldType.Date:
+						var rangeDomainDate = field.Domain as RangeDomain<DateTime>;
+						isValidChange = RangeDomainValidationRule.isValid(rangeDomainDate.MinimumValue, rangeDomainDate.MaximumValue, value, out errorMessage);
+						break;
+				}
+			}
+            return isValidChange;
+		}	
+    }
+
 	/// <summary>
 	/// *FOR INTERNAL USE ONLY* This class is used to validate edits in the 
 	/// DataGrid before saving them back to the Graphic attribute.
@@ -746,6 +983,12 @@ namespace ESRI.ArcGIS.Client.Toolkit
 		/// in validation.
 		/// </summary>		
 		public Field.FieldType? FieldType { get; set; }
+
+		/// <summary>
+        /// Gets or sets the data type of the field. Indicates what the type is 
+        /// for converting if FieldType is not set. FieldType take priority if set.
+        /// </summary>
+        public DataType? dataType { get; set; }
 
 		/// <summary>
 		/// Gets or sets a value indicating whether nulls are accepted as valid value
@@ -769,10 +1012,10 @@ namespace ESRI.ArcGIS.Client.Toolkit
 		public override System.Windows.Controls.ValidationResult Validate(object value, System.Globalization.CultureInfo cultureInfo)
 		{
 			string errorContent = null;
-			return new System.Windows.Controls.ValidationResult(IsValid(FieldType,Nullable,value, out errorContent), errorContent);
+			return new System.Windows.Controls.ValidationResult(IsValid(FieldType, dataType, Nullable,value,cultureInfo, out errorContent), errorContent);
 		}		
 
-		internal static bool IsValid(Field.FieldType? FieldType, bool Nullable, object value, out string errorContent) 
+		internal static bool IsValid(Field.FieldType? FieldType, DataType? dataType, bool Nullable, object value,CultureInfo culture, out string errorContent) 
 		{
 			errorContent = null;
 			if (FieldType.HasValue)
@@ -787,25 +1030,25 @@ namespace ESRI.ArcGIS.Client.Toolkit
 						{
 							case Field.FieldType.Double:
 								if (value is string)
-                                    value = double.Parse(value as string, System.Globalization.NumberStyles.Number);
+                                    value = double.Parse(value as string, System.Globalization.NumberStyles.Number | System.Globalization.NumberStyles.AllowExponent, culture);
 								else if (!(value is double))
 									return false;
 								break;
 							case Field.FieldType.Integer:
 								if (value is string)
-                                    value = int.Parse(value as string, System.Globalization.NumberStyles.Number);
+                                    value = int.Parse(value as string, System.Globalization.NumberStyles.Number, culture);
 								else if (!(value is int))
 									return false;
 								break;
 							case Field.FieldType.Single:
 								if (value is string)
-                                    value = float.Parse(value as string, System.Globalization.NumberStyles.Number);
+                                    value = float.Parse(value as string, System.Globalization.NumberStyles.Number | System.Globalization.NumberStyles.AllowExponent, culture);
 								else if (!(value is float))
 									return false;
 								break;
 							case Field.FieldType.SmallInteger:
 								if (value is string)
-                                    value = short.Parse(value as string, System.Globalization.NumberStyles.Number);
+                                    value = short.Parse(value as string, System.Globalization.NumberStyles.Number, culture);
 								if (!(value is short))
 									return false;
 								break;
@@ -813,6 +1056,89 @@ namespace ESRI.ArcGIS.Client.Toolkit
 								if (!(value is DateTime))
 									return false;
 								break;
+                            case Field.FieldType.GUID:
+                                if (value is string)
+                                    value = Guid.Parse(value as string);
+                                if (!(value is Guid))
+                                    return false;
+                                break;
+						}
+					}
+					catch(Exception ex)
+					{
+						errorContent = ex.Message;
+						return false;
+					}
+				}
+			}
+            else if(dataType.HasValue)
+            {
+                if (value == null)
+                    return Nullable;
+                else
+                {
+                    try
+                    {
+                        switch (dataType)
+                        {
+                            case DataType.Int16:
+                                if (value is string)
+                                    value = short.Parse(value as string, System.Globalization.NumberStyles.Number, culture);
+                                if (!(value is short))
+                                    return false;
+                                break;
+                            case DataType.Int32:
+                                if (value is string)
+                                    value = int.Parse(value as string, System.Globalization.NumberStyles.Number, culture);
+                                else if (!(value is int))
+                                    return false;
+                                break;
+                            case DataType.Int64:
+                                if (value is string)
+                                    value = long.Parse(value as string, System.Globalization.NumberStyles.Number, culture);
+                                else if (!(value is long))
+                                    return false;
+                                break;
+                            case DataType.Decimal:
+                                if (value is string)
+                                    value = decimal.Parse(value as string, System.Globalization.NumberStyles.Number, culture);
+                                else if (!(value is decimal))
+                                    return false;
+                                break;
+                            case DataType.Single:
+                                if (value is string)
+                                    value = float.Parse(value as string, System.Globalization.NumberStyles.Number | System.Globalization.NumberStyles.AllowExponent, culture);
+                                else if (!(value is float))
+                                    return false;
+                                break;
+                            case DataType.Double:
+                                if (value is string)
+                                    value = double.Parse(value as string, System.Globalization.NumberStyles.Number | System.Globalization.NumberStyles.AllowExponent, culture);
+                                else if (!(value is double))
+                                    return false;
+                                break;
+                            case DataType.DateTime:
+                                if (!(value is DateTime))
+                                    return false;
+                                break;
+                            case DataType.UInt16:
+                                if (value is string)
+                                    value = UInt16.Parse(value as string, System.Globalization.NumberStyles.Number, culture);
+                                if (!(value is UInt16))
+                                    return false;
+                                break;
+                            case DataType.UInt32:
+                                if (value is string)
+                                    value = UInt32.Parse(value as string, System.Globalization.NumberStyles.Number, culture);
+                                else if (!(value is UInt32))
+                                    return false;
+                                break;
+                            case DataType.UInt64:
+                                if (value is string)
+                                    value = UInt64.Parse(value as string, System.Globalization.NumberStyles.Number, culture);
+                                else if (!(value is UInt64))
+                                    return false;
+                                break;
 						}
 					}
 					catch(Exception ex)
@@ -913,6 +1239,12 @@ namespace ESRI.ArcGIS.Client.Toolkit
 		/// <value>The type of the field.</value>
 		public Field.FieldType? FieldType { get; set; }
 
+        /// <summary>
+        /// Gets or setws the data type of the field. Indicates waht the type is 
+        /// for converting if FieldType is not set. FieldType take priority if set.
+        /// </summary>
+        public DataType? dataType {get; set;}
+
 		#region IValueConverter Members
 
 		/// <summary>
@@ -927,7 +1259,9 @@ namespace ESRI.ArcGIS.Client.Toolkit
 		/// </returns>
 		public object Convert(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture)
 		{
-			return value;
+            if (value is Guid && targetType == typeof(string))
+                return string.Format("{{{0}}}", value);
+			return value; // Note: No need to convert the object to a string by using the culture because it's what WPF is doing by default
 		}
 
 		/// <summary>
@@ -942,29 +1276,58 @@ namespace ESRI.ArcGIS.Client.Toolkit
 		/// </returns>
 		public object ConvertBack(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture)
 		{
-			return ConvertToType(FieldType, value);
+			return ConvertToType(FieldType, dataType, value, culture);
 		}
 
-		internal static object ConvertToType(Field.FieldType? FieldType, object value)
+		internal static object ConvertToType(Field.FieldType? fieldType, DataType? dataType, object value, CultureInfo culture)
 		{
-			if (FieldType.HasValue && value is string)
+			if (fieldType.HasValue && value is string)
 			{
-				switch (FieldType)
+				switch (fieldType)
 				{
 					case Field.FieldType.Double:
-						return EnsureType<double?>((string)value);
+						return EnsureType<double?>((string)value, culture);
 					case Field.FieldType.Integer:
-						return EnsureType<int?>((string)value);
+						return EnsureType<int?>((string)value, culture);
 					case Field.FieldType.Single:
-						return EnsureType<float?>((string)value);
+						return EnsureType<float?>((string)value, culture);
 					case Field.FieldType.SmallInteger:
-						return EnsureType<short?>((string)value);
+						return EnsureType<short?>((string)value, culture);
 					case Field.FieldType.Date:
-						return EnsureType<DateTime?>((string)value);
+						return EnsureType<DateTime?>((string)value, culture);
+                    case Field.FieldType.GUID:
+                        return EnsureType<Guid?>((string)value, culture);
 					default:
 						return value;
 				}
 			}
+            else if (dataType.HasValue && value is string)
+            {
+                switch(dataType)
+                {
+                    case DataType.Int16:
+                        return EnsureType<Int16?>((string)value, culture);
+                    case DataType.Int32:
+                        return EnsureType<Int32?>((string)value, culture);
+                    case DataType.Int64:
+                        return EnsureType<Int64?>((string)value, culture);
+                    case DataType.Decimal:
+                        return EnsureType<Decimal?>((string)value, culture);
+                    case DataType.Single:
+                        return EnsureType<Single?>((string)value, culture);
+                    case DataType.Double:
+                        return EnsureType<Double?>((string)value, culture);
+                    case DataType.DateTime:
+                        return EnsureType<DateTime?>((string)value, culture);
+                    case DataType.UInt16:
+                        return EnsureType<UInt16?>((string)value, culture);
+                    case DataType.UInt32:
+                        return EnsureType<UInt32?>((string)value, culture);
+                    case DataType.UInt64:
+                        return EnsureType<UInt64?>((string)value, culture);
+                    
+                }
+            }
 			return value;
 		}
 
@@ -977,41 +1340,78 @@ namespace ESRI.ArcGIS.Client.Toolkit
 		/// </summary>
 		/// <typeparam name="T">The type to validate.</typeparam>
 		/// <param name="str">the string to validate</param>
+		/// <param name="culture">The culture to use for the validation</param>
 		/// <returns>returns validated type or null if validation fails.</returns>
-		private static object EnsureType<T>(string str)
+		private static object EnsureType<T>(string str, CultureInfo culture)
 		{
 			if (string.IsNullOrEmpty(str))
 				return null;
 			else if (typeof(T) == typeof(int) || typeof(T) == typeof(int?))
 			{                
 				int outInt; 
-				if (int.TryParse(str,System.Globalization.NumberStyles.Number,System.Globalization.CultureInfo.CurrentCulture, out outInt))
+				if (int.TryParse(str,System.Globalization.NumberStyles.Number, culture, out outInt))
 					return outInt;
 			}
 			else if (typeof(T) == typeof(double) || typeof(T) == typeof(double?))
 			{
                 double outDouble; 
-                if (double.TryParse(str, System.Globalization.NumberStyles.Number, System.Globalization.CultureInfo.CurrentCulture, out outDouble))
+                if (double.TryParse(str, System.Globalization.NumberStyles.Number | System.Globalization.NumberStyles.AllowExponent, culture, out outDouble))
 					return outDouble;
 			}
 			else if (typeof(T) == typeof(float) || typeof(T) == typeof(float?))
 			{
                 float outFloat; 
-                if (float.TryParse(str, System.Globalization.NumberStyles.Number, System.Globalization.CultureInfo.CurrentCulture, out outFloat))
+                if (float.TryParse(str, System.Globalization.NumberStyles.Number | System.Globalization.NumberStyles.AllowExponent, culture, out outFloat))
 					return outFloat;
 			}
 			else if (typeof(T) == typeof(short) || typeof(T) == typeof(short?))
 			{
                 short outShort; 
-                if (short.TryParse(str, System.Globalization.NumberStyles.Number, System.Globalization.CultureInfo.CurrentCulture, out outShort))
+                if (short.TryParse(str, System.Globalization.NumberStyles.Number, culture, out outShort))
 					return outShort;
 			}
 			else if (typeof(T) == typeof(DateTime) || typeof(T) == typeof(DateTime?))
 			{
 				DateTime outDateTime;
-				if (DateTime.TryParse(str, out outDateTime))
+				if (DateTime.TryParse(str, culture, DateTimeStyles.None, out outDateTime))
 					return new DateTime(outDateTime.Ticks, DateTimeKind.Utc);
 			}
+            else if(typeof(T) == typeof(Guid) || typeof(T) == typeof(Guid?))
+            {
+                Guid outGuid;
+                if (Guid.TryParse(str, out outGuid))
+                    return outGuid;
+            }
+            else if (typeof(T) == typeof(Decimal) || typeof(T) == typeof(Decimal?))
+            {
+                Decimal outDecimal;
+                if (Decimal.TryParse(str, System.Globalization.NumberStyles.Number, culture, out outDecimal))
+                    return outDecimal;
+            }
+            else if (typeof(T) == typeof(Int64) || typeof(T) == typeof(Int64?))
+            {
+                Int64 outInt64;
+                if (Int64.TryParse(str, System.Globalization.NumberStyles.Number, culture, out outInt64))
+                    return outInt64;
+            }
+            else if (typeof(T) == typeof(UInt16) || typeof(T) == typeof(UInt16?))
+            {
+                UInt16 outUInt16;
+                if (UInt16.TryParse(str, System.Globalization.NumberStyles.Number, culture, out outUInt16))
+                    return outUInt16;
+            }
+            else if (typeof(T) == typeof(UInt32) || typeof(T) == typeof(UInt32?))
+            {
+                UInt32 outUInt32;
+                if (UInt32.TryParse(str, System.Globalization.NumberStyles.Number, culture, out outUInt32))
+                    return outUInt32;
+            }
+            else if (typeof(T) == typeof(UInt64) || typeof(T) == typeof(UInt64?))
+            {
+                UInt64 outUInt64;
+                if (UInt64.TryParse(str, System.Globalization.NumberStyles.Number, culture, out outUInt64))
+                    return outUInt64;
+            }
 			return str;
 		}
 

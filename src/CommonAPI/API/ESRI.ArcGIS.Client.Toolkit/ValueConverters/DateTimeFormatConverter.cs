@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Globalization;
 using System.Net;
 using System.Windows;
 using System.Windows.Controls;
@@ -45,7 +46,7 @@ namespace ESRI.ArcGIS.Client.Toolkit.ValueConverters
 		public object Convert(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture)
 		{
 			if (value is DateTime)
-				return DateTimeToString((DateTime)value, DateTimeKind, DateTimeFormat);
+				return DateTimeToString((DateTime)value, DateTimeKind, DateTimeFormat, culture);
 			return "";
 		}
 
@@ -69,16 +70,17 @@ namespace ESRI.ArcGIS.Client.Toolkit.ValueConverters
 		/// <summary>
 		/// Gets the ToString() result of a DateTime object. 
 		/// </summary>
-		/// <param name="Date">Date to call ToString() method on.</param>
-		/// <param name="Kind">DateTimeKind to present the string result in.</param>
-		/// <param name="DateTimeFormat">String format used to format the ToString() method with.</param>
+		/// <param name="date">Date to call ToString() method on.</param>
+		/// <param name="kind">DateTimeKind to present the string result in.</param>
+		/// <param name="dateTimeFormat">String format used to format the ToString() method with.</param>
+		/// <param name="culture">The culture</param>
 		/// <returns></returns>
-		public static string DateTimeToString(DateTime? Date, DateTimeKind Kind, string DateTimeFormat)
+		public static string DateTimeToString(DateTime? date, DateTimeKind kind, string dateTimeFormat, CultureInfo culture)
 		{
-			DateTime dt = new DateTime(Date.Value.Ticks, Date.Value.Kind);
+			DateTime dt = new DateTime(date.Value.Ticks, date.Value.Kind);
 			if (dt.Kind != System.DateTimeKind.Unspecified)
 			{
-				switch (Kind)
+				switch (kind)
 				{
 					case System.DateTimeKind.Local:
 						dt = dt.ToLocalTime();
@@ -88,7 +90,7 @@ namespace ESRI.ArcGIS.Client.Toolkit.ValueConverters
 						break;
 				}
 			}
-			return dt.ToString(DateTimeFormat, System.Globalization.CultureInfo.CurrentCulture);
+			return dt.ToString(dateTimeFormat, culture);
 		}
 	}
 }

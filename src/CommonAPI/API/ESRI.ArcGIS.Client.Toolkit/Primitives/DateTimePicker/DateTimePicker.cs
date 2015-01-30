@@ -266,6 +266,7 @@ namespace ESRI.ArcGIS.Client.Toolkit.Primitives
 #endif
 		void _button_Click(object sender, RoutedEventArgs e)
 		{
+			_calendar.Language = Language;
 			_popup.IsOpen = true;
 #if SILVERLIGHT
 			SetPopUpPosition();
@@ -357,7 +358,7 @@ namespace ESRI.ArcGIS.Client.Toolkit.Primitives
 				return;
 			}
 			DateTime dt;
-			if (DateTime.TryParse(text, out dt))
+			if (DateTime.TryParse(text, new System.Globalization.CultureInfo(Language.IetfLanguageTag), System.Globalization.DateTimeStyles.None, out dt))
 			{
 				if (_calendar != null)
 				{
@@ -458,7 +459,7 @@ namespace ESRI.ArcGIS.Client.Toolkit.Primitives
 					_textbox.Text = "";
 				else
 				{
-					string date = DateTimeFormatConverter.DateTimeToString(SelectedDate, DateTimeKind, DateTimeFormat);										
+					string date = DateTimeFormatConverter.DateTimeToString(SelectedDate, DateTimeKind, DateTimeFormat, new System.Globalization.CultureInfo(Language.IetfLanguageTag));
 					// WARNING //////////////////////////////////////////////////////////////////////
 					// Do not set empty string conversion to Textbox.Text doing so may override the//
  					// original value saving null to the selected date when that was not intended. //

@@ -5,6 +5,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
@@ -44,10 +45,10 @@ namespace ESRI.ArcGIS.Client.Toolkit
 		private ButtonBase _commitButton = null;                                // Variable to hold the Commit button
 		private ButtonBase _deleteButton = null;								// Variable to hold the Delete button
 		private Dictionary<string, CodedValueDomain> _codedValueDomains = null; // Dictionary of all coded value domains with field names as keys
-		private Dictionary<string, Control> _attributeFrameworkElements = null; // Dictionary to hold appropriate controls for each field keyed by field names
+		internal Dictionary<string, Control> _attributeFrameworkElements = null; // Dictionary to hold appropriate controls for each field keyed by field names
 		private bool _isUpdatedByCommitButton = false;                          // Indicates whether changes applied by pressing FeatureDataForm's Commit button
 		internal Dictionary<string, bool> _attributeValidationStatus = null;    // Dictionary of each field with its validation status
-		private bool _isBindingData = false;                                    // Variable indicationg that FeatureDataForm is binding the data
+		private bool _isBindingData = false;                                    // Variable indicating that FeatureDataForm is binding the data
 		private bool _isVerifyingAfterLosingFocus = false;                      // Indicates the verification is taking place after a control loses its focus
 		private bool _isValid;                                                  // field for IsValid property
 		private bool _hasEdits;                                                 // field for HasEdits property
@@ -68,6 +69,7 @@ namespace ESRI.ArcGIS.Client.Toolkit
 
 #if SILVERLIGHT
 			DefaultStyleKey = typeof(FeatureDataForm);
+			Language = System.Windows.Markup.XmlLanguage.GetLanguage(System.Globalization.CultureInfo.CurrentCulture.Name);
 #endif
 		}
 
@@ -598,7 +600,7 @@ namespace ESRI.ArcGIS.Client.Toolkit
 							{
 								newIndex++;
 								Type type = Utilities.GetFieldType(key, this.FeatureLayer.LayerInfo.Fields);
-								if (Utilities.AreEqual(codedValueSource.Code, newValue, type))
+								if (Utilities.AreEqual(codedValueSource.Code, newValue, type, new CultureInfo(Language.IetfLanguageTag)))
 									break;
 							}
 						}
@@ -670,7 +672,7 @@ namespace ESRI.ArcGIS.Client.Toolkit
 						if (key == _typeIdField)
 						{
 							// When TypeID value changes need to update all non inherited domain types
-							// becasue the coded values from the non inherited domains changed based on the TypeID value.
+							// because the coded values from the non inherited domains changed based on the TypeID value.
 							// All domain types will show up in LayerInfo.FeatureTypes, but only inherited types will not have
  							// a Domain value for LayerInfo.Fields[FieldName].Domain.
 							object code = newValue;
@@ -762,10 +764,13 @@ namespace ESRI.ArcGIS.Client.Toolkit
 
 		private void FrameworkElement_PropertyChanged(object sender, EventArgs e)
 		{
-			if (this._isBindingData)
-				return;
 
 			string associatedField = (sender as FrameworkElement).GetValue(AssociatedFieldNameProperty) as string;
+
+
+			if (this._isBindingData && associatedField != _typeIdField)
+				return;
+
 			if (associatedField != null && !string.IsNullOrEmpty(associatedField.ToString()))
 			{
 				if (FeatureLayer != null)
@@ -777,7 +782,7 @@ namespace ESRI.ArcGIS.Client.Toolkit
 						Type type = Utilities.GetFieldType(associatedField, FeatureLayer.LayerInfo.Fields);
 						try
 						{
-							Utilities.ConvertToType(value, type);							
+							Utilities.ConvertToType(value, type, new CultureInfo(Language.IetfLanguageTag));
 						}
 						catch
 						{
@@ -874,17 +879,17 @@ namespace ESRI.ArcGIS.Client.Toolkit
 			bool Found = false;
 			if (codedValueDomain != null)
 			{
-			foreach (KeyValuePair<object, string> codeVal in codedValueDomain.CodedValues)
-			{
-				if (codedValueSources == null)
-				{					
-					codedValueSources = new CodedValueSources();					
+				foreach (KeyValuePair<object, string> codeVal in codedValueDomain.CodedValues)
+				{
+					if (codedValueSources == null)
+					{					
+						codedValueSources = new CodedValueSources();					
+					}
+					if (value != null && codeVal.Key != null && codeVal.Key.ToString() == value.ToString())
+						Found = true;
+					CodedValueSource codedValueSource = new CodedValueSource() { Code = codeVal.Key, DisplayName = codeVal.Value == null ? "" : codeVal.Value };
+					codedValueSources.Add(codedValueSource);
 				}
-				if (value != null && codeVal.Key != null && codeVal.Key.ToString() == value.ToString())
-					Found = true;
-				CodedValueSource codedValueSource = new CodedValueSource() { Code = codeVal.Key, DisplayName = codeVal.Value == null ? "" : codeVal.Value };
-				codedValueSources.Add(codedValueSource);
-			}
 			}			
 			if (!Found && value != null)
 			{
@@ -922,6 +927,7 @@ namespace ESRI.ArcGIS.Client.Toolkit
 			dtp.DateTimeKind = this.DateTimeKind;
 			dtp.VerticalAlignment = VerticalAlignment.Center;
 			dtp.Margin = CONTROLS_MARGIN;
+			dtp.Language = this.Language;
 
 			// Applying Style if any:
 			if (this.DateTimePickerStyle != null)
@@ -938,6 +944,9 @@ namespace ESRI.ArcGIS.Client.Toolkit
 		private TextBox GetTextFieldControl()
 		{
 			TextBox textBox = new TextBox();
+#if SILVERLIGHT
+            textBox.Language = this.Language;
+#endif
 			textBox.VerticalAlignment = VerticalAlignment.Center;
 			textBox.Margin = CONTROLS_MARGIN;
 
@@ -958,16 +967,17 @@ namespace ESRI.ArcGIS.Client.Toolkit
 			int idx = -1;								
 			if (codedValueDomain == null)
 				return -1;
+			var culture = new CultureInfo(Language.IetfLanguageTag);
 			foreach (KeyValuePair<object, string> codeVal in codedValueDomain.CodedValues)
 			{
 				idx++;
-				if (Utilities.AreEqual(codeVal.Key, value, codeVal.Key.GetType()))
+				if (Utilities.AreEqual(codeVal.Key, value, codeVal.Key.GetType(), culture))
 					return idx;
 			}						
 
 			return -1;
 		}
-		private Control GetControlFromType(Field field, BindingMode bindingMode, Domain fieldDomain)
+		private Control GetControlFromType(FeatureLayerInfo layerInfo, Field field, BindingMode bindingMode, Domain fieldDomain)
 		{
 			string fieldName = field.Name;
 			object fieldValue = this.GraphicSource.Attributes[fieldName];
@@ -1001,8 +1011,8 @@ namespace ESRI.ArcGIS.Client.Toolkit
 
 				if (field.Type == Field.FieldType.Date)
 				{
-					if(fieldValue != null && fieldValue is DateTime)
-						fieldValue = DateTimeFormatConverter.DateTimeToString((DateTime)fieldValue, DateTimeKind, DateTimeFormat);
+					if(fieldValue is DateTime)
+						fieldValue = DateTimeFormatConverter.DateTimeToString((DateTime)fieldValue, DateTimeKind, DateTimeFormat, new CultureInfo(Language.IetfLanguageTag));
 				}
 									
 				(control as TextBox).Text = (fieldValue == null) ? "" : fieldValue.ToString();
@@ -1021,35 +1031,64 @@ namespace ESRI.ArcGIS.Client.Toolkit
 				}
 				else if ((fieldDomain != null && fieldDomain is CodedValueDomain) || FieldDomainUtils.IsDynamicDomain(field,FeatureLayer.LayerInfo))
 				{
-					codedValueDomain = fieldDomain as CodedValueDomain;
-					if (codedValueDomain != null)   // Coded value domain
+					var dynamicCodedValueSource = FieldDomainUtils.BuildDynamicCodedValueSource(field, layerInfo);
+					var nullableSources = new CodedValueSources();
+					CodedValueSources codedValueSources = null;
+
+					if (this._attributeFrameworkElements.ContainsKey(_typeIdField))
 					{
-						if (this._codedValueDomains == null)
-							this._codedValueDomains = new Dictionary<string, CodedValueDomain>();
-						if (!this._codedValueDomains.ContainsKey(fieldName))
-							this._codedValueDomains.Add(fieldName, codedValueDomain);
-						else
-							this._codedValueDomains[fieldName] = codedValueDomain;
-
-
-						if (field.Name != _typeIdField)
-							control = GetCodedValueDomainFieldControl(codedValueDomain, field, fieldValue);
-
-						foreach (KeyValuePair<object, string> codeVal in codedValueDomain.CodedValues)
+						var selectedItem = ((ComboBox)this._attributeFrameworkElements[_typeIdField]).SelectedItem;
+						if (selectedItem != null)
 						{
-							if ((codeVal.Key != null && codeVal.Key.Equals(fieldValue)) || (fieldValue != null && fieldValue.Equals(codeVal.Key)))
-							{
-								codedValueSource = new CodedValueSource() { Code = codeVal.Key, DisplayName = codeVal.Value == null ? "" : codeVal.Value };
-								break;
-							}							
+							var code = ((CodedValueSource)selectedItem).Code;
+							if (dynamicCodedValueSource != null && code != null && dynamicCodedValueSource.ContainsKey(code))
+								codedValueSources = dynamicCodedValueSource[code];
 						}
 					}
 					else
-						control = GetCodedValueDomainFieldControl(null, field, fieldValue);
+					{
+						codedValueSources = Toolkit.Utilities.DynamicCodedValueSource.GetCodedValueSources(layerInfo.TypeIdField, field, GraphicSource, dynamicCodedValueSource, nullableSources);
+					}
 
-						if(codedValueSource == null && fieldValue != null)
+					if (codedValueSources != null)
+					{
+						codedValueDomain = fieldDomain as CodedValueDomain;
+						if (codedValueDomain != null)   // Coded value domain
+						{
+							if (this._codedValueDomains == null)
+								this._codedValueDomains = new Dictionary<string, CodedValueDomain>();
+							if (!this._codedValueDomains.ContainsKey(fieldName))
+								this._codedValueDomains.Add(fieldName, codedValueDomain);
+							else
+								this._codedValueDomains[fieldName] = codedValueDomain;
+
+
+							if (field.Name != _typeIdField)
+								control = GetCodedValueDomainFieldControl(codedValueDomain, field, fieldValue);
+
+							foreach (KeyValuePair<object, string> codeVal in codedValueDomain.CodedValues)
+							{
+								if ((codeVal.Key != null && codeVal.Key.Equals(fieldValue)) || (fieldValue != null && fieldValue.Equals(codeVal.Key)))
+								{
+									codedValueSource = new CodedValueSource() { Code = codeVal.Key, DisplayName = codeVal.Value == null ? "" : codeVal.Value };
+									break;
+								}
+							}
+						}
+						else
+							control = GetCodedValueDomainFieldControl(null, field, fieldValue);
+
+						if (codedValueSource == null && fieldValue != null)
 							codedValueSource = new CodedValueSource() { Code = fieldValue, DisplayName = fieldValue == null ? " " : fieldValue.ToString(), Temp = true };
-					}					
+					}
+					else
+					{
+						if (field.Type == Field.FieldType.Date)
+							control = GetDateFieldControl();
+						else
+							control = GetTextFieldControl();
+					}
+				}			
 				else   
 				{
 					if (field.Type == Field.FieldType.Date)
@@ -1078,48 +1117,48 @@ namespace ESRI.ArcGIS.Client.Toolkit
 			IKeyValue datafield = null;
 			if (type == typeof(int?) || type == typeof(int))
 			{
-				try { datafield = new FeatureDataField<int?>(this, field, type, fieldValue != null ? Convert.ToInt32(fieldValue) : (int?)null); }
-				catch { datafield = new FeatureDataField<int?>(this, field, type, (int?)null); }
+				try { datafield = new FeatureDataField<int?>(this, layerInfo, field, type, fieldValue != null ? Convert.ToInt32(fieldValue) : (int?)null); }
+				catch { datafield = new FeatureDataField<int?>(this, layerInfo, field, type, (int?)null); }
 			}
 			else if (type == typeof(short?) || type == typeof(short))
 			{
-				try { datafield = new FeatureDataField<short?>(this, field, type, fieldValue != null ? Convert.ToInt16(fieldValue) : (short?)null); }
-				catch { datafield = new FeatureDataField<short?>(this, field, type, (short?)null); }
+				try { datafield = new FeatureDataField<short?>(this, layerInfo, field, type, fieldValue != null ? Convert.ToInt16(fieldValue) : (short?)null); }
+				catch { datafield = new FeatureDataField<short?>(this, layerInfo, field, type, (short?)null); }
 			}
 			else if (type == typeof(double?) || type == typeof(double))
 			{
-				try { datafield = new FeatureDataField<double?>(this, field, type, fieldValue != null ? Convert.ToDouble(fieldValue) : (double?)null); }
-				catch { datafield = new FeatureDataField<double?>(this, field, type, (double?)null); }
+				try { datafield = new FeatureDataField<double?>(this, layerInfo, field, type, fieldValue != null ? Convert.ToDouble(fieldValue) : (double?)null); }
+				catch { datafield = new FeatureDataField<double?>(this, layerInfo, field, type, (double?)null); }
 			}
 			else if (type == typeof(float?) || type == typeof(float))
 			{
-				try { datafield = new FeatureDataField<float?>(this, field, type, fieldValue != null ? Convert.ToSingle(fieldValue) : (float?)null); }
-				catch { datafield = new FeatureDataField<float?>(this, field, type, (float?)null); }
+				try { datafield = new FeatureDataField<float?>(this, layerInfo, field, type, fieldValue != null ? Convert.ToSingle(fieldValue) : (float?)null); }
+				catch { datafield = new FeatureDataField<float?>(this, layerInfo, field, type, (float?)null); }
 			}
 			else if (type == typeof(DateTime?) || type == typeof(DateTime))
 			{
-				try { datafield = new FeatureDataField<DateTime?>(this, field, type, fieldValue != null ? Convert.ToDateTime(fieldValue) : (DateTime?)null); }
-				catch { datafield = new FeatureDataField<DateTime?>(this, field, type, (DateTime?)null); }
+				try { datafield = new FeatureDataField<DateTime?>(this, layerInfo, field, type, fieldValue != null ? Convert.ToDateTime(fieldValue) : (DateTime?)null); }
+				catch { datafield = new FeatureDataField<DateTime?>(this, layerInfo, field, type, (DateTime?)null); }
 			}
 			else if (type == typeof(long?) || type == typeof(long))
 			{
-				try { datafield = new FeatureDataField<long?>(this, field, type, fieldValue != null ? Convert.ToInt64(fieldValue) : (long?)null); }
-				catch { datafield = new FeatureDataField<long?>(this, field, type, (long?)null); }
+				try { datafield = new FeatureDataField<long?>(this, layerInfo, field, type, fieldValue != null ? Convert.ToInt64(fieldValue) : (long?)null); }
+				catch { datafield = new FeatureDataField<long?>(this, layerInfo, field, type, (long?)null); }
 			}
 			else if (type == typeof(byte?) || type == typeof(byte))
 			{
-				try { datafield = new FeatureDataField<byte?>(this, field, type, fieldValue != null ? Convert.ToByte(fieldValue) : (byte?)null); }
-				catch { datafield = new FeatureDataField<byte?>(this, field, type, (byte?)null); }
+				try { datafield = new FeatureDataField<byte?>(this, layerInfo, field, type, fieldValue != null ? Convert.ToByte(fieldValue) : (byte?)null); }
+				catch { datafield = new FeatureDataField<byte?>(this, layerInfo, field, type, (byte?)null); }
 			}
 			else if (type == typeof(bool?) || type == typeof(bool))
 			{
-				try { datafield = new FeatureDataField<bool?>(this, field, type, fieldValue != null ? Convert.ToBoolean(fieldValue) : (bool?)null); }
-				catch { datafield = new FeatureDataField<bool?>(this, field, type, (bool?)null); }
+				try { datafield = new FeatureDataField<bool?>(this, layerInfo, field, type, fieldValue != null ? Convert.ToBoolean(fieldValue) : (bool?)null); }
+				catch { datafield = new FeatureDataField<bool?>(this, layerInfo, field, type, (bool?)null); }
 			}
 			else if (type == typeof(string))
 			{
-				try { datafield = new FeatureDataField<string>(this, field, type, fieldValue != null ? Convert.ToString(fieldValue) : (string)null); }
-				catch { datafield = new FeatureDataField<string>(this, field, type, (string)null); }
+				try { datafield = new FeatureDataField<string>(this, layerInfo, field, type, fieldValue != null ? Convert.ToString(fieldValue) : (string)null); }
+				catch { datafield = new FeatureDataField<string>(this, layerInfo, field, type, (string)null); }
 			}
             else if(type == typeof(Guid))
             {                
@@ -1133,12 +1172,12 @@ namespace ESRI.ArcGIS.Client.Toolkit
                             fieldValue = guid;
                     }
                 }
-                try { datafield = new FeatureDataField<Guid>(this, field, type, (Guid)fieldValue); }
-                catch { datafield = new FeatureDataField<object>(this, field, type, fieldValue); }
+                try { datafield = new FeatureDataField<Guid>(this, layerInfo, field, type, (Guid)fieldValue); }
+                catch { datafield = new FeatureDataField<object>(this, layerInfo, field, type, fieldValue); }
             }
 			else if (type == typeof(object))
 			{
-				datafield = new FeatureDataField<object>(this, field, type, fieldValue);
+				datafield = new FeatureDataField<object>(this, layerInfo, field, type, fieldValue);
 			}			
 			if (datafield != null)
 			{
@@ -1195,7 +1234,7 @@ namespace ESRI.ArcGIS.Client.Toolkit
 			return control;
 		}
 
-		private void GenerateField(Field field, Grid grid, BindingMode bindingMode)
+		private void GenerateField(FeatureLayerInfo layerInfo, Field field, Grid grid, BindingMode bindingMode)
 		{
 			if (field.Type == Field.FieldType.OID && !field.Editable)
 				return;
@@ -1237,13 +1276,13 @@ namespace ESRI.ArcGIS.Client.Toolkit
 			Domain fieldDomain = GetDomain(field.Name, typeIdFieldValue);
 			if (fieldDomain == null)
 				fieldDomain = field.Domain;
-			PopulateFieldControl(field, grid, bindingMode, gridRow, fieldDomain);
+			PopulateFieldControl(layerInfo, field, grid, bindingMode, gridRow, fieldDomain);
 		}
 
-		private Control PopulateFieldControl(Field field, Grid grid, BindingMode bindingMode, int gridRow, Domain fieldDomain)
+		private Control PopulateFieldControl(FeatureLayerInfo layerInfo, Field field, Grid grid, BindingMode bindingMode, int gridRow, Domain fieldDomain)
 		{
 			// Field control:
-			Control fieldControl = GetControlFromType(field, bindingMode, fieldDomain);
+			Control fieldControl = GetControlFromType(layerInfo, field, bindingMode, fieldDomain);
 
 			// Set user control's AssociatedFieldName attached property to identify the corresponding field:
 			fieldControl.SetValue(AssociatedFieldNameProperty, field.Name);
@@ -1324,7 +1363,7 @@ namespace ESRI.ArcGIS.Client.Toolkit
 					if ((outFields.Contains("*") || outFields.Contains(field.Name)) &&	//Outfield requested
 						this.GraphicSource.Attributes.ContainsKey(field.Name) && 		//Attribute exist in graphic
 						IsViewableAttribute(field)) 					//Attribute not hidden
-						GenerateField(field, grid, bindingMode);
+						GenerateField(this.FeatureLayer.LayerInfo, field, grid, bindingMode);
 				}
 				if (this._commitButton != null)
 					this._commitButton.TabIndex = currentTabOrder;
@@ -1429,6 +1468,7 @@ namespace ESRI.ArcGIS.Client.Toolkit
 				return false; // If there are no entries there are no changes
 			else
 			{
+				var culture = new CultureInfo(Language.IetfLanguageTag);
 				// If there are entries verify that that at least one is different from graphic attribute value.				
 				foreach (KeyValuePair<string, bool> ChangeLogItem in _attributeValidationStatus)
 				{
@@ -1450,7 +1490,7 @@ namespace ESRI.ArcGIS.Client.Toolkit
 							var value = ((ComboBox)control).SelectedItem;							
 							if (value is CodedValueSource)
 							{								
-								if (Utilities.AreEqual(((CodedValueSource)value).Code, GraphicValue,type) == false)
+								if (Utilities.AreEqual(((CodedValueSource)value).Code, GraphicValue,type, culture) == false)
 									return true;
 							}
 							else if (value == null && GraphicValue != null)
@@ -1459,14 +1499,14 @@ namespace ESRI.ArcGIS.Client.Toolkit
 						else if (control is TextBox)
 						{
 							var value = ((TextBox)control).Text;
-							if (Utilities.AreEqual(value, GraphicValue, type) == false)
+							if (Utilities.AreEqual(value, GraphicValue, type, culture) == false)
 								return true;
 
 						}
 						else if (control is DateTimePicker)
 						{
 							var value = ((DateTimePicker)control).SelectedDate;
-							if (Utilities.AreEqual(value, GraphicValue, type) == false)
+							if (Utilities.AreEqual(value, GraphicValue, type, culture) == false)
 								return true;
 						}
 					}
@@ -1566,7 +1606,7 @@ namespace ESRI.ArcGIS.Client.Toolkit
 						CodedValueDomain codedValueDomain = this._codedValueDomains[fieldName];
 						foreach (KeyValuePair<object, string> codeVal in codedValueDomain.CodedValues)
 						{
-							if (Utilities.AreEqual(codeVal.Key, this.GraphicSource.Attributes[fieldName], codeVal.Key.GetType()))
+							if (Utilities.AreEqual(codeVal.Key, this.GraphicSource.Attributes[fieldName], codeVal.Key.GetType(), new CultureInfo(Language.IetfLanguageTag)))
 							{
 								currentValueInGraphic = new CodedValueSource() { Code = codeVal.Key, DisplayName = codeVal.Value == null ? "" : codeVal.Value };
 								break;
@@ -1625,6 +1665,7 @@ namespace ESRI.ArcGIS.Client.Toolkit
 		private bool HasChange(Control control, object valueInGraphic, Type type, out bool hasError)
 		{
 			hasError = false;
+			CultureInfo culture = new CultureInfo(Language.IetfLanguageTag);
 			try
 			{
 				if (control is ComboBox)
@@ -1636,7 +1677,7 @@ namespace ESRI.ArcGIS.Client.Toolkit
 					}
 					else
 					{
-						if (Utilities.AreEqual((control as ComboBox).SelectedItem, valueInGraphic, type, out hasError))
+						if (Utilities.AreEqual((control as ComboBox).SelectedItem, valueInGraphic, type, culture, out hasError))
 							return false;
 					}
 				}
@@ -1646,7 +1687,7 @@ namespace ESRI.ArcGIS.Client.Toolkit
 					DateTime? dateToCheck = null;
 					if (selectedDate != null)
 						dateToCheck = new DateTime(selectedDate.Value.Ticks, selectedDate.Value.Kind);
-					if (Utilities.AreEqual(dateToCheck, valueInGraphic, type, out hasError))
+					if (Utilities.AreEqual(dateToCheck, valueInGraphic, type, culture, out hasError))
 						return false;
 				}
 				else if (control is TextBox)
@@ -1659,7 +1700,7 @@ namespace ESRI.ArcGIS.Client.Toolkit
 						return valueInGraphic as string != input;
 					}
 					if ((string.IsNullOrEmpty((control as TextBox).Text.Trim()) && valueInGraphic == null) ||
-						Utilities.AreEqual((control as TextBox).Text, valueInGraphic, type, out hasError))
+						Utilities.AreEqual((control as TextBox).Text, valueInGraphic, type, culture,  out hasError))
 						return false;
 				}
 			}
@@ -1716,11 +1757,11 @@ namespace ESRI.ArcGIS.Client.Toolkit
 						else if (control is TextBox)
 							value = (control as TextBox).Text;
 						if (Utilities.IsNotOfTypeSystemNullable(typeIdFieldType))
-							typeIdFieldValue = System.Convert.ChangeType(value, typeIdFieldType, null);
+							typeIdFieldValue = System.Convert.ChangeType(value, typeIdFieldType, new CultureInfo(Language.IetfLanguageTag));
 						else
-							typeIdFieldValue = System.Convert.ChangeType(value, System.Nullable.GetUnderlyingType(typeIdFieldType), null);
+							typeIdFieldValue = System.Convert.ChangeType(value, System.Nullable.GetUnderlyingType(typeIdFieldType), new CultureInfo(Language.IetfLanguageTag));
 					}
-					catch { }									
+					catch { }
 
 					foreach (Field field in fields)
 					{
@@ -1756,7 +1797,8 @@ namespace ESRI.ArcGIS.Client.Toolkit
 							Domain fieldDomain = GetDomain(field.Name, typeIdFieldValue);
 							if (fieldDomain == null)
 								fieldDomain = field.Domain;
-							Control newFieldControl = PopulateFieldControl(field, grid, bindingMode, gridRow.Value, fieldDomain);
+
+							Control newFieldControl = PopulateFieldControl(FeatureLayer != null ? FeatureLayer.LayerInfo : null, field, grid, bindingMode, gridRow.Value, fieldDomain);
 
 							if (newFieldControl is TextBox)
 								(newFieldControl as TextBox).SetValue(TextBox.TextProperty, previousFieldControlValue == null ? "" : previousFieldControlValue.ToString());
@@ -1764,10 +1806,43 @@ namespace ESRI.ArcGIS.Client.Toolkit
 								(newFieldControl as DateTimePicker).SetValue(DateTimePicker.SelectedDateProperty, previousFieldControlValue as DateTime?);
 							else if (newFieldControl is ComboBox)
 							{
-								int selectedIndex = -1;								
-								Control combobox = (field.Name != _typeIdField && field.Domain == null) ? newFieldControl : previousFieldControl;								
-									selectedIndex = ((ComboBox)combobox).SelectedIndex;																						
-								(newFieldControl as ComboBox).SetValue(ComboBox.SelectedIndexProperty, selectedIndex);
+								var newComboBox = (ComboBox)newFieldControl;
+
+								if (previousFieldControl is ComboBox)
+								{
+									int selectedIndex = -1;
+									Control combobox = (field.Name != _typeIdField && field.Domain == null) ? newComboBox : previousFieldControl;
+									selectedIndex = ((ComboBox)combobox).SelectedIndex;
+									newComboBox.SetValue(ComboBox.SelectedIndexProperty, selectedIndex);
+								}
+								else if (previousFieldControl is TextBox || previousFieldControl is DateTimePicker)
+								{
+									var codedValueSources = newComboBox.ItemsSource as IEnumerable<CodedValueSource>;
+									if (codedValueSources != null)
+									{
+										var codedValueSource = codedValueSources.FirstOrDefault(cvs => Utilities.AreEqual(cvs.Code, previousFieldControlValue, Utilities.GetFieldType(field), new CultureInfo(Language.IetfLanguageTag)));
+										if (codedValueSource != null)
+											newComboBox.SetValue(ComboBox.SelectedItemProperty, codedValueSource);
+										else
+										{
+											var list = new List<CodedValueSource>(codedValueSources);
+											
+											var temp = list.FirstOrDefault(cvd => cvd.Temp == true);
+											if (temp != null)
+												list.Remove(temp);
+
+											int index = field.Nullable ? 1 : 0;
+											list.Insert(index, new CodedValueSource()
+											{
+												Code = previousFieldControlValue,
+												DisplayName = previousFieldControlValue == null ? "" : previousFieldControlValue.ToString(),
+												Temp = true
+											});
+											newComboBox.SetValue(ComboBox.ItemsSourceProperty, list);
+											newComboBox.SetValue(ComboBox.SelectedIndexProperty, index );
+										}
+									}
+								}
 							}
 						}
 					}
@@ -1776,8 +1851,20 @@ namespace ESRI.ArcGIS.Client.Toolkit
 			return true;
 		}
 
+		private void ResetValidation()
+		{
+			if (_attributeValidationStatus != null && _attributeValidationStatus.Keys.Any())
+			{
+				foreach (var key in _attributeValidationStatus.Keys.ToArray())
+					_attributeValidationStatus[key] = true;
+			}
+			IsValid = true;
+			UpdateStates();
+		}
+
 		private void RegenerateLayout(Control control, Control controlToFocus)
 		{
+			ResetValidation();
 			int tabIndex = controlToFocus != null ? controlToFocus.TabIndex : 0;
 			this._isBindingData = true;
 			if (RepopulateDomains(control))	// Layout is regenerated, apply the correct tab order
@@ -1903,53 +1990,57 @@ namespace ESRI.ArcGIS.Client.Toolkit
 
 		#region FeatureDataForm helper methods
 		internal sealed class Utilities
-		{
+		{			
+			internal static Type GetFieldType(Field field)
+			{
+				Type fieldType = Type.GetType("System.Object");
+				switch (field.Type)
+				{
+					case Field.FieldType.Date:
+						fieldType = typeof(DateTime?);
+						break;
+					case Field.FieldType.Double:
+						fieldType = typeof(double?);
+						break;
+					case Field.FieldType.Integer:
+						fieldType = typeof(int?);
+						break;
+					case Field.FieldType.OID:
+						fieldType = typeof(int);
+						break;
+					case Field.FieldType.GUID:
+						fieldType = typeof(Guid);
+						break;
+					case Field.FieldType.Geometry:
+					case Field.FieldType.Blob:
+					case Field.FieldType.Raster:
+					case Field.FieldType.Unknown:
+						fieldType = typeof(object);
+						break;
+					case Field.FieldType.Single:
+						fieldType = typeof(float?);
+						break;
+					case Field.FieldType.SmallInteger:
+						fieldType = typeof(short?);
+						break;
+					case Field.FieldType.GlobalID:
+					case Field.FieldType.String:
+					case Field.FieldType.XML:
+						fieldType = typeof(string);
+						break;
+					default:
+						throw new NotSupportedException(string.Format(Properties.Resources.FieldDomain_FieldTypeNotSupported, fieldType.GetType()));
+				}
+				return fieldType;
+			}
+
 			internal static Type GetFieldType(string fieldName, IEnumerable<Field> fields)
 			{
 				Type fieldType = Type.GetType("System.Object");
 				foreach (Field field in fields)
 				{
-					if (field.Name == fieldName)
-					{
-						switch (field.Type)
-						{
-							case Field.FieldType.Date:
-								fieldType = typeof(DateTime?);
-								break;
-							case Field.FieldType.Double:
-								fieldType = typeof(double?);
-								break;
-							case Field.FieldType.Integer:
-								fieldType = typeof(int?);
-								break;
-							case Field.FieldType.OID:
-								fieldType = typeof(int);
-								break;							
-							case Field.FieldType.GUID:
-                                fieldType = typeof(Guid);
-                                break;
-                            case Field.FieldType.Geometry:
-							case Field.FieldType.Blob:
-							case Field.FieldType.Raster:
-							case Field.FieldType.Unknown:
-								fieldType = typeof(object);
-								break;
-							case Field.FieldType.Single:
-								fieldType = typeof(float?);
-								break;
-							case Field.FieldType.SmallInteger:
-								fieldType = typeof(short?);
-								break;
-							case Field.FieldType.GlobalID:
-							case Field.FieldType.String:
-							case Field.FieldType.XML:
-								fieldType = typeof(string);
-								break;
-							default:
-								throw new NotSupportedException(string.Format(Properties.Resources.FieldDomain_FieldTypeNotSupported, fieldType.GetType()));
-						}
-						return fieldType;
-					}
+					if (field.Name == fieldName)					
+						return GetFieldType(field);					
 				}
 				return fieldType;
 			}
@@ -1960,13 +2051,13 @@ namespace ESRI.ArcGIS.Client.Toolkit
 					throw new ArgumentException(string.Format(Properties.Resources.Validation_InvalidRangeDomain, range.MinimumValue, range.MaximumValue));
 			}
 
-			internal static bool AreEqual(object firstObject, object secondObject, Type type)
+			internal static bool AreEqual(object firstObject, object secondObject, Type type, CultureInfo culture)
 			{
 				bool err = false;
-				return AreEqual(firstObject, secondObject, type, out err);
+				return AreEqual(firstObject, secondObject, type, culture, out err);
 			}
 
-			internal static bool AreEqual(object firstObject, object secondObject, Type type, out bool hasError)
+			internal static bool AreEqual(object firstObject, object secondObject, Type type, CultureInfo culture, out bool hasError)
 			{
 				hasError = false;
 				bool isNullable = type == typeof(string) ? true : !IsNotOfTypeSystemNullable(type);										
@@ -1976,11 +2067,11 @@ namespace ESRI.ArcGIS.Client.Toolkit
 				CodedValueSource firstCodedValueSource = firstObject as CodedValueSource;
 				CodedValueSource secondCodedValueSource = secondObject as CodedValueSource;
 				if (firstCodedValueSource != null && secondCodedValueSource != null)
-					return AreEqual(firstCodedValueSource.Code, secondCodedValueSource.Code, firstCodedValueSource.Code != null ? firstCodedValueSource.Code.GetType() : null);
+					return AreEqual(firstCodedValueSource.Code, secondCodedValueSource.Code, firstCodedValueSource.Code != null ? firstCodedValueSource.Code.GetType() : null, culture);
 				else if (firstCodedValueSource == null && secondCodedValueSource != null)
-					return AreEqual(firstObject, secondCodedValueSource.Code, secondCodedValueSource.Code != null ? secondCodedValueSource.Code.GetType() : null);
+					return AreEqual(firstObject, secondCodedValueSource.Code, secondCodedValueSource.Code != null ? secondCodedValueSource.Code.GetType() : null, culture);
 				else if (firstCodedValueSource != null && secondCodedValueSource == null)
-					return AreEqual(firstCodedValueSource.Code, secondObject, firstCodedValueSource.Code != null ? firstCodedValueSource.Code.GetType() : null);
+					return AreEqual(firstCodedValueSource.Code, secondObject, firstCodedValueSource.Code != null ? firstCodedValueSource.Code.GetType() : null, culture);
 				else
 				{
 					if (firstObject == null && secondObject == null) //	Both are null
@@ -1989,8 +2080,8 @@ namespace ESRI.ArcGIS.Client.Toolkit
 						return false;
 					try //None are null. Try convert to same type
 					{
-						object val1 = ConvertToType(firstObject, type);
-						object val2 = ConvertToType(secondObject, type);
+						object val1 = ConvertToType(firstObject, type, culture);
+						object val2 = ConvertToType(secondObject, type, culture);
 						return val1 != null ? val1.Equals(val2) : val1 == val2;
 					}
 					catch { hasError = true; }
@@ -1998,7 +2089,7 @@ namespace ESRI.ArcGIS.Client.Toolkit
 
 				return false;
 			}
-			internal static object ConvertToType(object value, Type type)
+			internal static object ConvertToType(object value, Type type, CultureInfo culture)
 			{
 				bool isNullable = !IsNotOfTypeSystemNullable(type);
 				if (value == null && isNullable) return null;
@@ -2025,7 +2116,7 @@ namespace ESRI.ArcGIS.Client.Toolkit
 				}
 				if (isNullable)
 					type = System.Nullable.GetUnderlyingType(type);
-				return Convert.ChangeType(value, type, null);
+				return Convert.ChangeType(value, type, culture);
 
 			}
 			internal static bool IsNotOfTypeSystemNullable(Type type)

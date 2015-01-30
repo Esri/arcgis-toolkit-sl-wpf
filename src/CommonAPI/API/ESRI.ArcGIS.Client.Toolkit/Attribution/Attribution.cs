@@ -299,6 +299,15 @@ namespace ESRI.ArcGIS.Client.Toolkit
 		}
 		#endregion
 
+	    /// <summary>
+	    /// When overridden in a derived class, is invoked whenever application code or internal processes call <see cref="M:System.Windows.FrameworkElement.ApplyTemplate"/>.
+	    /// </summary>
+	    public override void OnApplyTemplate()
+		{
+			base.OnApplyTemplate();
+			UpdateAttributionItems();
+		}
+
 		#region DependencyProperty Layers
 
         /// <summary>
@@ -975,20 +984,30 @@ namespace ESRI.ArcGIS.Client.Toolkit
 		/// </summary>
 		private void UpdateAttributionItems()
 		{
-			if (Layers == null) {
-				Items = null;
-				return;
-			}
-
 			if (DesignerProperties.GetIsInDesignMode(this))
+			{
 				// Design mode : create a dummy entry by layer implementing IAttribution with non null AttributionTemplate
-				Items = Layers.OfType<IAttribution>().Where(attrib => attrib.AttributionTemplate != null).Select(attribution => (IAttribution)new DesignAttribution((Layer)attribution)).ToObservableCollection();
-			else {
+				IEnumerable<IAttribution> items = Layers == null
+					? null
+					: Layers.OfType<IAttribution>().Where(attrib => attrib.AttributionTemplate != null).Select(attribution => (IAttribution) new DesignAttribution((Layer) attribution));
+				// If no layer implementing IAttribution, create a design time attribution to enhance the design time experience
+				if (items == null || !items.Any())
+					items = new IAttribution[] { new DesignAttribution(null) };
+				Items = items.ToObservableCollection();
+			}
+			else
+			{
 				// Non design mode : filter on implementation of IAttribution and non null AttributionTemplate
-
+				if (Layers == null)
+				{
+					Items = null;
+				}
+				else
+				{
 				IEnumerable<Layer> visibleLayers = EnumerateLeafLayers(Layers);
 				Items = visibleLayers.OfType<IAttribution>().Where(attrib => attrib.AttributionTemplate != null).ToObservableCollection();
 			}
+		}
 		}
 
 		private IEnumerable<Layer> EnumerateLeafLayers(IEnumerable<Layer> layers)
@@ -1015,7 +1034,9 @@ namespace ESRI.ArcGIS.Client.Toolkit
 		{
 			public DesignAttribution(Layer layer)
 			{
-				Copyright = string.Format(Properties.Resources.Attribution_Copyright, layer.ID ?? layer.GetType().Name);
+				Copyright = layer == null
+					            ? string.Format(Properties.Resources.Attribution_Copyright, "Design")
+					            : string.Format(Properties.Resources.Attribution_Copyright, layer.ID ?? layer.GetType().Name);
 			}
 
 			static DesignAttribution()

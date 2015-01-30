@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using ESRI.ArcGIS.Client.FeatureService;
 
 namespace ESRI.ArcGIS.Client.Toolkit.Utilities
@@ -17,9 +18,7 @@ namespace ESRI.ArcGIS.Client.Toolkit.Utilities
 		internal static bool IsDynamicDomain(Field field, FeatureLayerInfo layerInfo)
 		{
 			bool result = false;
-			if (field.Domain == null && layerInfo != null
-				&& layerInfo.FeatureTypes != null
-				&& layerInfo.FeatureTypes.Count > 0)
+			if (field != null && layerInfo != null && layerInfo.FeatureTypes != null && layerInfo.FeatureTypes.Count > 0)
 			{
 				foreach (object key in layerInfo.FeatureTypes.Keys)
 				{
@@ -80,6 +79,41 @@ namespace ESRI.ArcGIS.Client.Toolkit.Utilities
 			}
 			return dynamicCodedValueSource;
 		}
+
+        internal static IEnumerable<KeyValuePair<object,RangeDomain<T>>> BuildDynamicRangeDomain<T>(Field field, FeatureLayerInfo layerInfo) where T : System.IComparable
+        {
+            List<KeyValuePair<object,RangeDomain<T>>> dynamicRangeDomains = null;
+            foreach (object key in layerInfo.FeatureTypes.Keys)
+            {
+                FeatureType featureType = layerInfo.FeatureTypes[key];
+                if (featureType.Domains.ContainsKey(field.Name))
+                {
+                    if (dynamicRangeDomains == null)
+                        dynamicRangeDomains = new List<KeyValuePair<object,RangeDomain<T>>>();
+
+                    RangeDomain<T> rangeDomain = featureType.Domains[field.Name] as RangeDomain<T>;
+                    if (rangeDomain != null)
+                        dynamicRangeDomains.Add(new KeyValuePair<object, RangeDomain<T>>(featureType.Id, rangeDomain));                   
+                }
+            }
+            return dynamicRangeDomains;
+        }
+#if !SILVERLIGHT
+		internal static RangeDomain<T> GetRangeDomain<T>(string lookupField, Graphic graphic, IEnumerable<KeyValuePair<object, RangeDomain<T>>> dynamicRangeDomain) where T : System.IComparable
+        {
+            if (dynamicRangeDomain != null && graphic != null && !string.IsNullOrEmpty(lookupField))
+            {
+                var key =  graphic.Attributes[lookupField];                
+                if (key == null)
+                    return null;
+                var domains = dynamicRangeDomain.Where(kvp => kvp.Key.Equals(key));
+                if (domains != null && domains.Any())
+                    return domains.First().Value;                 
+            }
+            return null;
+        }
+#endif
+
 		/// <summary>
 		/// Returns CodedValueSources that make up the display text of each value of the TypeIDField.
 		/// </summary>

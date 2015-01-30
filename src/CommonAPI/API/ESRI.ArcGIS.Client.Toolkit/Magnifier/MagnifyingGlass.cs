@@ -4,6 +4,7 @@
 // All other rights reserved.
 
 using System;
+using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -299,7 +300,7 @@ namespace ESRI.ArcGIS.Client.Toolkit
 			{
 				if (mag.bigMap != null)
 				{
-					if (mag.Layer != null)
+					if (mag.Layer != null && !mag.bigMap.Layers.Any()) // the layer may have laready b een added OnLayerChanegd or OnApplyTemplate events
 						mag.bigMap.Layers.Add(mag.Layer);					
 					mag.bigMap.Rotation = newMap.Rotation;
 				}

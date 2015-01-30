@@ -83,22 +83,28 @@
 					<StackPanel>
 						<StackPanel.Resources>
 							<!-- Busy indicator displayed while the legend is requested-->
-							<DataTemplate x:Key="BusyIndicatorTemplate">
+							<ControlTemplate x:Key="BusyIndicatorTemplate">
+								<ControlTemplate.Triggers>
+									<Trigger Value="Visible" Property="Visibility">
+										<Trigger.EnterActions>
+											<BeginStoryboard x:Name="bs" >
+												<BeginStoryboard.Storyboard>
+													<Storyboard>
+														<DoubleAnimation Duration="0:0:1" RepeatBehavior="Forever"
+																		Storyboard.TargetName="BusyIndicator"
+																		Storyboard.TargetProperty="(UIElement.RenderTransform).(RotateTransform.Angle)"
+																		To="360" />
+													</Storyboard>
+												</BeginStoryboard.Storyboard>
+												</BeginStoryboard>
+										</Trigger.EnterActions>
+										<Trigger.ExitActions>
+											<RemoveStoryboard BeginStoryboardName="bs"/>
+										</Trigger.ExitActions>
+									</Trigger>
+								</ControlTemplate.Triggers>
 								<Grid x:Name="BusyIndicator" Background="Transparent" Margin="3,0" 
 									  HorizontalAlignment="Left" VerticalAlignment="Center" RenderTransformOrigin="0.5,0.5" >
-									<Grid.Triggers>
-										<EventTrigger RoutedEvent="Grid.Loaded">
-											<EventTrigger.Actions>
-												<BeginStoryboard>
-													<Storyboard>
-														<DoubleAnimation Duration="0:0:1" RepeatBehavior="Forever" To="360" Storyboard.TargetName="BusyIndicator"
-															 Storyboard.TargetProperty="(UIElement.RenderTransform).(RotateTransform.Angle)" />
-													</Storyboard>
-												</BeginStoryboard>
-											</EventTrigger.Actions>
-										</EventTrigger>
-									</Grid.Triggers>
-
 									<Grid.RenderTransform>
 										<RotateTransform />
 									</Grid.RenderTransform>
@@ -108,7 +114,7 @@
 									<Ellipse Fill="#BF525252" Height="5" Width="5" VerticalAlignment="Bottom" Margin="0,0,3,3" HorizontalAlignment="Right" />
 									<Ellipse Fill="#FF525252" Height="6" Width="6" VerticalAlignment="Bottom" Margin="9,0" />
 								</Grid>
-							</DataTemplate>
+							</ControlTemplate>
 						</StackPanel.Resources>
 
 
@@ -123,7 +129,7 @@
 
 						<StackPanel Orientation="Horizontal" Margin="0,6">
 							<!--Busy indicator-->
-							<ContentControl ContentTemplate="{StaticResource BusyIndicatorTemplate}"
+							<Control Template="{StaticResource BusyIndicatorTemplate}"
 											Visibility="{Binding BusyIndicatorVisibility}"
 											VerticalAlignment="Center"/>
 

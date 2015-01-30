@@ -26,7 +26,7 @@ namespace ESRI.ArcGIS.Client.Toolkit.Utilities
 			if (value != null)
 			{
 				DateTime dt = DateTime.MinValue;
-				if (DateTime.TryParse(value.ToString(), out dt))
+				if (DateTime.TryParse(value.ToString(), culture, System.Globalization.DateTimeStyles.None,  out dt))
 					return dt.ToShortDateString();
 				else
 					return value;

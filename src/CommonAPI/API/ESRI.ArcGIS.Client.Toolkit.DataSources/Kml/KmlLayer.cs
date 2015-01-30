@@ -423,7 +423,7 @@ namespace ESRI.ArcGIS.Client.Toolkit.DataSources
   ///   // Need to use a ProxyUrl on the KmlLayer since the service is not hosted locally or on a local network.
   ///   theKmlLayer.ProxyUrl = "http://servicesbeta3.esri.com/SilverlightDemos/ProxyPage/proxy.ashx";
   ///   
-  ///   // Add the KmlLayer to the Map. An automaic refresh of the Map and Legend Controls will occur.
+  ///   // Add the KmlLayer to the Map. An automatic refresh of the Map and Legend Controls will occur.
   ///   Map1.Layers.Add(theKmlLayer);
   /// }
   /// </code>
@@ -521,7 +521,7 @@ namespace ESRI.ArcGIS.Client.Toolkit.DataSources
   /// </para>
   /// <para>
   /// Depending on the particular ArcGIS Runtime for WPF object that is used, the developer will need to write code in the 
-  /// appropriate error handling event. For example: an ArcGISDynmaicMapServiceLayer should have error trapping code in 
+  /// appropriate error handling event. For example: an ArcGISDynamicMapServiceLayer should have error trapping code in 
   /// the InitializationFailed Event; a QueryTask should have error trapping code in the Failed Event, a PrintTask should 
   /// have error trapping code in the ExecuteCompleted Event (via the PrintEventArgs), etc.
   /// </para>
@@ -1045,7 +1045,7 @@ namespace ESRI.ArcGIS.Client.Toolkit.DataSources
   ///   </item>
   ///   <item>
   ///   <b>NOTE:</b> To learn more about how proxies work refer to the <b>ArcGIS Resource Center</b> document 
-  ///   <a href="http://help.arcgis.com/en/webapi/silverlight/help/index.html#/Secure_services/016600000022000000/" target="_blank">Secure Services</a>. 
+        ///   <a href="javascript:ApiToConcept('secure-services', '01n700000022000000', '011v0000000n000000')" target="_top">Secure Services</a>. 
   ///   </item>
   /// </list>
   /// <para>
@@ -1625,7 +1625,7 @@ namespace ESRI.ArcGIS.Client.Toolkit.DataSources
   ///                       
   ///                       When looking at the binding syntax for the Text="" Property the following applies:
   ///                       
-  ///                       (1) Binding [extendedData] ==&gt; extendedData is the internal attribute name of the KmlExtenedData object. 
+  ///                       (1) Binding [extendedData] ==&gt; extendedData is the internal attribute name of the KmlExtendedData object. 
   ///                       Hence you are binding to this Attribute just as you would a normal String but in this case you are 
   ///                       binding to an object that can have any of three attribute values ('DisplayName', 'Name', and 'Value').
   ///                                             
@@ -2131,7 +2131,7 @@ namespace ESRI.ArcGIS.Client.Toolkit.DataSources
   ///       // Append which Graphic we are operating on in the StringBuilder.
   ///       sb.Append("Graphic #" + graphicsCount.ToString() + Environment.NewLine);
   ///       
-  ///       // Incriment the Graphics counter.
+  ///       // Increment the Graphics counter.
   ///       graphicsCount = graphicsCount + 1;
   ///       
   ///       // ---------------------------------------------------------------------------------------
@@ -2251,7 +2251,7 @@ namespace ESRI.ArcGIS.Client.Toolkit.DataSources
   ///     sb.Append("=============================================" + Environment.NewLine);
   ///     sb.Append("Number of Elements: " + theElementLayer.Children.Count.ToString() + Environment.NewLine);
   ///     
-  ///     // Append the Extent information about the ElementLayer int the Stirng Builder.
+  ///     // Append the Extent information about the ElementLayer int the String Builder.
   ///     ESRI.ArcGIS.Client.Geometry.Envelope elementLayerFullExtent = theElementLayer.FullExtent;
   ///     sb.Append("FullExtent: " + elementLayerFullExtent.ToString() + Environment.NewLine);
   ///     sb.Append(Environment.NewLine);
@@ -2259,7 +2259,7 @@ namespace ESRI.ArcGIS.Client.Toolkit.DataSources
   ///     // Loop through each UIElement in the ElementLayer.
   ///     foreach (System.Windows.UIElement oneElement in theElementLayer.Children)
   ///     {
-  ///       // Append information about each UIElement in the StringBulder.
+  ///       // Append information about each UIElement in the StringBuilder.
   ///       sb.Append("ElementType: " + oneElement.GetType().ToString() + Environment.NewLine);
   ///       sb.Append("Opacity: " + oneElement.Opacity.ToString() + Environment.NewLine);
   ///       sb.Append("Visibility: " + oneElement.Visibility.ToString() + Environment.NewLine);
@@ -2460,7 +2460,7 @@ namespace ESRI.ArcGIS.Client.Toolkit.DataSources
   ///       ' Append which Graphic we are operating on in the StringBuilder.
   ///       sb.Append("Graphic #" + graphicsCount.ToString + vbCrLf)
   ///       
-  ///       ' Incriment the Graphics counter.
+  ///       ' Increment the Graphics counter.
   ///       graphicsCount = graphicsCount + 1
   ///       
   ///       ' ---------------------------------------------------------------------------------------
@@ -2580,7 +2580,7 @@ namespace ESRI.ArcGIS.Client.Toolkit.DataSources
   ///     sb.Append("=============================================" + vbCrLf)
   ///     sb.Append("Number of Elements: " + theElementLayer.Children.Count.ToString + vbCrLf)
   ///     
-  ///     ' Append the Extent information about the ElementLayer int the Stirng Builder.
+  ///     ' Append the Extent information about the ElementLayer int the String Builder.
   ///     Dim elementLayerFullExtent As ESRI.ArcGIS.Client.Geometry.Envelope = theElementLayer.FullExtent
   ///     sb.Append("FullExtent: " + elementLayerFullExtent.ToString + vbCrLf)
   ///     sb.Append(vbCrLf)
@@ -2588,7 +2588,7 @@ namespace ESRI.ArcGIS.Client.Toolkit.DataSources
   ///     ' Loop through each UIElement in the ElementLayer.
   ///     For Each oneElement As System.Windows.UIElement In theElementLayer.Children
   ///       
-  ///       ' Append information about each UIElement in the StringBulder.
+  ///       ' Append information about each UIElement in the StringBuilder.
   ///       sb.Append("ElementType: " + oneElement.GetType.ToString + vbCrLf)
   ///       sb.Append("Opacity: " + oneElement.Opacity.ToString + vbCrLf)
   ///       sb.Append("Visibility: " + oneElement.Visibility.ToString + vbCrLf)
@@ -2726,6 +2726,16 @@ namespace ESRI.ArcGIS.Client.Toolkit.DataSources
 
 		#endregion
 
+		/// <summary>
+		/// Gets the parent layer in a hierarchy of KML Layers.
+		/// </summary>
+		/// <value>
+		/// The parent KML layer or null if the layer is a root layer.
+		/// </value>
+		public KmlLayer ParentLayer
+		{
+			get { return _parentLayer; }
+		}
 
 		#region Private Members
 		// Context contains :
@@ -2783,6 +2793,10 @@ namespace ESRI.ArcGIS.Client.Toolkit.DataSources
 #if !SILVERLIGHT || WINDOWS_PHONE
 			Credentials = parentLayer.Credentials;
 #endif
+#if !SILVERLIGHT
+			ClientCertificate = parentLayer.ClientCertificate;
+#endif
+
 		}
 
 		void KmlLayer_InitializationFailed(object sender, EventArgs e)
@@ -2815,6 +2829,7 @@ namespace ESRI.ArcGIS.Client.Toolkit.DataSources
 					newValue.ExtentChanged += RefreshOnRegionAsync;
 				newValue.PropertyChanged += Map_PropertyChanged;
 				SetResolutionRange();
+				ProjectGroundOverlays();
 			}
 			base.OnMapChanged(oldValue, newValue);
 		}
@@ -2868,9 +2883,9 @@ namespace ESRI.ArcGIS.Client.Toolkit.DataSources
 
     	private void SetSourceInternal(Stream stream)
 		{
-			XDocument xLocalDoc;
 			using (Stream seekableStream = ConvertToSeekable(stream))
 			{
+				XDocument xLocalDoc;
 				if (IsStreamCompressed(seekableStream))
 				{
 					// Feed result into ZIP library
@@ -2880,14 +2895,7 @@ namespace ESRI.ArcGIS.Client.Toolkit.DataSources
 				}
 				else
 				{
-					try
-					{
-						xLocalDoc = XDocument.Load(XmlReader.Create(new StreamReader(seekableStream)), LoadOptions.None);
-					}
-					catch
-					{
-						xLocalDoc = null;
-					}
+					xLocalDoc = LoadDocument(seekableStream);
 				}
 
 				if (xLocalDoc != null)
@@ -2953,7 +2961,7 @@ namespace ESRI.ArcGIS.Client.Toolkit.DataSources
 		}
 
 		/// <summary>
-		/// If the region matches the map extent, download the URL immediatly
+		/// If the region matches the map extent, download the URL immediately
 		/// else set the flag NeedRefreshOnRegion for further refresh
 		/// </summary>
 		/// <param name="region">The region.</param>
@@ -3196,7 +3204,9 @@ namespace ESRI.ArcGIS.Client.Toolkit.DataSources
 #if !SILVERLIGHT || WINDOWS_PHONE
 			_context.Credentials = Credentials;
 #endif
-
+#if !SILVERLIGHT
+			_context.ClientCertificate = ClientCertificate;
+#endif
 			// Invoke the background thread and pass the info about the XElement to parse via event arguments
 			backgroundWorker.RunWorkerAsync(_context);
 		}
@@ -3469,16 +3479,32 @@ namespace ESRI.ArcGIS.Client.Toolkit.DataSources
 
                     case ".kml":
                         // Create the XDocument object from the input stream
-                        try
-                        {
-							XDocument doc = XDocument.Load(XmlReader.Create(new StreamReader(ms)));
-						    xDoc = doc;
-                        }
-                        catch { }
+						xDoc = LoadDocument(ms);
                         break;
+
                 }
             }
 
+            return xDoc;
+        }
+
+		internal static XDocument LoadDocument(Stream stream)
+		{
+			XDocument xDoc;
+                        try
+                        {
+				// As xsi is in some cases an undeclared namespace, add it
+				var nsManager = new XmlNamespaceManager(new NameTable());
+				nsManager.AddNamespace("xsi", "http://www.w3.org/2001/XMLSchema-instance");
+				XmlParserContext context = new XmlParserContext(null, nsManager, "", XmlSpace.Default);
+				XmlReader reader = XmlReader.Create(new StreamReader(stream), null, context);
+
+				xDoc = XDocument.Load(reader, LoadOptions.None);
+                }
+			catch
+			{
+				xDoc = null;
+            }
             return xDoc;
         }
 
@@ -3800,6 +3826,54 @@ namespace ESRI.ArcGIS.Client.Toolkit.DataSources
 			}
 		}
 
+		private void ProjectGroundOverlays()
+		{
+			var spatialReference = Map == null ? null : Map.SpatialReference;
+			if (spatialReference == null)
+				return;
+
+			// Support only WebMercator<-->WGS84 conversions
+			if (!spatialReference.Equals(new SpatialReference(102100)) && !spatialReference.Equals(new SpatialReference(4326)))
+				return;
+
+			// Go recursively through all ElementLayers
+			if (ChildLayers != null)
+			{
+				foreach (KmlLayer layer in ChildLayers.OfType<KmlLayer>())
+				{
+					layer.ProjectGroundOverlays();
+				}
+				foreach (var layer in ChildLayers.OfType<ElementLayer>())
+				{
+					ProjectGroundOverlays(layer, spatialReference);
+				}
+			}
+		}
+
+		private static void ProjectGroundOverlays(ElementLayer layer, SpatialReference sref)
+		{
+			var proj = new Projection.WebMercator();
+			var webMercatorSR = new SpatialReference(102100);
+			var wgs84SR = new SpatialReference(4326);
+			foreach (UIElement elt in layer.Children)
+			{
+				var envelope = elt.GetValue(ElementLayer.EnvelopeProperty) as Envelope;
+				if (envelope != null)
+				{
+					if (webMercatorSR.Equals(envelope.SpatialReference) && wgs84SR.Equals(sref))
+					{
+						var env = proj.ToGeographic(envelope) as Envelope;
+						elt.SetValue(ElementLayer.EnvelopeProperty, env);
+					}
+					else if (wgs84SR.Equals(envelope.SpatialReference) && webMercatorSR.Equals(sref))
+					{
+						var env = proj.FromGeographic(envelope) as Envelope;
+						elt.SetValue(ElementLayer.EnvelopeProperty, env);
+					}
+				}
+			}
+		}
+
 		void Map_PropertyChanged(object sender, PropertyChangedEventArgs e)
 		{
 			Map map = sender as Map;
@@ -3807,7 +3881,10 @@ namespace ESRI.ArcGIS.Client.Toolkit.DataSources
 				return;
 
 			if (e.PropertyName == "SpatialReference")
+			{
 				SetResolutionRange();
+				ProjectGroundOverlays();
+			}
 		}
 
 		private IProjectionService GetProjectionService()
@@ -3904,10 +3981,10 @@ namespace ESRI.ArcGIS.Client.Toolkit.DataSources
 		public Dictionary<string, ImageBrush> Images { get; set; }
 
 #if !SILVERLIGHT
-		internal System.Security.Cryptography.X509Certificates.X509Certificate ClientCertificate { get; set; } // workaround for DP not accessible in backgroud thread
+		internal System.Security.Cryptography.X509Certificates.X509Certificate ClientCertificate { get; set; } // workaround for DP not accessible in background thread
 #endif
 
-		internal ICredentials Credentials { get; set; } // workaround for DP not accessible in backgroud thread
+		internal ICredentials Credentials { get; set; } // workaround for DP not accessible in background thread
 	}
 
 	internal class WebMercatorProjectionService : IProjectionService
