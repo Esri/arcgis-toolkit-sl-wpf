@@ -16,6 +16,7 @@ using System.ComponentModel.DataAnnotations;
 using System.Windows;
 using System.ComponentModel;
 using System.Windows.Controls;
+using ESRI.ArcGIS.Client.FeatureService;
 
 namespace ESRI.ArcGIS.Client.Toolkit.Utilities
 {
@@ -40,29 +41,37 @@ namespace ESRI.ArcGIS.Client.Toolkit.Utilities
 			{
 				if (value.GetType() == typeof(string))
 					return typeof(string);
-				if (value.GetType() == typeof(DateTime) || value.GetType() == typeof(DateTime?))
+                else if (value.GetType() == typeof(double))
+                    return typeof(double?);
+                else if (value.GetType() == typeof(int))
+                    return typeof(int?);
+                else if (value.GetType() == typeof(short))
+                    return typeof(short?);
+                else if (value.GetType() == typeof(float))
+                    return typeof(float?);
+				else if (value.GetType() == typeof(DateTime))
 					return typeof(DateTime?);
-				if (value.GetType() == typeof(bool) || value.GetType() == typeof(bool?))
+                else if (value.GetType() == typeof(long))
+                    return typeof(long?);
+                else if (value.GetType() == typeof(decimal))
+                    return typeof(decimal?);                
+                else if (value.GetType() == typeof(UInt16))
+                    return typeof(UInt16?);
+                else if (value.GetType() == typeof(UInt32))
+                    return typeof(UInt32?);
+                else if (value.GetType() == typeof(UInt64))
+                    return typeof(UInt64?);
+                else if (value.GetType() == typeof(bool))
 					return typeof(bool?);
-				if (value.GetType() == typeof(byte) || value.GetType() == typeof(byte?))
+                else if (value.GetType() == typeof(byte))
 					return typeof(byte?);
-				if (value.GetType() == typeof(short) || value.GetType() == typeof(short?))
-					return typeof(short?);
-				if (value.GetType() == typeof(int) || value.GetType() == typeof(int?))
-					return typeof(int?);
-				if (value.GetType() == typeof(long) || value.GetType() == typeof(long?))
-					return typeof(long?);
-				if (value.GetType() == typeof(float) || value.GetType() == typeof(float?))
-					return typeof(float?);
-				if (value.GetType() == typeof(double) || value.GetType() == typeof(double?))
-					return typeof(double?);
 				else
 				    return value.GetType();		// User-defined data types
 			}
 			return typeof(object);
         }
 
-        private static string GetTypeSignature(IDictionary firstDict, Dictionary<string, Type> fieldInfo)
+        private static string GetTypeSignature(Dictionary<string, Type> fieldInfo)
         {
             StringBuilder sb = new StringBuilder();
             if (fieldInfo != null)
@@ -72,18 +81,10 @@ namespace ESRI.ArcGIS.Client.Toolkit.Utilities
                     sb.AppendFormat("_{0}_{1}", key, fieldInfo[key]);
                 }
             }
-            else
-            {
-                foreach (DictionaryEntry pair in firstDict)
-                {
-                    sb.AppendFormat("_{0}_{1}", pair.Key, GetValueType(pair.Key.ToString(), pair.Value, fieldInfo));
-                }
-            }
             return sb.ToString().GetHashCode().ToString().Replace("-", "Minus");
         }
 
-        private static IEnumerable GenerateEnumerable(Type objectType, IEnumerable<Graphic> graphics,
-                                                      string[] types, IEnumerable<Graphic> filter)
+        private static IEnumerable GenerateEnumerable(Type objectType, FeatureLayerInfo layerInfo, IEnumerable<Graphic> graphics, string[] types, IEnumerable<Graphic> filter)
         {
 			IEnumerable graphicsAfterFilter = filter != null ? graphics.Intersect<Graphic>(filter) : graphics;
             var listType = typeof(ObservableCollection<>).MakeGenericType(new[] { objectType });
@@ -91,7 +92,7 @@ namespace ESRI.ArcGIS.Client.Toolkit.Utilities
 
 			foreach (Graphic g in graphicsAfterFilter)
             {
-				var row = AttributeListToObject(objectType, g, null, types);
+				var row = AttributeListToObject(objectType, layerInfo, g, null, types);
                 listType.GetMethod("Add").Invoke(listOfCustom, new[] { row });
             }
             return listOfCustom as IEnumerable;
@@ -116,15 +117,13 @@ namespace ESRI.ArcGIS.Client.Toolkit.Utilities
 			return tb;
         }
 
-        private static void CreateProperty(TypeBuilder tb, string propertyName, Type propertyType, 
-                                           Dictionary<string, object[]> rangeDomainInfo, Field field, int order, bool isKey)
+        private static void CreateProperty(TypeBuilder tb, FieldBuilder dynamicRangeDomainValidation, string propertyName, Type propertyType, FeatureLayerInfo layerInfo, Field field, int order, bool isKey)
         {
-            FieldBuilder fieldBuilder = tb.DefineField("_" + propertyName,
-                                                        propertyType,
-                                                        FieldAttributes.Private);
-            PropertyBuilder propertyBuilder =
-                    tb.DefineProperty(
-                        propertyName, PropertyAttributes.HasDefault, propertyType, null);
+            // Create the private data backed property i.e. (private int _myProperty)
+            FieldBuilder fieldBuilder = tb.DefineField("_" + propertyName, propertyType, FieldAttributes.Private);
+
+            // Create the public property i.e. (public int MyProperty { get { return _myProperty; } set{ _myPropety = value; } })
+            PropertyBuilder propertyBuilder = tb.DefineProperty(propertyName, PropertyAttributes.HasDefault, propertyType, null);
 
             string displayName = null;
             if (field != null)
@@ -219,34 +218,43 @@ namespace ESRI.ArcGIS.Client.Toolkit.Utilities
 
             ILGenerator setIL = setPropMthdBldr.GetILGenerator();
 
-            if (rangeDomainInfo != null)
+            // for feature layer range domain validation is added to the setter call.
+            if (dynamicRangeDomainValidation != null) 
             {
-                if (rangeDomainInfo.ContainsKey(propertyName))
-                {
-                    object[] rangeValues = rangeDomainInfo[propertyName];
-                    if (rangeValues.Length == 2)
-                    {
-						string min = rangeValues[0].ToString();
-						string max = rangeValues[1].ToString();
-                        MethodInfo methodValidator = typeof(RangeDomainValidator).GetMethod("IsInValidRange",
-                                                            BindingFlags.Public | BindingFlags.Static,
-                                                            null, CallingConventions.Standard,
-															new Type[] { propertyType, typeof(string), typeof(string)}, null);
+                // Labels are used to jump ahead to a specific line of code.
+                // for example if an if statement returns false then you will want to jump 
+                // over the code that would execute if the condition was true because you don't
+                // want that code to get executed.
 
-                        setIL.Emit(OpCodes.Ldarg_1);                            // Pushing the value parameter
-						setIL.Emit(OpCodes.Ldstr, min);							// Push string literal onto the top of the stack
-						setIL.Emit(OpCodes.Ldstr, max);							// Push string literal onto the top of the stack
-                        setIL.EmitCall(OpCodes.Call, methodValidator, null);    // Invoking IsInValidRange() method of the RangeDomainValidator class
+                // An un-named temp variable that the compiler needs
+                // in order to store the resulting boolean from the if statement.
+                setIL.DeclareLocal(typeof(bool)); // Stloc_0             
+                System.Reflection.Emit.Label endIfLabel = setIL.DefineLabel();
+
+                setIL.Emit(OpCodes.Ldarg_0);                                // load this instance
+                setIL.Emit(OpCodes.Ldfld, dynamicRangeDomainValidation);    // load this field
+                setIL.Emit(OpCodes.Ldnull);                                 // load a null value
+                setIL.Emit(OpCodes.Ceq);                                    // compare equality 
+                setIL.Emit(OpCodes.Stloc_0);                                // store the result of the equality check. note: setIL.DeclareLocal(typeof(bool)) must be declared.
+                setIL.Emit(OpCodes.Ldloc_0);                                // load the result of the equality check
+                setIL.Emit(OpCodes.Brtrue_S, endIfLabel);                  // if true execute the next argument. if false jump to the else if statement label.
+                setIL.Emit(OpCodes.Ldarg_0);
+                setIL.Emit(OpCodes.Ldfld, dynamicRangeDomainValidation);
+                setIL.Emit(OpCodes.Ldarg_0);
+                setIL.Emit(OpCodes.Ldstr, field != null ? field.FieldName : "");
+                setIL.Emit(OpCodes.Ldarg_1);
+                setIL.Emit(OpCodes.Box, propertyType);
+                setIL.Emit(OpCodes.Callvirt, typeof(Action<object, string, object>).GetMethod("Invoke", new Type[] { typeof(object), typeof(string), typeof(object) }));
+                setIL.MarkLabel(endIfLabel);
                     }
-                }
-            }
-
             setIL.Emit(OpCodes.Ldarg_0);
             setIL.Emit(OpCodes.Ldarg_1);
             setIL.Emit(OpCodes.Stfld, fieldBuilder);
             setIL.Emit(OpCodes.Ret);
+            
             propertyBuilder.SetGetMethod(getPropMthdBldr);
             propertyBuilder.SetSetMethod(setPropMthdBldr);
+            
         }
 		
         private static FieldInfo[] GetFieldInfo(Type objectType)
@@ -254,10 +262,10 @@ namespace ESRI.ArcGIS.Client.Toolkit.Utilities
             return objectType.GetFields(BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Public);
         }
 
-        private static void AddToEnumerable(Type objectType, Graphic graphic, IEnumerable itemsSource)
+        private static void AddToEnumerable(Type objectType, FeatureLayerInfo layerInfo, Graphic graphic, IEnumerable itemsSource)
         {
             var listType = typeof(ObservableCollection<>).MakeGenericType(new[] { objectType });
-            var row = AttributeListToObject(objectType, graphic, graphic.Attributes.Keys, null);			
+            var row = AttributeListToObject(objectType, layerInfo, graphic, graphic.Attributes.Keys, null);			
             
 			listType.GetMethod("Add").Invoke((itemsSource as ICollectionView).SourceCollection, new[] { row });	
         }
@@ -273,7 +281,7 @@ namespace ESRI.ArcGIS.Client.Toolkit.Utilities
             return string.Format("{0}{1}", valueToBeInserted, prefix);
         }
 
-        private static string GetMappedKey(string key)
+        private static string CreateMappedKey(string key)
         {
             string mappedKey = key;
             MatchCollection improperNames = improperNameRegex.Matches(key, 0);
@@ -290,6 +298,11 @@ namespace ESRI.ArcGIS.Client.Toolkit.Utilities
             return mappedKey;
         }
 
+        private static string GetMappedKey(string key)
+        {
+            return _fieldMapping.ContainsKey(key) ? _fieldMapping[key] : key;
+        }
+
         private static string KeyOfValue(this Dictionary<string, string> dictionary, string value)
         {
             if (dictionary.ContainsValue(value))
@@ -304,10 +317,39 @@ namespace ESRI.ArcGIS.Client.Toolkit.Utilities
             return null;
         }
 
-		private static object AttributeListToObject(Type objectType, Graphic graphic, 
-													IEnumerable<string> attributeKeys, IEnumerable<string> propertyNames)
+		private static object AttributeListToObject(Type objectType, FeatureLayerInfo layerInfo, Graphic graphic,IEnumerable<string> attributeKeys, IEnumerable<string> propertyNames)
         {
-			var row = Activator.CreateInstance(objectType, new object[] { graphic });
+
+            string typeIdFieldName = null;
+            if(layerInfo != null && string.IsNullOrEmpty(layerInfo.TypeIdField) == false)
+            {
+                if (_fieldMapping != null && _fieldMapping.ContainsKey(layerInfo.TypeIdField))
+                    typeIdFieldName = _fieldMapping.KeyOfValue(layerInfo.TypeIdField);
+            }
+            
+            Action<object, string, object> myDynamicRangeValidationMethod = (instance, fieldName, value) =>
+            {
+                if (layerInfo == null || layerInfo.Fields == null || layerInfo.Fields.Count == 0)
+                    return;
+                
+                var field = layerInfo.Fields.FirstOrDefault(f => string.Equals(f.FieldName, fieldName));
+                if(field != null)
+                {
+                    if(FieldDomainUtils.IsDynamicDomain(field, layerInfo))
+                    {
+                        var fieldInfo = instance.GetType().GetProperty(typeIdFieldName);
+                        var typeIDValue = fieldInfo.GetValue(instance, null);                
+                        RangeDomainValidator.ValidateRange(layerInfo, field, typeIDValue, value);
+                    }
+                    else if(field.Domain != null && !(field.Domain is CodedValueDomain))
+                    {
+                         RangeDomainValidator.ValidateRange(field, value);
+                    }
+                
+                }
+            };
+           
+            var row = Activator.CreateInstance(objectType, new object[] { graphic, myDynamicRangeValidationMethod });
             foreach (string type in propertyNames ?? attributeKeys)
             {
                 IDictionary<string, object> currentDict = graphic.Attributes;
@@ -406,17 +448,68 @@ namespace ESRI.ArcGIS.Client.Toolkit.Utilities
 			return (type1 == type2);
 		}
 
+        private static bool IsNumericType(Type t)
+        {
+            return (t == typeof(Int16) || t == typeof(UInt16) || t == typeof(Nullable<Int16>) || t == typeof(Nullable<UInt16>)
+                || t == typeof(Int32)  || t == typeof(UInt32) || t == typeof(Nullable<Int32>) || t == typeof(Nullable<UInt32>)
+                || t == typeof(Int64)  || t == typeof(UInt64) || t == typeof(Nullable<Int64>) || t == typeof(Nullable<UInt64>)
+                || t == typeof(Single) || t == typeof(Double) || t == typeof(Nullable<Single>) || t == typeof(Nullable<Double>)
+                || t == typeof(Decimal) || t == typeof(Nullable<Decimal>));
+        }
+
+        private static int NumericRank(Type t)
+        {
+            if (t == typeof(Int16) || t == typeof(UInt16) || t == typeof(Nullable<Int16>) || t == typeof(Nullable<UInt16>))
+                return 0;
+            if (t == typeof(Int32) || t == typeof(UInt32) || t == typeof(Nullable<Int32>) || t == typeof(Nullable<UInt32>))
+                return 1;
+            if (t == typeof(Int64) || t == typeof(UInt64) || t == typeof(Nullable<Int64>) || t == typeof(Nullable<UInt64>))
+                return 2;
+            if (t == typeof(Decimal) || t == typeof(Nullable<Decimal>))            
+                return 3;
+            if (t == typeof(Single) || t == typeof(Nullable<Single>))
+                return 4;
+            if (t == typeof(Double) || t == typeof(Nullable<Double>))
+                return 5;
+            return -1;            
+        }
+
+        private static Type UpgradeRankType(Type t)
+        {
+            if (t == typeof(Int16) || t == typeof(UInt16) || t == typeof(Nullable<Int16>) || t == typeof(Nullable<UInt16>))
+                return typeof(Nullable<Int32>);
+            if (t == typeof(Int32) || t == typeof(UInt32) || t == typeof(Nullable<Int32>) || t == typeof(Nullable<UInt32>))
+                return typeof(Nullable<Int64>);
+            if (t == typeof(Int64) || t == typeof(UInt64) || t == typeof(Nullable<Int64>) || t == typeof(Nullable<UInt64>))
+                return typeof(Nullable<Decimal>);
+            if (t == typeof(Decimal) || t == typeof(Nullable<Decimal>))
+                return typeof(Nullable<Single>);
+            if (t == typeof(Single) || t == typeof(Nullable<Single>))
+                return typeof(Nullable<Double>);
+            return typeof(object);
+        }
+
+        private static bool IsUnsigned(Type t)
+        {
+            return (t == typeof(UInt16) || t == typeof(UInt16?)
+                || t == typeof(UInt32) || t == typeof(UInt32?)
+                || t == typeof(UInt64) || t == typeof(UInt64?));
+        }
+
 		internal static IEnumerable ToDataSource(this IEnumerable<Graphic> graphics, 
+                                                 FeatureLayerInfo layerInfo,
                                                  Dictionary<string, Type> fieldInfo, 
-                                                 Dictionary<string, object[]> rangeDomainInfo,
                                                  Dictionary<string, Field> fieldProps,
                                                  string uniqueID,
 												 IEnumerable<Graphic> filterGraphics,
                                                  out Type objectType)
         {
+           
             objectType = null;
             IDictionary firstDict = null;
             IEnumerable<IDictionary<string, object>> list = GetGraphicsEnumerable(graphics);
+            Dictionary<string, Type> properties = new Dictionary<string, Type>();
+            _fieldMapping = new Dictionary<string, string>();
             if (fieldInfo == null)
             {
                 if (list != null)
@@ -427,11 +520,21 @@ namespace ESRI.ArcGIS.Client.Toolkit.Utilities
                         firstDict = enumList.Current as IDictionary;
 						if (firstDict != null)
                         {
+                                       
+                            foreach (DictionaryEntry pair in firstDict)
+                            {
+                                string keyToUse = CreateMappedKey(pair.Key.ToString());
+                                Type t = GetValueType(keyToUse, pair.Value, fieldInfo);
+                                properties.Add(keyToUse, t);
+                            }
+            
                             while (enumList.MoveNext())
                             {
                                 IDictionary nextDict = enumList.Current as IDictionary;
-								foreach (DictionaryEntry pair in nextDict)
+                                IDictionaryEnumerator enumEntries = nextDict.GetEnumerator();
+                                while (enumEntries != null && enumEntries.MoveNext())
                                 {
+                                    DictionaryEntry pair = (DictionaryEntry)enumEntries.Current;
 									Type t = GetValueType(pair.Key as string, pair.Value, fieldInfo);
 									if (!firstDict.Contains(pair.Key))	// Attribute doesn't exist => add it
 									{
@@ -441,11 +544,36 @@ namespace ESRI.ArcGIS.Client.Toolkit.Utilities
 									else   // Attribute exists => check for data type compatibility
 									{
 										Type typeInFirstDict = GetValueType(pair.Key as string, firstDict[pair.Key], fieldInfo);
-										if (typeInFirstDict != typeof(object) &&		// object type in firstDict covers all data types
-											pair.Value != null &&	// null values in nextDict match the nullable data type associated with the attribute in firstDict
+                                        if (typeInFirstDict is Object && firstDict[pair.Key] == null)
+                                        {
+                                            string keyToUse = GetMappedKey(pair.Key.ToString());
+                                            if (t == typeof(string) || IsNumericType(t))
+                                                properties[keyToUse] = t;
+                                            continue;
+                                        }
+
+                                        if (pair.Value != null &&           // null values in nextDict match the nullable data type associated with the attribute in firstDict
 											!t.IsOfType(typeInFirstDict))	// attribute data types don't match
-											throw new InvalidCastException(string.Format(Properties.Resources.FeatureDataGrid_MixedAttributeTypesNotAllowed, 
-																						 firstDict[pair.Key].GetType(), pair.Key));
+                                        {
+                                            if (typeInFirstDict == typeof(string))
+                                                continue;
+                                            if(IsNumericType(typeInFirstDict) && IsNumericType(t))
+                                            {
+                                                int rank1 = NumericRank(typeInFirstDict); 
+                                                int rank2 = NumericRank(t);
+                                                
+                                                string keyToUse = GetMappedKey(pair.Key.ToString());
+
+                                                if (rank1 < rank2)
+                                                    properties[keyToUse] = t;
+                                                else if (rank1 == rank2 && IsUnsigned(typeInFirstDict) != IsUnsigned(t))
+                                                    properties[keyToUse] = UpgradeRankType(t);
+                                                continue;
+                                                
+                                            }
+                                            throw new InvalidCastException(string.Format(Properties.Resources.FeatureDataGrid_MixedAttributeTypesNotAllowed,firstDict[pair.Key].GetType(), pair.Key));
+                                        }
+                                           
 									}
                                 }
                             }
@@ -456,41 +584,35 @@ namespace ESRI.ArcGIS.Client.Toolkit.Utilities
             if(firstDict == null && fieldInfo == null)
                 return new object[] { };
 
-            string typeSignature = GetTypeSignature(firstDict, fieldInfo);
-            Dictionary<string, Type> properties = new Dictionary<string, Type>();
-            _fieldMapping = new Dictionary<string, string>();
             if (fieldInfo != null)  // FeatureLayer
             {
                 foreach (string key in fieldInfo.Keys)
                 {
-                    string keyToUse = GetMappedKey(key);
+                    string keyToUse = CreateMappedKey(key);
                     Type t = fieldInfo[key];
                     properties.Add(keyToUse, t);
                 }
             }
-            else                    // GraphicsLayer
-            {
-                foreach (DictionaryEntry pair in firstDict)
-                {
-                   string keyToUse = GetMappedKey(pair.Key.ToString());
-                   Type t = GetValueType(keyToUse, pair.Value, fieldInfo);
-                   properties.Add(keyToUse, t);
-                }
-            }
+            string typeSignature = GetTypeSignature(properties);
             objectType = GetTypeByTypeSignature(typeSignature);
            
             if (objectType == null)
             {
                 TypeBuilder tb = GetTypeBuilder(typeSignature);
 
+                FieldBuilder DynamicTypeRangeDomainValidationFieldBuilder = tb.DefineField("DynamicTypeRangeDomainValidationMethod", typeof(Action<object, string, object>), FieldAttributes.Private);                
 				FieldBuilder fieldBuilder = tb.DefineField("_graphicSibling", typeof(Graphic), FieldAttributes.Private);
-				ConstructorBuilder constructorBuilder = tb.DefineConstructor(MethodAttributes.Public, CallingConventions.Standard, new Type[] { typeof(Graphic) });
+
+                ConstructorBuilder constructorBuilder = tb.DefineConstructor(MethodAttributes.Public, CallingConventions.Standard, new Type[] { typeof(Graphic), typeof(Action<object, string, object>)});
 				ILGenerator cbIL = constructorBuilder.GetILGenerator();
 				cbIL.Emit(OpCodes.Ldarg_0);
 				cbIL.Emit(OpCodes.Call, typeof(object).GetConstructor(Type.EmptyTypes));
 				cbIL.Emit(OpCodes.Ldarg_0);
 				cbIL.Emit(OpCodes.Ldarg_1);
 				cbIL.Emit(OpCodes.Stfld, fieldBuilder);
+                cbIL.Emit(OpCodes.Ldarg_0);
+                cbIL.Emit(OpCodes.Ldarg_2);
+                cbIL.Emit(OpCodes.Stfld, DynamicTypeRangeDomainValidationFieldBuilder);                                
 				cbIL.Emit(OpCodes.Ret);
 
 				MethodBuilder methodBuilder = tb.DefineMethod("GetGraphicSibling", MethodAttributes.Public, typeof(Graphic), Type.EmptyTypes);
@@ -511,19 +633,19 @@ namespace ESRI.ArcGIS.Client.Toolkit.Utilities
                             {
                                 Field fld = fieldProps[mappedKey];
                                 if (IsViewableAttribute(fld))
-                                    CreateProperty(tb, key, properties[key], rangeDomainInfo, fld, order++, uniqueID == key);
+                                    CreateProperty(tb, DynamicTypeRangeDomainValidationFieldBuilder, key, properties[key], layerInfo, fld, order++, uniqueID == key);                                
                             }
                         }
                     }
                     else    // GraphicsLayer
-                        CreateProperty(tb, key, properties[key], rangeDomainInfo, null, order++, uniqueID == key);
+                        CreateProperty(tb, null, key, properties[key], null, null, order++, uniqueID == key);                    
                 }
                
                 objectType = tb.CreateType();
 
                 _typeBySignature.Add(typeSignature, objectType);
             }
-            return GenerateEnumerable(objectType, graphics, properties.Keys.ToArray(),filterGraphics);
+            return GenerateEnumerable(objectType, layerInfo, graphics, properties.Keys.ToArray(), filterGraphics);
         }
 
         internal static IList AsList(this IEnumerable itemsSource)
@@ -540,10 +662,10 @@ namespace ESRI.ArcGIS.Client.Toolkit.Utilities
         	}
         }
 
-        internal static void AddToDataSource(this IEnumerable itemsSource, Graphic graphic, Type objectType)
+        internal static void AddToDataSource(this IEnumerable itemsSource, FeatureLayerInfo layerInfo, Graphic graphic, Type objectType)
         {
             if (objectType != null)
-                AddToEnumerable(objectType, graphic, itemsSource);
+                AddToEnumerable(objectType, layerInfo, graphic, itemsSource);
         }
 
         internal static void RemoveFromDataSource(this IEnumerable itemsSource, int indexToRemove, Type objectType)
@@ -614,10 +736,10 @@ namespace ESRI.ArcGIS.Client.Toolkit.Utilities
             }
         }
 
-        internal static void RefreshRow(this Graphic graphic, IEnumerable itemsSource, int itemIndex, Type objectType)
+        internal static void RefreshRow(this Graphic graphic, IEnumerable itemsSource, int itemIndex, Type objectType, FeatureLayerInfo layerInfo)
         {
             if (objectType != null)
-                itemsSource.AsList()[itemIndex] = AttributeListToObject(objectType, graphic, graphic.Attributes.Keys, null);
+                itemsSource.AsList()[itemIndex] = AttributeListToObject(objectType, layerInfo, graphic, graphic.Attributes.Keys, null);
         }
 
         internal static string GetDisplayName(this Type objectType, string propertyPath)

@@ -83,14 +83,19 @@ namespace ESRI.ArcGIS.Client.Toolkit.Utilities
 
 		internal static object CodedValueCodeLookup(string field, object generic, CodedValueSources codedValueSources)
 		{
+			bool isGraphic = (generic is Graphic);
+			object code = null;
+			if(isGraphic)
+				code = ((Graphic)generic).Attributes[field];
 #if SILVERLIGHT
+			else
+			{
 			PropertyInfo fieldProperty = generic.GetType().GetProperty(field);
 			if (fieldProperty == null)
 				return null;
 
-			var code = fieldProperty.GetValue(generic, null);
-#else
-			var code = generic is Graphic ? (generic as Graphic).Attributes[field] : null;
+				code = fieldProperty.GetValue(generic, null);
+			}
 #endif
 			if (code == null)
 				return null;
@@ -112,15 +117,22 @@ namespace ESRI.ArcGIS.Client.Toolkit.Utilities
 		{
 			if (dynamicCodedValueSource != null && generic != null && !string.IsNullOrEmpty(lookupField))
 			{
+				bool isGraphic = generic is Graphic;
+
+				object key = null;
+				if (isGraphic)				
+					key = ((Graphic)generic).Attributes[lookupField];			
 #if SILVERLIGHT
+				else 
+				{
 				PropertyInfo lookupFieldProperty = generic.GetType().GetProperty(lookupField);
 				if (lookupFieldProperty == null)
 					return null;
 
-				var key = lookupFieldProperty.GetValue(generic, null);
-#else
-				var key = (generic is Graphic) ? (generic as Graphic).Attributes[lookupField] : null;
+					key = lookupFieldProperty.GetValue(generic, null);
+				}
 #endif
+
 				if (key == null)
 				{
 					object code = CodedValueSources.CodedValueCodeLookup(field.Name, generic, new CodedValueSources());
@@ -143,18 +155,26 @@ namespace ESRI.ArcGIS.Client.Toolkit.Utilities
 					codedValueSoruces = dynamicCodedValueSource[key];
 				else if (dynamicCodedValueSource.ContainsKey(key.ToString()))
 					codedValueSoruces = dynamicCodedValueSource[key.ToString()];
-
+                if(codedValueSoruces != null)
+                { 
 				CodedValueSource tempSource = codedValueSoruces.FirstOrDefault(x => x.Temp == true);
 				if (tempSource != null)
 					codedValueSoruces.Remove(tempSource);
+                }
+
+				object value = null;
+				if (isGraphic)
+					value = ((Graphic)generic).Attributes[field.Name];
 #if SILVERLIGHT
-				object value = CodedValueSources.CodedValueNameLookup(field.Name, generic, new CodedValueSources());
+				else
+				{
+					value = CodedValueSources.CodedValueNameLookup(field.Name, generic, new CodedValueSources());
 				if (string.IsNullOrEmpty(value as string))
 					value = null;
-#else
-				object value = (generic as Graphic).Attributes[field.Name];
+				}
 #endif
-				if (value != null)
+
+                if (value != null && codedValueSoruces != null)
 				{
 					CodedValueSource source = codedValueSoruces.FirstOrDefault(x => x.Code != null && x.Code.ToString() == value.ToString());
 					if (source == null)
@@ -207,6 +227,16 @@ namespace ESRI.ArcGIS.Client.Toolkit.Utilities
 							return name;
 					}
 				}
+                else
+                {
+                    PropertyInfo FieldProperty = generic.GetType().GetProperty(field);
+                    if (FieldProperty == null)
+                        return null;
+
+                    var value = FieldProperty.GetValue(generic, null);
+                    return value != null ? value.ToString() : null;
+                }
+
 			}
 			return null;
 		}

@@ -38,6 +38,7 @@ namespace ESRI.ArcGIS.Client.Toolkit
 		private SortDescriptionCollection _sortDescriptions;				// sorting instructions for view
 		private GraphicComparer _activeComparer = new GraphicComparer();	// sort comparer		
 		private Predicate<object> _filter;									// filter view with custom criteria
+        private Dictionary<string, Type> _fieldTypes = new Dictionary<string, Type>();
 		#endregion Private Properties
 
 		#region Constructor
@@ -81,6 +82,75 @@ namespace ESRI.ArcGIS.Client.Toolkit
 		/// and not on 0,1,2 which is the code.
 		/// </example>
 		public FeatureLayerInfo LayerInfo { get; set; }		
+
+		/// <summary>
+        /// Checks the value of attribute against schema of the collection.
+        /// </summary>
+        /// <param name="key">attribute key to check</param>
+        /// <param name="value">value to validate against schema.</param>
+        /// <returns>true if value is correct type for the given key. 
+        /// false if the value is incorrect type</returns>
+        internal bool IsResetRequired(string key, object value)
+        {
+            if(LayerInfo != null && LayerInfo.Fields != null && LayerInfo.Fields.Any())
+                return false;
+
+            if(_fieldTypes == null || !_fieldTypes.ContainsKey(key))
+                return true;
+
+            var t1 = _fieldTypes[key]; ;
+            if(t1 == typeof(string) || IsNumericType(t1) == false)
+                return false;
+
+            var t2 = GetValueType(value);
+            if(IsNumericType(t1) && IsNumericType(t2))
+            {
+                int rank1 = NumericRank(t1);
+                int rank2 = NumericRank(t2);
+
+                if(rank1 < rank2)
+                    return true;
+                else if (rank1 == rank2 && IsUnsigned(t1) != IsUnsigned(t2))     
+                    return true;
+            }
+            return false;                            
+        }
+
+        internal KeyValuePair<string,DataType>? GetAttributeSchema(string key)
+        {
+            if (_fieldTypes == null || !_fieldTypes.ContainsKey(key) || string.IsNullOrEmpty(key))
+                return null;
+            var keyValuePair = _fieldTypes.FirstOrDefault(kvp => kvp.Key.Equals(key, StringComparison.InvariantCultureIgnoreCase));
+            return new KeyValuePair<string, DataType>(keyValuePair.Key, GetDataType(keyValuePair.Value));
+        }
+
+        private DataType GetDataType(Type t)
+        {
+            if (t == typeof(string))
+                return DataType.String;
+            if (t == typeof(Int16) || t == typeof(Int16?))
+                return DataType.Int16;
+            if (t == typeof(Int32) || t == typeof(Int32?))
+                return DataType.Int32;
+            if (t == typeof(Int64) || t == typeof(Int64?))
+                return DataType.Int64;
+            if (t == typeof(Decimal) || t == typeof(Decimal?))
+                return DataType.Decimal;
+            if (t == typeof(Single) || t == typeof(Single?))
+                return DataType.Single;
+            if (t == typeof(Double) || t == typeof(Double?))
+                return DataType.Double;
+            if (t == typeof(DateTime) || t == typeof(DateTime?))
+                return DataType.DateTime;
+            if (t == typeof(UInt16) || t == typeof(UInt16?))
+                return DataType.UInt16;
+            if (t == typeof(UInt32) || t == typeof(UInt32?))
+                return DataType.UInt32;
+            if (t == typeof(UInt64) || t == typeof(UInt64?))
+                return DataType.UInt64;
+            
+            return DataType.Object;
+        }
 
 		/// <summary>
 		/// Can use predicate to filter graphics based on a custom criteria.
@@ -342,6 +412,7 @@ namespace ESRI.ArcGIS.Client.Toolkit
 				{
 					_activeComparer.Field = sort.PropertyName; // field to sort by
 					_activeComparer.LayerInfo = this.LayerInfo; // layer info for sorting coded value domain types
+                    _activeComparer.DataType = _fieldTypes[_activeComparer.Field];
 					list = sort.Direction == ListSortDirection.Ascending ? list.OrderBy(x => x, _activeComparer) : list.OrderByDescending(x => x, _activeComparer);
 				}
 			}
@@ -368,34 +439,158 @@ namespace ESRI.ArcGIS.Client.Toolkit
 		{
 			get
 			{
+                _fieldTypes.Clear();
 				List<ItemPropertyInfo> itemsInfo = new List<ItemPropertyInfo>();
 				if (LayerInfo != null && LayerInfo.Fields != null)
 				{
 					LayerInfo.Fields.Where(f => f != null).ForEach(f =>
 					{
-						itemsInfo.Add(new ItemPropertyInfo(f.Name, typeof(object), null));
+                        _fieldTypes[f.Name] = GetFieldType(f);
+						itemsInfo.Add(new ItemPropertyInfo(f.Name, _fieldTypes[f.Name], null));
 					});
 				}
 				else
 				{
-					List<string> uniqueAttributes = new List<string>();
 					IEnumerator enumerator = this.GetEnumerator();
 					while (enumerator.MoveNext())
 					{
 						Graphic graphic = enumerator.Current as Graphic;
 						foreach (string key in graphic.Attributes.Keys)
 						{
-							if (uniqueAttributes.Contains(key))
-								continue;
-							uniqueAttributes.Add(key);
+                            var value = graphic.Attributes[key];
+							if (!_fieldTypes.ContainsKey(key))                            
+                                _fieldTypes[key] = GetValueType(value);
+                            else
+                            {
+                                if (value == null)
+                                    continue;
 
-							itemsInfo.Add(new ItemPropertyInfo(key, typeof(object), null));
+                                var t1 = _fieldTypes[key];
+                                if (t1 == typeof(string) || t1 == typeof(DateTime?))
+								continue;
+
+                                var t2 = GetValueType(value);                                
+                                if(IsNumericType(t1) && IsNumericType(t2))
+                                {
+                                    int rank1 = NumericRank(t1);
+                                    int rank2 = NumericRank(t2);                                    
+
+                                    if(rank1 < rank2)
+                                        _fieldTypes[key] = t2;
+                                    else if (rank1 == rank2 && IsUnsigned(t1) != IsUnsigned(t2))                                                                            
+                                        _fieldTypes[key] = UpgradeRankType(t1);                                     
+                                    continue;
+                                }                                
+                                _fieldTypes[key] = t2;
+                            }
 						}
 					}
+
+                    foreach (string key in _fieldTypes.Keys)
+                        itemsInfo.Add(new ItemPropertyInfo(key, _fieldTypes[key], null));                    
+                    
 				}
 				return new ReadOnlyCollection<ItemPropertyInfo>(itemsInfo);
 			}
 		}
+
+        private Type GetFieldType(Field field)
+        {
+            if (field == null)
+                return typeof(string);
+
+            if (field.Type == Field.FieldType.SmallInteger)
+                return field.Nullable ? typeof(short?) : typeof(short);            
+            if (field.Type == Field.FieldType.Integer)
+                return field.Nullable ? typeof(int?) : typeof(int);
+            if (field.Type == Field.FieldType.Single)
+                return field.Nullable ? typeof(float?) : typeof(float);
+            if(field.Type == Field.FieldType.Double)
+                return field.Nullable ? typeof(double?) : typeof(double);
+            if (field.Type == Field.FieldType.Date)            
+                return field.Nullable ? typeof(DateTime?) : typeof(DateTime);            
+            if (field.Type == Field.FieldType.OID)
+                return field.Nullable ? typeof(int?) : typeof(int);            
+                
+            return typeof(string);
+        }
+
+        private Type GetValueType(object value)
+        {
+            if (value == null)
+                return typeof(object);
+            if (value is string)
+                return typeof(string);
+            if (value is short)
+                return typeof(short?);
+            if (value is int)
+                return typeof(int?);
+            if (value is long)
+                return typeof(long?);
+            if (value is decimal)
+                return typeof(decimal?);
+            if (value is float)
+                return typeof(float?);
+            if (value is double)
+                return typeof(double?);
+            if (value is DateTime)
+                return typeof(DateTime?);
+            if (value is UInt16)
+                return typeof(UInt16?);
+            if (value is UInt32)
+                return typeof(UInt32?);
+            if (value is UInt64)
+                return typeof(UInt64?);
+            return typeof(string);
+        }
+
+        private static bool IsNumericType(Type t)
+        {
+            return (t == typeof(Int16) || t == typeof(UInt16) || t == typeof(Nullable<Int16>) || t == typeof(Nullable<UInt16>)
+                || t == typeof(Int32) || t == typeof(UInt32) || t == typeof(Nullable<Int32>) || t == typeof(Nullable<UInt32>)
+                || t == typeof(Int64) || t == typeof(UInt64) || t == typeof(Nullable<Int64>) || t == typeof(Nullable<UInt64>)
+                || t == typeof(Single) || t == typeof(Double) || t == typeof(Nullable<Single>) || t == typeof(Nullable<Double>)
+                || t == typeof(Decimal) || t == typeof(Nullable<Decimal>));
+        }
+
+        private static int NumericRank(Type t)
+        {
+            if (t == typeof(Int16) || t == typeof(UInt16) || t == typeof(Nullable<Int16>) || t == typeof(Nullable<UInt16>))
+                return 0;
+            if (t == typeof(Int32) || t == typeof(UInt32) || t == typeof(Nullable<Int32>) || t == typeof(Nullable<UInt32>))
+                return 1;
+            if (t == typeof(Int64) || t == typeof(UInt64) || t == typeof(Nullable<Int64>) || t == typeof(Nullable<UInt64>))
+                return 2;
+            if (t == typeof(Decimal) || t == typeof(Nullable<Decimal>))
+                return 3;
+            if (t == typeof(Single) || t == typeof(Nullable<Single>))
+                return 4;
+            if (t == typeof(Double) || t == typeof(Nullable<Double>))
+                return 5;
+            return -1;
+        }
+       
+        private static Type UpgradeRankType(Type t)
+        {
+            if (t == typeof(Int16) || t == typeof(UInt16) || t == typeof(Nullable<Int16>) || t == typeof(Nullable<UInt16>))
+                return typeof(Nullable<Int32>);
+            if (t == typeof(Int32) || t == typeof(UInt32) || t == typeof(Nullable<Int32>) || t == typeof(Nullable<UInt32>))
+                return typeof(Nullable<Int64>);
+            if (t == typeof(Int64) || t == typeof(UInt64) || t == typeof(Nullable<Int64>) || t == typeof(Nullable<UInt64>))
+                return typeof(Nullable<Decimal>);
+            if (t == typeof(Decimal) || t == typeof(Nullable<Decimal>))
+                return typeof(Nullable<Single>);
+            if (t == typeof(Single) || t == typeof(Nullable<Single>))
+                return typeof(Nullable<Double>);                       
+            return typeof(object);
+        }
+
+        private static bool IsUnsigned(Type t)
+        {
+            return (t == typeof(UInt16) || t == typeof(UInt16?)
+                || t == typeof(UInt32) || t == typeof(UInt32?)
+                || t == typeof(UInt64) || t == typeof(UInt64?));
+        }
 
 		#endregion
 
@@ -591,6 +786,7 @@ namespace ESRI.ArcGIS.Client.Toolkit
 			private string TypeIDField;
 			private System.Collections.Comparer comparer = new System.Collections.Comparer(System.Globalization.CultureInfo.CurrentCulture);
 
+			
 			private string _field;
 			public string Field
 			{
@@ -615,6 +811,18 @@ namespace ESRI.ArcGIS.Client.Toolkit
 					Initialize();
 				}
 			}
+
+            internal Type DataType
+            {
+                get { return _type; }
+                set
+                {
+                    if (_type == value)
+                        return;
+                    _type = value;                    
+                }
+            }
+            private Type _type = typeof(object);
 
 			public GraphicComparer() { }
 			public GraphicComparer(string Field) { this.Field = Field; }
@@ -646,6 +854,31 @@ namespace ESRI.ArcGIS.Client.Toolkit
 				else if (isCodedValue)
 					codedValueSources = FieldDomainUtils.BuildCodedValueSource(field);
 			}
+
+            private static Type NonNullableType(Type t)
+            {         
+                if(t == typeof(Nullable<Int16>))
+                    return typeof(Int16);
+                if(t == typeof(Nullable<UInt16>))
+                    return typeof(UInt16);
+                if(t == typeof(Nullable<Int32>))
+                    return typeof(Int32);
+                if(t == typeof(Nullable<UInt32>))
+                    return typeof(UInt32);
+                if(t == typeof(Nullable<Int64>))
+                    return typeof(Int64);
+                if(t == typeof(Nullable<UInt64>))
+                    return typeof(UInt64);
+                if(t == typeof(Nullable<Single>))
+                    return typeof(Single);
+                if(t == typeof(Nullable<Double>))
+                    return typeof(Double);
+                if(t == typeof(Nullable<Decimal>))
+                    return typeof(Decimal);
+                if (t == typeof(Nullable<DateTime>))
+                    return typeof(DateTime);
+                return t;
+            }
 
 			#region IComparer Members
 
@@ -686,12 +919,41 @@ namespace ESRI.ArcGIS.Client.Toolkit
 				var o1 = x.Attributes[Field]; // get primitive value
 				var o2 = y.Attributes[Field]; // get primitive value
 
+                if (o1 == null && o2 == null)
+                    return 0;
+                else if (o1 != null && o2 == null)
+                    return 1;
+                else if (o1 == null && o2 != null)
+                    return -1;
+
+                var type = NonNullableType(DataType);
+
+                var t1 = o1.GetType();
+                var t2 = o2.GetType();
+
+                if(type == typeof(DateTime))
+                {
+                    if(t1 != type && t2 != type)
+                        return 0;
+                    if (t1 != type && t2 == type)
+                        return -1;
+                    if (t1 == type && t2 != type)
+                        return 1;
+                }
+                else
+                {
+                    if (t1 != type)
+                        o1 = Convert.ChangeType(o1, type);
+                    if (t2 != type)
+                        o2 = Convert.ChangeType(o2, type);
+                }
+
 				if (isDynamicCodedValue)
 				{
 					o1 = DynamicCodedValueSource.CodedValueNameLookup(TypeIDField, Field, x, dynamicCodedValueSource);
 					o2 = DynamicCodedValueSource.CodedValueNameLookup(TypeIDField, Field, y, dynamicCodedValueSource);
 				}
-				if (isCodedValue || isTypeIDField)
+				else if (isCodedValue || isTypeIDField)
 				{
 					o1 = CodedValueSources.CodedValueNameLookup(Field, x, codedValueSources);
 					o2 = CodedValueSources.CodedValueNameLookup(Field, y, codedValueSources);
@@ -704,4 +966,77 @@ namespace ESRI.ArcGIS.Client.Toolkit
 		}
 	}
 	
+    /// <summary>
+    /// *FOR INTERNAL USE ONLY* Used to convert values from TextBox controls back
+    /// to the original data type of the graphic attribute. This is used when 
+    /// editing values in the FeatureDataGrid using a GraphicsLayer.
+    /// </summary>	
+    /// <exclude/>
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    public enum DataType
+    {
+        /// <summary>
+        /// Object.
+        /// </summary>
+        Object,
+        
+        /// <summary>
+        /// String.
+        /// </summary>
+        String,
+        
+        /// <summary>
+        /// Signed 16-bit Integer.
+        /// </summary>
+        Int16,
+        
+        /// <summary>
+        /// Unsigned 16-bit Integer.
+        /// </summary>
+        UInt16,
+        
+        /// <summary>
+        /// Signed 32-bit Integer.
+        /// </summary>
+        Int32,
+
+        /// <summary>
+        /// Unsigned 32-bit Integer.
+        /// </summary>
+        UInt32,
+
+        /// <summary>
+        /// Signed 64-bit Integer.
+        /// </summary>
+        Int64,
+
+        /// <summary>
+        /// Unsigned 64-bit Integer.
+        /// </summary>
+        UInt64,
+
+        /// <summary>
+        /// Decimal floating point number.
+        /// </summary>
+        Decimal,
+
+        /// <summary>
+        /// Single floating point number.
+        /// </summary>
+        Single,
+
+        /// <summary>
+        /// Double floating point number.
+        /// </summary>
+        Double,
+
+        /// <summary>
+        /// DateTime.
+        /// </summary>
+        DateTime,
+		/// <summary>
+		/// A Global unique identifier
+		/// </summary>
+        GUID,
+    }
 }

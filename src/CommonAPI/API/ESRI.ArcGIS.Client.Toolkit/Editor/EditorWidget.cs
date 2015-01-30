@@ -5,6 +5,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using ESRI.ArcGIS.Client;
@@ -13,6 +14,7 @@ using ESRI.ArcGIS.Client.Toolkit;
 using System.Windows.Controls.Primitives;
 using System.Windows.Automation.Peers;
 using System.Windows.Automation.Provider;
+using ESRI.ArcGIS.Client.Symbols;
 
 namespace ESRI.ArcGIS.Client.Toolkit
 {
@@ -42,6 +44,16 @@ namespace ESRI.ArcGIS.Client.Toolkit
         public EditorWidget()
         {
             this.editor = new Editor();
+            
+            DrawLineSymbol = editor.DrawLineSymbol;
+            DrawFillSymbol = editor.DrawFillSymbol;
+            SnapDistanceSymbol = editor.SnapDistanceSymbol;
+            MidVertexSymbol = editor.MidVertexSymbol;
+            VertexSymbol = editor.VertexSymbol;
+            ScalePointSymbol = editor.ScalePointSymbol;
+            ScaleBoxSymbol = editor.ScaleBoxSymbol;
+            RotatePointSymbol = editor.RotatePointSymbol;
+
             this.editor.EditorActivated += Editor_EditorActivated;
 			this.editor.EditCompleted += Editor_EditCompleted;
             this.displayAttribute = false;
@@ -60,7 +72,15 @@ namespace ESRI.ArcGIS.Client.Toolkit
 			SetEditorBinding("EditVerticesEnabled", Editor.EditVerticesEnabledProperty);
 			SetEditorBinding("RotateEnabled", Editor.RotateEnabledProperty);
 			SetEditorBinding("ScaleEnabled", Editor.ScaleEnabledProperty);
-			SetEditorBinding("MaintainAspectRatioEnabled", Editor.MaintainAspectRatioProperty);
+            SetEditorBinding("MaintainAspectRatio", Editor.MaintainAspectRatioProperty);
+            SetEditorBinding("SnapDistanceSymbol", Editor.SnapDistanceSymbolProperty);
+            SetEditorBinding("MidVertexSymbol", Editor.MidVertexSymbolProperty);
+            SetEditorBinding("VertexSymbol", Editor.VertexSymbolProperty);
+            SetEditorBinding("ScaleBoxSymbol", Editor.ScaleBoxSymbolProperty); 
+            SetEditorBinding("ScalePointSymbol", Editor.ScalePointSymbolProperty);
+            SetEditorBinding("RotatePointSymbol", Editor.RotatePointSymbolProperty);
+            SetEditorBinding("DrawLineSymbol", Editor.DrawLineSymbolProperty);
+            SetEditorBinding("DrawFillSymbol", Editor.DrawFillSymbolProperty);
 #if!SILVERLIGHT
             SetEditorBinding("GeometryServiceCredentials", Editor.GeometryServiceCredentialsProperty);
 			SetEditorBinding("GeometryServiceClientCertificate", Editor.GeometryServiceClientCertificateProperty);
@@ -431,10 +451,18 @@ namespace ESRI.ArcGIS.Client.Toolkit
         /// Gets or sets the layer IDs of the layers for which templates are displayed.
         /// </summary>
         /// <remarks>
-        /// Specified in XAML and in Blend as a comma-delimited string: If a layer 
-        /// name contains a comma, please use &#44; instead of the comma.
-        /// If null/empty, templates from all feature layers are used. Order of 
-        /// the layer ids is respected in generating templates.
+        /// <para>
+        /// Specified in XAML and in Blend as a comma-delimited string: If a layer name contains a comma, please use &#44; instead of the comma.
+        /// If null/empty, templates from all feature layers are used. Order of the layer ids is respected in generating templates.
+        /// </para>
+        /// <ESRISILVERLIGHT><para><b>KNOWN ISSUE:</b> Specifically in Visual Studio 10 (including SP1), properties that are based on arrays of primitives (ex: int, string, etc.) do not work as expected in XAML for Silverlight. When you try to use a property based on an array of primitives in XAML, a blue squiggly line to appears under the property and the following error will occur within the Visual Studio 2010 IDE:</para></ESRISILVERLIGHT>
+        /// <ESRISILVERLIGHT><para>Unable to cast object of type 'Microsoft.Expression.DesignModel.DocumentModel.DocumentPrimitiveNode' to type 'Microsoft.Expression.DesignModel.DocumentModel.DocumentCompositeNode'.</para></ESRISILVERLIGHT>
+        /// <ESRISILVERLIGHT><para>The following is a list of all ArcGIS Silverlight API properties based on an array of primitives for which this issue occurs:</para></ESRISILVERLIGHT>
+        /// <ESRISILVERLIGHT><list type="bullet"><item><see cref="P:ESRI.ArcGIS.Client.ArcGISDynamicMapServiceLayer.VisibleLayers">ESRI.ArcGIS.Client.ArcGISDynamicMapServiceLayer.VisibleLayers</see> Property</item><item><see cref="P:ESRI.ArcGIS.Client.ArcGISImageServiceLayer.BandIds">ESRI.ArcGIS.Client.ArcGISImageServiceLayer.BandIds</see> Property</item><item><see cref="P:ESRI.ArcGIS.Client.Editor.LayerIDs">ESRI.ArcGIS.Client.Editor.LayerIDs</see> Property</item><item><see cref="P:ESRI.ArcGIS.Client.QueryDataSource.OIDFields">ESRI.ArcGIS.Client.QueryDataSource.OIDFields</see> Property</item><item><see cref="P:ESRI.ArcGIS.Client.Toolkit.DataSources.WmsLayer.Layers">ESRI.ArcGIS.Client.Toolkit.DataSources.WmsLayer.Layers</see> Property</item><item><see cref="P:ESRI.ArcGIS.Client.Toolkit.EditorWidget.LayerIDs">ESRI.ArcGIS.Client.Toolkit.EditorWidget.LayerIDs</see> Property</item><item><see cref="P:ESRI.ArcGIS.Client.Toolkit.Legend.LayerIDs">ESRI.ArcGIS.Client.Toolkit.Legend.LayerIDs</see> Property</item><item><see cref="P:ESRI.ArcGIS.Client.Toolkit.TemplatePicker.LayerIDs">ESRI.ArcGIS.Client.Toolkit.TemplatePicker.LayerIDs</see> Property</item></list></ESRISILVERLIGHT>
+        /// <ESRISILVERLIGHT><para>Although you can run the application, this error locks up the Visual Studio 2010 Design tab for the .xaml page. It is recommended that developers use properties based on an array of primitives only in the code-behind.</para></ESRISILVERLIGHT>
+        /// <ESRISILVERLIGHT><para>Performing a re-build of the application which causes a refresh of the Design view results in a similar error message (NOTE: This error message and screen shot are for the ArcGISDynamicMapServiceLayer.VisibleLayers property; it will look slightly different for the properties based upon an array of primitives):<br/>InvalidCastException was thrown on "ArcGISDynamicMapServiceLayer": Unable to cast object of type 'Microsoft.Expression.DesignModel.DocumentModel.DocumentPrimitiveNode' to type 'Microsoft.Expression.DesignModel.DocumentModel.DocumentCompositeNode'.<br/>at Microsoft.Expression.DesignModel.InstanceBuilders.ArrayInstanceBuilder.InstantiateTargetType(IInstanceBuilderContext context, ViewNode viewNode)<br/>at Microsoft.Expression.DesignModel.InstanceBuilders.ClrObjectInstanceBuilder.Instantiate(IInstanceBuilderContext context, ViewNode viewNode)<br/>at Microsoft.Expression.DesignModel.Core.ViewNodeManager.Instantiate(ViewNode viewNode)<br/></para></ESRISILVERLIGHT>
+        /// <ESRISILVERLIGHT><para><img border="0" alt="Visual Studio interger array XAML limitation issue." src="C:\ArcGIS\dotNET\API SDK\Main\ArcGISSilverlightSDK\LibraryReference\images\Client.ArcGISDynamicMapServiceLayer.VisibleLayers3.png"/></para></ESRISILVERLIGHT>
+        /// <ESRISILVERLIGHT><para><b>This issue of using properties based on an array of primitives (ex: int, string, etc.) in XAML was corrected by Microsoft in Visual Studio version 2012 and higher.</b></para></ESRISILVERLIGHT>
         /// </remarks>
         /// <value>The layer IDs.</value>
         [System.ComponentModel.TypeConverter(typeof(StringToStringArrayConverter))]
@@ -489,6 +517,7 @@ namespace ESRI.ArcGIS.Client.Toolkit
                 widget.editor.Map = newMap;
                 if (oldMap != null && oldMap.Layers != null)
                 {
+                    oldMap.MapGesture -= widget.Map_MapGesture;
                     List<GraphicsLayer> oldGraphicsLayers = new List<GraphicsLayer>();
                     foreach (Layer layer in oldMap.Layers)
                     {
@@ -500,6 +529,7 @@ namespace ESRI.ArcGIS.Client.Toolkit
                 }
                 if (newMap != null && newMap.Layers != null)
                 {
+                    newMap.MapGesture += widget.Map_MapGesture;
                     newMap.Layers.CollectionChanged += widget.Layers_CollectionChanged;
                     widget.AttachLayerEventHandlers(widget.editor.GraphicsLayers);
                 }
@@ -532,6 +562,135 @@ namespace ESRI.ArcGIS.Client.Toolkit
         }
         #endregion
 
+        #region Symbols
+        /// <summary>
+        /// Gets or sets the symbol displays distance reached for snapping.
+        /// </summary>
+        /// <value>The default snap distance symbol.</value>
+        public MarkerSymbol SnapDistanceSymbol
+        {
+            get { return (MarkerSymbol)GetValue(SnapDistanceSymbolProperty); }
+            set { SetValue(SnapDistanceSymbolProperty, value); }
+        }
+
+        /// <summary>
+        /// Identifies the <see cref="SnapDistanceSymbol"/> dependency property.
+        /// </summary>
+        public static readonly DependencyProperty SnapDistanceSymbolProperty =
+            DependencyProperty.Register("SnapDistanceSymbol", typeof (MarkerSymbol), typeof (EditorWidget), null);
+
+        /// <summary>
+        /// Gets or sets the symbol used to visualize where new vertex will be placed.
+        /// </summary>
+        /// <value>The default mid-vertex symbol.</value>
+        public MarkerSymbol MidVertexSymbol
+        {
+            get { return (MarkerSymbol)GetValue(MidVertexSymbolProperty); }
+            set { SetValue(MidVertexSymbolProperty, value); }
+        }
+
+        /// <summary>
+        /// Identifies the <see cref="MidVertexSymbol"/> dependency property.
+        /// </summary>
+        public static readonly DependencyProperty MidVertexSymbolProperty =
+          DependencyProperty.Register("MidVertexSymbol", typeof(MarkerSymbol), typeof(EditorWidget), null);
+
+        /// <summary>
+        /// Gets or sets the vertex symbol used for editing vertex
+        /// </summary>
+        /// <value>The default vertex symbol.</value>
+        public MarkerSymbol VertexSymbol
+        {
+            get { return (MarkerSymbol)GetValue(VertexSymbolProperty); }
+            set { SetValue(VertexSymbolProperty, value); }
+        }
+
+        /// <summary>
+        /// Identifies the <see cref="VertexSymbol"/> dependency property.
+        /// </summary>
+        public static readonly DependencyProperty VertexSymbolProperty =
+            DependencyProperty.Register("VertexSymbol", typeof (MarkerSymbol), typeof (EditorWidget), null);
+
+        /// <summary>
+        /// Gets or sets the scale box symbol used for editing vertex
+        /// </summary>
+        /// <value>The default scale box symbol.</value>
+        public LineSymbol ScaleBoxSymbol
+        {
+            get { return (LineSymbol)GetValue(ScaleBoxSymbolProperty); }
+            set { SetValue(ScaleBoxSymbolProperty, value); }
+        }
+
+        /// <summary>
+        /// Identifies the <see cref="ScaleBoxSymbol"/> dependency property.
+        /// </summary>
+        public static readonly DependencyProperty ScaleBoxSymbolProperty =
+          DependencyProperty.Register("ScaleBoxSymbol", typeof(LineSymbol), typeof(EditorWidget), null);
+
+        /// <summary>
+        /// Gets or sets the scale point symbol used for scaling geometry
+        /// </summary>
+        /// <value>The default scale point symbol.</value>
+        public MarkerSymbol ScalePointSymbol
+        {
+            get { return (MarkerSymbol)GetValue(ScalePointSymbolProperty); }
+            set { SetValue(ScalePointSymbolProperty, value); }
+        }
+
+        /// <summary>
+        /// Identifies the <see cref="ScalePointSymbol"/> dependency property.
+        /// </summary>
+        public static readonly DependencyProperty ScalePointSymbolProperty =
+          DependencyProperty.Register("ScalePointSymbol", typeof(MarkerSymbol), typeof(EditorWidget), null);
+
+        /// <summary>
+        /// Gets or sets the rotate point symbol used for rotating geometry
+        /// </summary>
+        /// <value>The default rotate point symbol.</value>
+        public MarkerSymbol RotatePointSymbol
+        {
+            get { return (MarkerSymbol)GetValue(RotatePointSymbolProperty); }
+            set { SetValue(RotatePointSymbolProperty, value); }
+        }
+
+        /// <summary>
+        /// Identifies the <see cref="RotatePointSymbol"/> dependency property.
+        /// </summary>
+        public static readonly DependencyProperty RotatePointSymbolProperty =
+          DependencyProperty.Register("RotatePointSymbol", typeof(MarkerSymbol), typeof(EditorWidget), null);
+
+        /// <summary>
+        /// Gets or sets the draw line symbol used for cut, reshape and freehand selection.
+        /// </summary>
+        /// <value>The default draw line symbol.</value>
+        public LineSymbol DrawLineSymbol
+        {
+            get { return (LineSymbol)GetValue(DrawLineSymbolProperty); }
+            set { SetValue(DrawLineSymbolProperty, value); }
+        }
+
+        /// <summary>
+        /// Identifies the <see cref="DrawLineSymbol"/> dependency property.
+        /// </summary>
+        public static readonly DependencyProperty DrawLineSymbolProperty =
+            DependencyProperty.Register("DrawLineSymbol", typeof (LineSymbol), typeof (EditorWidget), null);
+
+        /// <summary>
+        /// Gets or sets the draw fill symbol used for union and rectangle selection.
+        /// </summary>
+        /// <value>The default draw fill symbol.</value>
+        public FillSymbol DrawFillSymbol
+        {
+            get { return (FillSymbol)GetValue(DrawFillSymbolProperty); }
+            set { SetValue(DrawFillSymbolProperty, value); }
+        }
+
+        /// <summary>
+        /// Identifies the <see cref="DrawFillSymbol"/> dependency property.
+        /// </summary>
+        public static readonly DependencyProperty DrawFillSymbolProperty =
+          DependencyProperty.Register("DrawFillSymbol", typeof(FillSymbol), typeof(EditorWidget), null);
+        #endregion
         #endregion
 
         #region Event Handlers
@@ -612,6 +771,42 @@ namespace ESRI.ArcGIS.Client.Toolkit
                 TemplatePicker.ShowAttributeForm(featureLayer, args.Graphic);
                 this.displayAttribute = this.Continuous;
                 args.Handled = true;
+            }
+        }
+		
+        private const double TAP_TOLERANCE = 30;
+
+        private void Map_MapGesture(object sender, Map.MapGestureEventArgs e)
+        {
+            if (!displayAttribute || editor == null || !editor.GraphicsLayers.Any(l => l is FeatureLayer))
+                return;
+			if (e.Gesture != GestureType.Tap)
+				return;
+            var featureLayers = from l in editor.GraphicsLayers
+                                where l is FeatureLayer
+                                select l as FeatureLayer;
+            var graphics = e.DirectlyOver(TAP_TOLERANCE, featureLayers);
+            if (graphics != null && graphics.GetEnumerator().MoveNext())
+            {
+                var graphic = graphics.First();
+                FeatureLayer layer = null;
+                if (graphic == null) return;
+                foreach (var l in featureLayers)
+                {
+                    if (l.Graphics == null)
+                        return;
+                    if (l.Graphics.Contains(graphic))
+                    {
+                        layer = l;
+                        break;
+                    }
+                }
+                if (layer != null)
+                {
+                    e.Handled = true;
+                    TemplatePicker.ShowAttributeForm(layer, graphic);
+                    this.displayAttribute = this.Continuous;
+                }
             }
         }
 		

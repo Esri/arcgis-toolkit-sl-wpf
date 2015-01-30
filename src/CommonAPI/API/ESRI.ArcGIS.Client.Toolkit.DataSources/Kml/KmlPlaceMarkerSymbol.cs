@@ -2,6 +2,7 @@
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
+using System.Windows.Media.Effects;
 using ESRI.ArcGIS.Client.Symbols;
 
 namespace ESRI.ArcGIS.Client.Toolkit.DataSources.Kml
@@ -44,6 +45,51 @@ namespace ESRI.ArcGIS.Client.Toolkit.DataSources.Kml
         {
             KmlPlaceMarkerSymbol dp = d as KmlPlaceMarkerSymbol;
             dp.OnPropertyChanged("Fill");
+        }
+
+        /// <summary>
+        /// Identifies the <see cref="IconColorProperty"/> dependency property.
+        /// </summary>
+        public static readonly DependencyProperty IconColorProperty = DependencyProperty.Register("IconColor", typeof(Color), typeof(KmlPlaceMarkerSymbol), new PropertyMetadata(OnIconColorPropertyChanged));
+
+        /// <summary>
+        /// Gets or sets the icon color.
+        /// </summary>
+        public Color IconColor
+        {
+            get
+            {
+                return (Color)GetValue(IconColorProperty);
+            }
+
+            set
+            {
+                SetValue(IconColorProperty, value);
+            }
+        }
+
+        private static void OnIconColorPropertyChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        {
+            KmlPlaceMarkerSymbol dp = d as KmlPlaceMarkerSymbol;
+            if (dp != null)
+                dp.OnIconColorPropertyChanged((Color)e.NewValue);
+        }
+
+        private void OnIconColorPropertyChanged(Color iconColor)
+        {
+            // For performance reason, we try to use pixel shaders effect if absolutely needed only.
+            if (iconColor.R == byte.MaxValue && iconColor.B == byte.MaxValue && iconColor.G == byte.MaxValue)
+            {
+                // White more or less opaque --> setting opacity gives the expected result
+                Effect = null;
+                Opacity = (double)iconColor.A / byte.MaxValue;
+            }
+            else
+            {
+                Effect = new MultiplyBlendEffect { BlendColor = iconColor };
+                Opacity = 1.0;
+            }
+            OnPropertyChanged("IconColor");
         }
 
         /// <summary>
@@ -233,6 +279,27 @@ namespace ESRI.ArcGIS.Client.Toolkit.DataSources.Kml
         {
             KmlPlaceMarkerSymbol dp = d as KmlPlaceMarkerSymbol;
             dp.OnPropertyChanged("TranslateY");
+        }
+
+        /// <summary>
+        /// Identifies the <see cref="Effect"/> dependency property.
+        /// </summary>
+        public static readonly DependencyProperty EffectProperty = DependencyProperty.Register("Effect", typeof(Effect), typeof(KmlPlaceMarkerSymbol), null);
+
+        /// <summary>
+        /// Gets or sets the effect to apply to the image.
+        /// </summary>
+        public Effect Effect
+        {
+            get
+            {
+                return (Effect)GetValue(EffectProperty);
+            }
+
+            private set
+            {
+                SetValue(EffectProperty, value);
+            }
         }
     }
 }

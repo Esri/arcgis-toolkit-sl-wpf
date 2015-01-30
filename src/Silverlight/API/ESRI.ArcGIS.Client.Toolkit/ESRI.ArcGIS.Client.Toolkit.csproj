@@ -243,6 +243,8 @@
       <Link>Properties\Resources.Designer.cs</Link>
     </Compile>
     <Compile Include="Utilities\DataSourceCreator.cs" />
+    <Compile Include="ValueConverters\EmptyStringToNullConverter.cs" />
+    <Compile Include="ValueConverters\GUIDToStringConverter.cs" />
   </ItemGroup>
   <ItemGroup>
     <Resource Include="Bookmark\Bookmark.Theme.xaml">
@@ -428,6 +430,12 @@
     </EmbeddedResource>
     <EmbeddedResource Include="..\..\..\CommonAPI\API\ESRI.ArcGIS.Client.Toolkit\Properties\Resources.sv.resx">
       <Link>Properties\Resources.sv.resx</Link>
+    </EmbeddedResource>
+    <EmbeddedResource Include="..\..\..\CommonAPI\API\ESRI.ArcGIS.Client.Toolkit\Properties\Resources.th.resx">
+      <Link>Properties\Resources.th.resx</Link>
+    </EmbeddedResource>
+    <EmbeddedResource Include="..\..\..\CommonAPI\API\ESRI.ArcGIS.Client.Toolkit\Properties\Resources.tr.resx">
+      <Link>Properties\Resources.tr.resx</Link>
     </EmbeddedResource>
     <EmbeddedResource Include="..\..\..\CommonAPI\API\ESRI.ArcGIS.Client.Toolkit\Properties\Resources.zh-CN.resx">
       <Link>Properties\Resources.zh-CN.resx</Link>

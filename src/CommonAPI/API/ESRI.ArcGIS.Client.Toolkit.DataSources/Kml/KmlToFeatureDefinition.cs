@@ -595,14 +595,7 @@ namespace ESRI.ArcGIS.Client.Toolkit.DataSources.Kml
 					}
 					else
 					{
-						try
-						{
-							xDoc = XDocument.Load(System.Xml.XmlReader.Create(new StreamReader(seekableStream)), LoadOptions.None);
-						}
-						catch
-						{
-							xDoc = null;
-						}
+						xDoc = KmlLayer.LoadDocument(seekableStream);
 					}
 				}
 			}
@@ -676,18 +669,7 @@ namespace ESRI.ArcGIS.Client.Toolkit.DataSources.Kml
 				{
 					case ".kml":
 						// Create the XDocument object from the input stream
-						try
-						{
-#if SILVERLIGHT
-							xDoc = XDocument.Load(ms, LoadOptions.None);
-#else
-							xDoc = XDocument.Load(XmlReader.Create(ms));
-#endif
-						}
-						catch
-						{
-							xDoc = null;
-						}
+						xDoc = KmlLayer.LoadDocument(ms);
 						break;
 				}
 			}
@@ -1098,8 +1080,8 @@ namespace ESRI.ArcGIS.Client.Toolkit.DataSources.Kml
                 ESRI.ArcGIS.Client.Geometry.PointCollection pts = ExtractCoordinates(coord);
                 if (pts != null && pts.Count > 0)
                 {
-                    ESRI.ArcGIS.Client.Geometry.Polygon polygon = new Polygon();
-                    polygon.Rings.Add(pts);
+                    var polyline = new Polyline();
+                    polyline.Paths.Add(pts);
 
                     // Create symbol and use style information
                     LineSymbolDescriptor sym = new LineSymbolDescriptor();
@@ -1108,7 +1090,7 @@ namespace ESRI.ArcGIS.Client.Toolkit.DataSources.Kml
                     // Create feature descriptor from geometry and other information
                     return new PlacemarkDescriptor()
                     {
-                        Geometry = polygon,
+                        Geometry = polyline,
                         Symbol = sym
                     };
                 }
@@ -1362,6 +1344,7 @@ namespace ESRI.ArcGIS.Client.Toolkit.DataSources.Kml
 		private void GetStyleUrlAsync(string styleUrl, XDocument xDoc, System.Net.ICredentials credentials, Action<KMLStyle> callback, X509Certificate clientCertificate = null)
 		{
 			KMLStyle kmlStyle = new KMLStyle();
+			styleUrl = styleUrl.Trim();
 
 			if (!String.IsNullOrEmpty(styleUrl))
 			{
@@ -1473,6 +1456,13 @@ namespace ESRI.ArcGIS.Client.Toolkit.DataSources.Kml
                         kmlStyle.IconHref = iconUrl;
 
                     }
+                }
+
+                // Extract IconColor
+                XElement iconColor = iconStyle.Element(kmlNS + "color");
+                if (iconColor != null)
+                {
+                    kmlStyle.IconColor = GetColorFromHexString(iconColor.Value);
                 }
 
                 // If the hotspot element is present, make use of it

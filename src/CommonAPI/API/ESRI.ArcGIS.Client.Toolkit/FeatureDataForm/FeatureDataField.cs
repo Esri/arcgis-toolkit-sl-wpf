@@ -3,10 +3,13 @@
 // Please see http://go.microsoft.com/fwlink/?LinkID=131993 for details.
 // All other rights reserved.
 
+using ESRI.ArcGIS.Client.FeatureService;
+using ESRI.ArcGIS.Client.Toolkit.Utilities;
 using System;
 using System.ComponentModel;
-using ESRI.ArcGIS.Client.Toolkit.Utilities;
-using ESRI.ArcGIS.Client.FeatureService;
+using System.Globalization;
+using System.Linq;
+using System.Windows.Controls;
 
 namespace ESRI.ArcGIS.Client.Toolkit
 {
@@ -28,6 +31,7 @@ namespace ESRI.ArcGIS.Client.Toolkit
     {
         private FeatureDataForm _featureDataForm;
         private Field _field;
+		private FeatureLayerInfo _layerInfo;
         private Type _propertyType;
         private T _propertyValue;
         private CodedValueDomain _codedValueDomain;
@@ -43,17 +47,21 @@ namespace ESRI.ArcGIS.Client.Toolkit
         /// Initializes a new instance of the <see cref="FeatureDataField&lt;T&gt;"/> class.
         /// </summary>
         /// <param name="featureDataForm">The feature data form.</param>
+        /// <param name="layerInfo">The feature layer info.</param>
         /// <param name="field">The field.</param>
         /// <param name="propertyType">Type of the property.</param>
         /// <param name="propertyValue">The property value.</param>
-        internal FeatureDataField(FeatureDataForm featureDataForm, Field field, Type propertyType, T propertyValue)
+        internal FeatureDataField(FeatureDataForm featureDataForm, FeatureLayerInfo layerInfo, Field field, Type propertyType, T propertyValue)
         {
             this._featureDataForm = featureDataForm;
+			this._field = field;
+			this._layerInfo = layerInfo;
             this._codedValueDomain = null;
             Domain domain = field.Domain;
-            if (domain != null)
+            if (domain != null && !Toolkit.Utilities.FieldDomainUtils.IsDynamicDomain(_field, _layerInfo))
             {
                 this._codedValueDomain = domain as CodedValueDomain;
+
                 if (propertyType == typeof(DateTime) || propertyType == typeof(DateTime?))
                     this._dateRangeDomain = domain as RangeDomain<DateTime>;
                 else if (propertyType == typeof(double) || propertyType == typeof(double?))
@@ -69,8 +77,6 @@ namespace ESRI.ArcGIS.Client.Toolkit
                 else if (propertyType == typeof(byte) || propertyType == typeof(byte?))
                     this._byteRangeDomain = domain as RangeDomain<byte>;
             }
-
-            this._field = field;
             this._propertyType = propertyType;
             this._propertyValue = propertyValue;
         }
@@ -147,9 +153,9 @@ namespace ESRI.ArcGIS.Client.Toolkit
                             {
                                 object verifyType = null;
                                 if (FeatureDataForm.Utilities.IsNotOfTypeSystemNullable(this._propertyType))
-                                    verifyType = System.Convert.ChangeType(value, this._propertyType, null);
+                                    verifyType = System.Convert.ChangeType(value, this._propertyType, new CultureInfo(_featureDataForm.Language.IetfLanguageTag));
                                 else
-                                    verifyType = System.Convert.ChangeType(value, System.Nullable.GetUnderlyingType(this._propertyType), null);
+									verifyType = System.Convert.ChangeType(value, System.Nullable.GetUnderlyingType(this._propertyType), new CultureInfo(_featureDataForm.Language.IetfLanguageTag));
                             }
                         }
                         catch
@@ -161,6 +167,66 @@ namespace ESRI.ArcGIS.Client.Toolkit
                         // Type of the value is valid; first check for a range domain and verify the value over its min and max:
                         try
                         {
+							if(Toolkit.Utilities.FieldDomainUtils.IsDynamicDomain(_field, _layerInfo))
+							{
+								if (_featureDataForm._attributeFrameworkElements != null && _layerInfo != null && _featureDataForm._attributeFrameworkElements.ContainsKey(_layerInfo.TypeIdField))
+								{
+									var selectedItem = ((ComboBox)_featureDataForm._attributeFrameworkElements[_layerInfo.TypeIdField]).SelectedItem;
+									if (selectedItem != null)
+									{
+										object code = ((CodedValueSource)selectedItem).Code;
+										switch (_field.Type)
+										{
+											case ESRI.ArcGIS.Client.Field.FieldType.Double:
+												var dynamicRangeDoubleDomains = FieldDomainUtils.BuildDynamicRangeDomain<double>(_field, _layerInfo);
+												if (dynamicRangeDoubleDomains != null && code != null)
+												{
+													var domains = dynamicRangeDoubleDomains.Where(kvp => kvp.Key.Equals(code));
+													if (domains != null && domains.Any())
+														this._doubleRangeDomain = domains.First().Value;
+												}
+												break;
+											case ESRI.ArcGIS.Client.Field.FieldType.Integer:
+												var dynamicRangeIntegerDomains = FieldDomainUtils.BuildDynamicRangeDomain<int>(_field, _layerInfo);
+												if (dynamicRangeIntegerDomains != null && code != null)
+												{
+													var domains = dynamicRangeIntegerDomains.Where(kvp => kvp.Key.Equals(code));
+													if (domains != null && domains.Any())
+														this._intRangeDomain = domains.First().Value;
+												}
+												break;
+											case ESRI.ArcGIS.Client.Field.FieldType.Single:
+												var dynamicRangeSingleDomains = FieldDomainUtils.BuildDynamicRangeDomain<float>(_field, _layerInfo);
+												if (dynamicRangeSingleDomains != null && code != null)
+												{
+													var domains = dynamicRangeSingleDomains.Where(kvp => kvp.Key.Equals(code));
+													if (domains != null && domains.Any())
+														this._floatRangeDomain = domains.First().Value;
+												}
+												break;
+											case ESRI.ArcGIS.Client.Field.FieldType.SmallInteger:
+												var dynamicRangeShortDomains = FieldDomainUtils.BuildDynamicRangeDomain<short>(_field, _layerInfo);
+												if (dynamicRangeShortDomains != null && code != null)
+												{
+													var domains = dynamicRangeShortDomains.Where(kvp => kvp.Key.Equals(code));
+													if (domains != null && domains.Any())
+														this._shortRangeDomain = domains.First().Value;
+												}
+												break;
+											case ESRI.ArcGIS.Client.Field.FieldType.Date:
+												var dynamicRangeDateDomains = FieldDomainUtils.BuildDynamicRangeDomain<DateTime>(_field, _layerInfo);
+												if (dynamicRangeDateDomains != null && code != null)
+												{
+													var domains = dynamicRangeDateDomains.Where(kvp => kvp.Key.Equals(code));
+													if (domains != null && domains.Any())
+														this._dateRangeDomain = domains.First().Value;
+												}
+												break;
+										}
+									}
+								}
+							}
+												
                             if (this._dateRangeDomain != null)
                             {
                                 DateTime parsedValue = DateTime.Parse(value.ToString());

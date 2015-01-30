@@ -131,6 +131,40 @@ namespace ESRI.ArcGIS.Client.Toolkit
 
 			const string scriptText = @"
     if (opener) {
+        var hasAuthInfo = false;
+
+        // Check anchor part of URL for expected values
+        if (location.hash && location.hash.length > 1)
+        {
+            var params = location.hash.substring(1).split('&');
+            for (var i = 0; i < params.length; i++)
+            {
+                var param = params[i].split('=');
+                if (param[0] == 'access_token' || param[0] == 'error')
+                {
+                    hasAuthInfo = true;
+                    break;
+                }
+            }
+        }
+
+        // Check query string part of URL for expected values
+        if (!hasAuthInfo && location.search && location.search.length > 1)
+        {
+            var params = location.search.substring(1).split('&');
+            for (var i = 0; i < params.length; i++)
+            {
+                var param = params[i].split('=');
+                if (param[0] == 'code' || param[0] == 'error')
+                {
+                    hasAuthInfo = true;
+                    break;
+                }
+            }
+        }
+
+        if (hasAuthInfo)
+        {
         // Page initiated as redirect uri of another SL instance --> pass in the fragments to the other instance and close this one
         try {
             opener.setAuthData(location.href);
@@ -138,6 +172,7 @@ namespace ESRI.ArcGIS.Client.Toolkit
         catch (err) // the SL window may have been closed
         { }
         close();
+    }
     }
 
     var timer = null;
@@ -377,7 +412,32 @@ namespace ESRI.ArcGIS.Client.Toolkit
 
 			_callbackUrl = callbackUrl;
 			_tcs = new TaskCompletionSource<IDictionary<string, string>>();
+			var tcs = _tcs;
 
+			System.Windows.Threading.Dispatcher d = null;
+
+#if SILVERLIGHT
+			// Note that RootVisual is only accessible from UI Thread so Application.Current.RootVisual.Dispatcher crashes
+			if (Deployment.Current != null) // should always be the case
+				d = Deployment.Current.Dispatcher;
+#else
+			if (Application.Current != null)
+				d = Application.Current.Dispatcher;
+#endif
+
+			if (d != null && !d.CheckAccess())
+			{
+				//Ensure we are showing up the Authorize Web Page on the UI thread
+				d.BeginInvoke((Action)delegate { AuthorizeInUIThread(authorizeUrl); });
+			}
+			else
+				AuthorizeInUIThread(authorizeUrl);
+
+			return tcs.Task;
+		}
+
+		private void AuthorizeInUIThread(string authorizeUrl)
+		{
 			// Set an embedded webBrowser that displays the authorize page
 			var webBrowser = new WebBrowser();
 			webBrowser.Navigating += WebBrowserOnNavigating;
@@ -398,10 +458,7 @@ namespace ESRI.ArcGIS.Client.Toolkit
 			webBrowser.Navigate(authorizeUrl);
 
 			// Display the Window
-			var tcs = _tcs;
 			_window.ShowDialog();
-
-			return tcs.Task;
 		}
 
 		void OnWindowClosed(object sender, EventArgs e)
@@ -417,12 +474,15 @@ namespace ESRI.ArcGIS.Client.Toolkit
 		// Check if the web browser is redirected to the callback url
 		void WebBrowserOnNavigating(object sender, NavigatingCancelEventArgs e)
 		{
+			const string portalApprovalMarker = "/oauth2/approval";
 			var webBrowser = sender as WebBrowser;
 			Uri uri = e.Uri;
-			if (webBrowser == null || uri == null || _tcs == null)
+			if (webBrowser == null || uri == null || _tcs == null || string.IsNullOrEmpty(uri.AbsoluteUri))
 				return;
 
-			if (!String.IsNullOrEmpty(uri.AbsoluteUri) && uri.AbsoluteUri.StartsWith(_callbackUrl))
+			bool isRedirected = uri.AbsoluteUri.StartsWith(_callbackUrl) ||
+				_callbackUrl.Contains(portalApprovalMarker) && uri.AbsoluteUri.Contains(portalApprovalMarker); // Portal OAuth workflow with org defined at runtime --> the redirect uri can change
+			if (isRedirected)
 			{
 				// The web browser is redirected to the callbackUrl ==> close the window, decode the parameters returned as fragments or query, and return these parameters as result of the Task
 				e.Cancel = true;

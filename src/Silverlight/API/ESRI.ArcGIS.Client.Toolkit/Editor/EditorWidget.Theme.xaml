@@ -201,6 +201,10 @@
                                                   AutoComplete="{Binding AutoComplete}"
                                                   BorderBrush="{TemplateBinding BorderBrush}"
                                                   Background="{TemplateBinding Background}"
+                                                  SnapDistanceSymbol="{TemplateBinding SnapDistanceSymbol}"
+                                                  VertexSymbol="{TemplateBinding VertexSymbol}"
+                                                  DrawLineSymbol="{TemplateBinding DrawLineSymbol}"
+                                                  DrawFillSymbol="{TemplateBinding DrawFillSymbol}"
                                                   x:Name="TemplatePicker">
                                 <local:TemplatePicker.Template>
                                 <ControlTemplate TargetType="local:TemplatePicker">

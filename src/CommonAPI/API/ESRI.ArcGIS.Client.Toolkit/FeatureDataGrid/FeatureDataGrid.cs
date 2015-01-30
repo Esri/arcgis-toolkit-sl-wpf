@@ -185,15 +185,25 @@ namespace ESRI.ArcGIS.Client.Toolkit
 						// date time fields
 						DateTimeColumn(e);
 					}
-#if !SILVERLIGHT					
+#if !SILVERLIGHT		
+			        else if(field.Type == Field.FieldType.GUID)
+                    {
+                        TextColumn(e, DataType.GUID);
+                    }
 					else
 					{
 						// all others
-						TextColumn(e);
+						TextColumn(e, DataType.Object);
 					}
+#else
+                    else if(field.Type == Field.FieldType.GUID)
+                    {
+                        GuidColumn(e);
+                    }
 #endif
 					// Attached Field info to the column for easy reference
 					e.Column.SetValue(FieldColumnProperty, field);
+
 #if SILVERLIGHT
 					SetFieldAliasMapping(e.Column, e.PropertyName, field.Alias);
 #endif
@@ -202,7 +212,23 @@ namespace ESRI.ArcGIS.Client.Toolkit
 #if !SILVERLIGHT
 			else
 			{				
-				TextColumn(e); // Not a feature layer
+                var fcv = ItemsSource as FeatureCollectionView;
+                KeyValuePair<string, DataType>? kvp = null;
+                if(fcv != null)                
+                    kvp = fcv.GetAttributeSchema(mappedKey);                                                                       
+
+                var dataType = kvp.HasValue ? kvp.Value.Value : DataType.Object;
+
+                if(dataType == DataType.DateTime)
+                {                    
+				    DateTimeColumn(e); // date time fields                    
+                }
+                else
+                {
+                    TextColumn(e, dataType); // all others
+                }
+
+                e.Column.SetValue(KeyColumnProperty, kvp);
 			}
 #endif
 #if SILVERLIGHT			
@@ -210,11 +236,11 @@ namespace ESRI.ArcGIS.Client.Toolkit
 #else
 			e.Column.Header = AliasLookup(e.PropertyName);			
 #endif			
-			e.Column.CanUserSort = true;
-			e.Column.SortMemberPath = e.PropertyName;			
-		}
+			e.Column.CanUserSort = true;            
+            e.Column.SortMemberPath = e.PropertyName;			
+		}        
 
-		/// <summary>
+        /// <summary>
         /// Copies property from c2 over to c1.
         /// </summary>
         /// <param name="c1">column to copy to.</param>
@@ -565,7 +591,7 @@ namespace ESRI.ArcGIS.Client.Toolkit
 					// Unsubscribe from PagedCollectionView CollectionChanged event to perform a manual source 
 					// collection update:
 					(ItemsSource as PagedCollectionView).CollectionChanged -= PagedCollectionView_CollectionChanged;
-					graphic.RefreshRow((ItemsSource as ICollectionView).SourceCollection, idx, objectType);
+					graphic.RefreshRow((ItemsSource as ICollectionView).SourceCollection, idx, objectType, featureLayerInfo);
 					gridRows = ItemsSource.AsList();	// Refresh needed as a row in the ItemsSource has changed					
 					// Subscribing back to the PagedCollectionView CollectionChanged event handler:
 					(ItemsSource as PagedCollectionView).CollectionChanged += PagedCollectionView_CollectionChanged;
@@ -666,11 +692,12 @@ namespace ESRI.ArcGIS.Client.Toolkit
 		/// <summary>
 		/// Creates a DataGridColumn that uses a TexBlock for Display and Editing.
 		/// </summary>
-		private void TextColumn(DataGridAutoGeneratingColumnEventArgs e)
+		private void TextColumn(DataGridAutoGeneratingColumnEventArgs e, DataType dataType)
 		{
 			string maxLength = "";
 			bool Nullable = true;
-			string FieldType = "{x:Null}";
+            string FieldType = "{x:Null}";
+			string DataType = dataType != Toolkit.DataType.Object ? dataType.ToString() : "{x:Null}";
 			string RangeDomainValidationXAML = string.Empty;
 			if (featureLayer != null)
 			{
@@ -679,7 +706,7 @@ namespace ESRI.ArcGIS.Client.Toolkit
 				Nullable = field.Nullable;
 				FieldType = field.Type.ToString();
 				RangeDomainValidationXAML = GetRangeDomainValidation(field);
-			}
+			}            
 			DataGridTemplateColumn templateColumn = new DataGridTemplateColumn();
 			
 			// Creating CellTemplate:
@@ -687,35 +714,39 @@ namespace ESRI.ArcGIS.Client.Toolkit
 
 			string xaml;
 
-			const string cellTemplate = 
-			@"<DataTemplate 
+			const string cellTemplate =
+            @"<DataTemplate 
 				xmlns=""http://schemas.microsoft.com/winfx/2006/xaml/presentation""
+                xmlns:local=""clr-namespace:ESRI.ArcGIS.Client.Toolkit;assembly=ESRI.ArcGIS.Client.Toolkit"" 
 				xmlns:x=""http://schemas.microsoft.com/winfx/2006/xaml"">
 				<TextBlock VerticalAlignment=""Center"" Margin=""3"">
+                    <TextBlock.Resources>
+						<local:StringToPrimitiveTypeConverter x:Key=""converter"" FieldType=""{1}"" dataType=""{2}"" />
+					</TextBlock.Resources>
 					<TextBlock.Text>
-						<Binding Path=""{0}"" Mode=""OneWay""/>
+						<Binding Path=""{0}"" Mode=""OneWay"" Converter=""{{StaticResource converter}}"" />
 					</TextBlock.Text>
 				</TextBlock>
 			</DataTemplate>";
 
-			xaml = string.Format(cellTemplate, propName);
+			xaml = string.Format(cellTemplate, propName, FieldType, DataType);
 			templateColumn.CellTemplate = (DataTemplate)LoadXaml(xaml);
 
 			const string editingTemplate =
-			@"<DataTemplate 
+            @"<DataTemplate 
 				xmlns=""http://schemas.microsoft.com/winfx/2006/xaml/presentation"" 
 				xmlns:local=""clr-namespace:ESRI.ArcGIS.Client.Toolkit;assembly=ESRI.ArcGIS.Client.Toolkit"" 
 				xmlns:x=""http://schemas.microsoft.com/winfx/2006/xaml"">
 				<Grid>
 					<Grid.Resources>
-						<local:StringToPrimitiveTypeConverter x:Key=""converter"" FieldType=""{0}"" />
+						<local:StringToPrimitiveTypeConverter x:Key=""converter"" FieldType=""{0}"" dataType=""{1}"" />
 					</Grid.Resources>
-					<TextBox {1} >
+					<TextBox {2} >
 						<TextBox.Text>
-							<Binding Path=""{2}"" Mode=""TwoWay"" Converter=""{{StaticResource converter}}"" >
+							<Binding Path=""{3}"" Mode=""TwoWay"" Converter=""{{StaticResource converter}}"" >
 								<Binding.ValidationRules>
-									<local:FeatureValidationRule ValidationStep=""ConvertedProposedValue"" FieldType=""{0}"" Nullable=""{3}"" />
-									{4}
+									<local:FeatureValidationRule ValidationStep=""ConvertedProposedValue"" FieldType=""{0}"" dataType=""{1}"" Nullable=""{4}"" />
+									{5}
 								</Binding.ValidationRules>
 							</Binding>
 						</TextBox.Text>
@@ -733,17 +764,73 @@ namespace ESRI.ArcGIS.Client.Toolkit
 			</DataTemplate>";
 
 			xaml = string.Format(editingTemplate, 
-				FieldType, 
+				FieldType,
+                DataType,
 				maxLength, 
 				propName, 
 				Nullable, 
 				RangeDomainValidationXAML);
 
-			templateColumn.CellEditingTemplate = (DataTemplate)LoadXaml(xaml);
+            templateColumn.CellEditingTemplate = (DataTemplate)LoadXaml(xaml);
+
             CopyColumnProperties(templateColumn, e.Column);
 			e.Column = templateColumn;
 		}
 #endif
+#if SILVERLIGHT               
+
+        private void GuidColumn(DataGridAutoGeneratingColumnEventArgs e)
+        {                        
+            DataGridTemplateColumn templateColumn = new DataGridTemplateColumn();
+
+            // Creating CellTemplate:
+            string propName = GetBindingPropertyName(e.PropertyName);
+
+            string xaml;
+
+            const string cellTemplate =
+            @"<DataTemplate 
+				xmlns=""http://schemas.microsoft.com/winfx/2006/xaml/presentation""
+                xmlns:local=""clr-namespace:ESRI.ArcGIS.Client.Toolkit.ValueConverters;assembly=ESRI.ArcGIS.Client.Toolkit"" 
+				xmlns:x=""http://schemas.microsoft.com/winfx/2006/xaml"">
+				<TextBlock VerticalAlignment=""Center"" Margin=""3"">
+                    <TextBlock.Resources>
+						<local:GUIDToStringConverter x:Key=""converter"" />
+					</TextBlock.Resources>
+					<TextBlock.Text>
+						<Binding Path=""{0}"" Mode=""OneWay"" Converter=""{{StaticResource converter}}"" />
+					</TextBlock.Text>
+				</TextBlock>
+			</DataTemplate>";
+
+            xaml = string.Format(cellTemplate, propName);
+            templateColumn.CellTemplate = System.Windows.Markup.XamlReader.Load(xaml) as DataTemplate;
+
+            const string editingTemplate =
+           @"<DataTemplate 
+				xmlns=""http://schemas.microsoft.com/winfx/2006/xaml/presentation"" 
+				xmlns:local=""clr-namespace:ESRI.ArcGIS.Client.Toolkit.ValueConverters;assembly=ESRI.ArcGIS.Client.Toolkit"" 
+				xmlns:x=""http://schemas.microsoft.com/winfx/2006/xaml"">
+				<Grid>
+					<Grid.Resources>
+						<local:GUIDToStringConverter x:Key=""converter"" />
+					</Grid.Resources>
+					<TextBox>
+						<TextBox.Text>
+							<Binding Path=""{0}"" Mode=""TwoWay"" Converter=""{{StaticResource converter}}"" ValidatesOnExceptions=""true"" NotifyOnValidationError=""true""/>	
+						</TextBox.Text>						
+					</TextBox>
+				</Grid>
+			</DataTemplate>";
+
+            xaml = string.Format(editingTemplate, propName);
+            templateColumn.CellEditingTemplate = System.Windows.Markup.XamlReader.Load(xaml) as DataTemplate;
+
+            CopyColumnProperties(templateColumn, e.Column);
+            e.Column = templateColumn;
+        }
+#endif
+
 		/// <summary>
 		/// Creates a DataGridColumn that works with TypeID Field of a FeatureLayer.
 		/// </summary>
@@ -778,8 +865,11 @@ namespace ESRI.ArcGIS.Client.Toolkit
 			DynamicCodedValueSource dynamicCodedValueSource = FieldDomainUtils.BuildDynamicCodedValueSource(field, featureLayer.LayerInfo);
 			DynamicCodedValueDomainColumn column = new DynamicCodedValueDomainColumn();
 			column.DynamicCodedValueSource = dynamicCodedValueSource;
+            column.DateTimeKind = this.DateTimeKind;
+            column.DateTimeFormat = this.DateTimeFormat;
 			column.LookupField = featureLayer.LayerInfo.TypeIdField;
 			column.FieldInfo = field;
+            column.LayerInfo = featureLayer.LayerInfo;
 			column.Field = e.PropertyName;
             CopyColumnProperties(column, e.Column);
 			e.Column = column;
@@ -804,8 +894,19 @@ namespace ESRI.ArcGIS.Client.Toolkit
 #endif
                 CopyColumnProperties(column, e.Column);
 				e.Column = column;
-			}
-		}
+            }
+#if !SILVERLIGHT
+            else
+            {                
+                column.DateTimeKind = this.DateTimeKind;
+                column.DateTimeFormat = this.DateTimeFormat;
+                column.Header = e.PropertyName;
+                column.Field = e.PropertyName;                
+                CopyColumnProperties(column, e.Column);
+                e.Column = column;
+            }
+#endif
+        }
 
 		/// <summary>
 		/// Create a binding string used for template columns.
@@ -955,7 +1056,7 @@ namespace ESRI.ArcGIS.Client.Toolkit
 				currentRecordNumber = idx - 1;
 			SelectCurrentRecord();
 #else
-			if (_collection != null && _collection.Count > 0)
+            if (_collection != null && _collection.Count > 0)
 				MoveRecord(_collection.CurrentPosition - 1);
 #endif
 		}
@@ -1456,6 +1557,10 @@ namespace ESRI.ArcGIS.Client.Toolkit
 		/// </returns>
 		protected override FrameworkElement GenerateEditingElement(DataGridCell cell, object dataItem)
 		{
+#if !SILVERLIGHT
+			_isEditing = false;
+#endif
+
 			ComboBox box = new ComboBox()
 			{
 				Margin = new Thickness(4.0),
@@ -1481,9 +1586,23 @@ namespace ESRI.ArcGIS.Client.Toolkit
 				box.SetBinding(ComboBox.SelectedItemProperty, selectedBinding);
 								
 				box.SelectionChanged += box_SelectionChanged;
-			}						
+			}
 			return box;
 		}
+
+#if !SILVERLIGHT
+		private bool _isEditing;
+        /// <summary>
+        /// Commit should be accepted and pushed back to the source if value returns true or rejected if false.
+        /// </summary>
+        /// <param name="editingElement">The framework element that was used during the edit.</param>
+        /// <returns></returns>
+		protected override bool CommitCellEdit(FrameworkElement editingElement)
+		{
+			return _isEditing && base.CommitCellEdit(editingElement); // return false while not in edition to avoid committing the change when the selected item binding kicks in
+		}
+#endif
+
 
 		/// <summary>
 		/// When overridden in a derived class, gets a read-only element that is bound to the column's <see cref="P:System.Windows.Controls.DataGridBoundColumn.Binding"/> property value.
@@ -1527,6 +1646,9 @@ namespace ESRI.ArcGIS.Client.Toolkit
 		/// </returns>
 		protected override object PrepareCellForEdit(FrameworkElement editingElement, RoutedEventArgs editingEventArgs)
 		{
+#if !SILVERLIGHT
+			_isEditing = true;
+#endif
 			return null;
 		}
 
@@ -1606,10 +1728,17 @@ namespace ESRI.ArcGIS.Client.Toolkit
 	public sealed class DynamicCodedValueDomainColumn : DataGridBoundColumn
 	{
 		// private
+        private const string DEFAULT_DATETIME_FORMAT = "G";
+        private DateTimeFormatConverter dateTimeConverter;
 		private DynamicCodedValueSourceConverter nameConverter;
 		private DynamicCodedValueSourceLookupConverter lookupConverter;
 		private DynamicCodedValueSourceSelectedItemConverter selectedConverter;
 		private CodedValueSources nullableSources;
+#if !SILVERLIGHT
+        private StringToPrimitiveTypeConverter stringToPrimitiveTypeConverter;
+#else 
+        private EmptyStringToNullConverter emptyStringToNullConverter;
+#endif
 
 
 		/// <summary>
@@ -1638,16 +1767,60 @@ namespace ESRI.ArcGIS.Client.Toolkit
 		/// </summary>
 		public Field FieldInfo { get; set; }
 
+        /// <summary>
+        /// Gets or sets the Layer information property.
+        /// </summary>
+        public FeatureLayerInfo LayerInfo { get; set; }
+
+        /// <summary>
+        /// Gets or sets the date time format used to display date time in the DateTimePicker control.
+        /// </summary>		
+        public string DateTimeFormat
+        {
+            get { return (string)GetValue(DateTimeFormatStringProperty); }
+            set { SetValue(DateTimeFormatStringProperty, value); }
+        }
+
+        /// <summary>
+        /// The dependency property used for DateTimeFormat property.
+        /// </summary>
+        public static readonly DependencyProperty DateTimeFormatStringProperty =
+            DependencyProperty.Register("DateTimeFormat", typeof(string), typeof(DynamicCodedValueDomainColumn), new PropertyMetadata(DEFAULT_DATETIME_FORMAT));
+
+        /// <summary>
+        /// Gets or sets the DateTimeKind of the DateTime generated by the DateTimePicker control.		
+        /// If set to DateTimeKind.Local all DateTimes entered will be created as local DateTimeKind and
+        /// displayed in the DateTimePicker control as DateTimeKind.Local
+        /// </summary>				
+        public DateTimeKind DateTimeKind
+        {
+            get { return (DateTimeKind)GetValue(DateTimeKindProperty); }
+            set { SetValue(DateTimeKindProperty, value); }
+        }
+
+        /// <summary>
+        /// The dependency property used for DateTimeKind property.
+        /// </summary>
+        public static readonly DependencyProperty DateTimeKindProperty =
+            DependencyProperty.Register("DateTimeKind", typeof(DateTimeKind), typeof(DynamicCodedValueDomainColumn), new PropertyMetadata(DateTimeKind.Local));
+
 		/// <summary>
 		/// Initializes a new instance of the <see cref="DynamicCodedValueDomainColumn"/> class.
 		/// </summary>
 		public DynamicCodedValueDomainColumn()
 			: base()
 		{
+            dateTimeConverter = new DateTimeFormatConverter();
 			nameConverter = new DynamicCodedValueSourceConverter();
 			lookupConverter = new DynamicCodedValueSourceLookupConverter();
 			selectedConverter = new DynamicCodedValueSourceSelectedItemConverter();
+
 			nullableSources = new CodedValueSources();
+#if !SILVERLIGHT
+            stringToPrimitiveTypeConverter = new StringToPrimitiveTypeConverter();
+#else
+            emptyStringToNullConverter = new EmptyStringToNullConverter();
+#endif
 		}
 
 		/// <summary>
@@ -1660,39 +1833,168 @@ namespace ESRI.ArcGIS.Client.Toolkit
 		/// </returns>
 		protected override FrameworkElement GenerateEditingElement(DataGridCell cell, object dataItem)
 		{
-			ComboBox box = new ComboBox
-			{
-				Margin = new Thickness(4.0),
-				VerticalAlignment = VerticalAlignment.Center,
-				VerticalContentAlignment = VerticalAlignment.Center,
-				DisplayMemberPath = "DisplayName"
-			};
-			if (!string.IsNullOrEmpty(LookupField) && !string.IsNullOrEmpty(Field) && DynamicCodedValueSource != null)
-			{
-				// Item Source Binding
-				lookupConverter.LookupField = this.LookupField;
-				lookupConverter.Field = this.FieldInfo;
-				lookupConverter.NullableSources = this.nullableSources;
-				Binding binding = new Binding();
-				binding.Mode = BindingMode.OneWay;
-				binding.Converter = lookupConverter;
-				binding.ConverterParameter = DynamicCodedValueSource;
-				box.SetBinding(ComboBox.ItemsSourceProperty, binding);
+#if !SILVERLIGHT
+			_isEditing = false;
+#endif
+            if(!string.IsNullOrEmpty(Field))
+            {
+                var codedValueSources = Utilities.DynamicCodedValueSource.GetCodedValueSources(LookupField, FieldInfo, dataItem, DynamicCodedValueSource, nullableSources);
+                if (codedValueSources != null)
+                {
+                    ComboBox box = new ComboBox
+                    {
+                        Margin = new Thickness(4.0),
+                        VerticalAlignment = VerticalAlignment.Center,
+                        VerticalContentAlignment = VerticalAlignment.Center,
+                        DisplayMemberPath = "DisplayName"
+                    };
+                    if (!string.IsNullOrEmpty(LookupField) && DynamicCodedValueSource != null)
+                    {
+                        // Item Source Binding
+                        lookupConverter.LookupField = this.LookupField;
+                        lookupConverter.Field = this.FieldInfo;
+                        lookupConverter.NullableSources = this.nullableSources;
+                        Binding binding = new Binding();
+                        binding.Mode = BindingMode.OneWay;
+                        binding.Converter = lookupConverter;
+                        binding.ConverterParameter = DynamicCodedValueSource;
+                        box.SetBinding(ComboBox.ItemsSourceProperty, binding);
 
-				// Selected Item Binding
-				selectedConverter.Field = Field;
-				selectedConverter.LookupField = LookupField;				
-				selectedConverter.NullableSources = this.nullableSources;
-				Binding selectedBinding = new Binding();
-				selectedBinding.Mode = BindingMode.OneWay;
-				selectedBinding.Converter = selectedConverter;
-				selectedBinding.ConverterParameter = this.DynamicCodedValueSource;
-				box.SetBinding(ComboBox.SelectedItemProperty, selectedBinding);
+                        // Selected Item Binding
+                        selectedConverter.Field = Field;
+                        selectedConverter.LookupField = LookupField;
+                        selectedConverter.NullableSources = this.nullableSources;
+                        Binding selectedBinding = new Binding();
+                        selectedBinding.Mode = BindingMode.OneWay;
+                        selectedBinding.Converter = selectedConverter;
+                        selectedBinding.ConverterParameter = this.DynamicCodedValueSource;
+                        box.SetBinding(ComboBox.SelectedItemProperty, selectedBinding);
 
-				box.SelectionChanged += box_SelectionChanged;
-			}
-			return box;
+                        box.SelectionChanged += box_SelectionChanged;
+                    }
+                    return box;
+                }
+                else if(FieldInfo.Type == Client.Field.FieldType.Date)
+                {
+                    DateTimePicker dtp = new DateTimePicker
+                    {
+                        Margin = new Thickness(4.0),
+                        VerticalAlignment = VerticalAlignment.Center,
+                        VerticalContentAlignment = VerticalAlignment.Center,
+                        DateTimeFormat = this.DateTimeFormat,
+                        DateTimeKind = this.DateTimeKind,
+                        Language = cell.Language
+                    };
+                    
+                    Binding selectedBinding =
+#if SILVERLIGHT
+                    new Binding(Field);
+#else
+				    new Binding("Attributes["+Field+"]");
+					if (FieldDomainUtils.IsDynamicDomain(FieldInfo, LayerInfo))
+					{
+						selectedBinding.ValidationRules.Add(new DynamicRangeDomainValidationRule()
+						{
+							ValidationStep = ValidationStep.ConvertedProposedValue,
+							Field = FieldInfo,
+							LayerInfo = LayerInfo,
+							Graphic = dataItem as Graphic
+						});
+					}
+#endif
+                    selectedBinding.Mode = BindingMode.TwoWay;
+                    selectedBinding.ValidatesOnExceptions = true;
+                    selectedBinding.NotifyOnValidationError = true;
+                    dtp.SetBinding(DateTimePicker.SelectedDateProperty, selectedBinding);
+                    
+                    return dtp;
+                }
+                else
+                {
+                    TextBox box = new TextBox
+                    {
+                        Margin = new Thickness(4.0),
+                        VerticalAlignment = VerticalAlignment.Center,
+                        VerticalContentAlignment = VerticalAlignment.Center,
+                    };
+
+                    box.MaxLength = Field.Length;
+
+                    Binding binding =
+#if SILVERLIGHT
+                    new Binding(Field);
+                    binding.Mode = BindingMode.TwoWay;
+                    binding.ValidatesOnExceptions = true;
+                    binding.NotifyOnValidationError = true;
+                    binding.Converter = emptyStringToNullConverter;
+#else
+                    new Binding("Attributes["+Field+"]");		
+                    binding.Mode = BindingMode.TwoWay;
+                    stringToPrimitiveTypeConverter.FieldType = FieldInfo.Type;
+                    binding.Converter = stringToPrimitiveTypeConverter;
+                    
+                    // Validates that the value entered into the text box can be 
+                    // converted to the corrected field type without error.
+                    // if value cannot be converted to the correct type validation
+                    // error will be triggered based on binding trigger below.
+                    binding.ValidationRules.Add(new FeatureValidationRule()
+                    {
+                        ValidationStep = ValidationStep.ConvertedProposedValue,
+                        FieldType = FieldInfo.Type,
+                        Nullable = FieldInfo.Nullable
+                    });
+
+
+                    if (FieldDomainUtils.IsDynamicDomain(FieldInfo, LayerInfo))
+                    {
+                        binding.ValidationRules.Add(new DynamicRangeDomainValidationRule()
+                        {
+                            ValidationStep = ValidationStep.ConvertedProposedValue,
+                            Field = FieldInfo,
+                            LayerInfo = LayerInfo,
+                            Graphic = dataItem as Graphic
+                        });
+                    }
+
+                    // Build a data trigger to show the validation error i.e. red outline around textbox
+                    // with message content in tooltip.
+                    var setterBinding = new Binding("(Validation.Errors)[0].ErrorContent");
+                    setterBinding.RelativeSource = RelativeSource.Self;
+
+                    var setter = new Setter();
+                    setter.Property = TextBox.ToolTipProperty;
+                    setter.Value = setterBinding;
+                                        
+                    var trigger = new Trigger();
+                    trigger.Property = Validation.HasErrorProperty;
+                    trigger.Value = true;
+                    trigger.Setters.Add(setter);
+                                      
+                    var style = new Style(typeof(TextBox));                    
+                    style.Triggers.Add(trigger);                                        
+                    box.Style = style;
+#endif                  
+                    box.SetBinding(TextBox.TextProperty, binding);                    
+                    return box;
+                }       
+            }
+            return new TextBlock(); // Should never reach this line.
 		}
+
+
+#if !SILVERLIGHT
+		private bool _isEditing;
+        /// <summary>
+        /// Commits edit back to the source object if returns 
+        /// true and rejects edit of returns false.
+        /// </summary>
+        /// <param name="editingElement">The framework element used during cell edit.</param>
+        /// <returns></returns>
+		protected override bool CommitCellEdit(FrameworkElement editingElement)
+		{
+			return _isEditing && base.CommitCellEdit(editingElement); // return false while not in edition to avoid committing the change when the selected item binding kicks in
+		}
+#endif
 
 		/// <summary>
 		/// When overridden in a derived class, gets a read-only element that is bound to the column's <see cref="P:System.Windows.Controls.DataGridBoundColumn.Binding"/> property value.
@@ -1703,34 +2005,73 @@ namespace ESRI.ArcGIS.Client.Toolkit
 		/// A new, read-only element that is bound to the column's <see cref="P:System.Windows.Controls.DataGridBoundColumn.Binding"/> property value.
 		/// </returns>
 		protected override FrameworkElement GenerateElement(DataGridCell cell, object dataItem)
-		{
-			TextBlock block = new TextBlock
-			{
-				Margin = new Thickness(4.0),
-				VerticalAlignment = VerticalAlignment.Center
-			};
-			if (!string.IsNullOrEmpty(LookupField) 	&& !string.IsNullOrEmpty(Field) && DynamicCodedValueSource != null)
-			{								
-				nameConverter.LookupField = this.LookupField;
-				nameConverter.Field = this.Field;
+		{            
+            TextBlock block = new TextBlock
+            {
+                Margin = new Thickness(4.0),
+                VerticalAlignment = VerticalAlignment.Center
+            };
 
-				Binding binding =
+            if (!string.IsNullOrEmpty(Field))
+            {
+                var codedValueSources = Utilities.DynamicCodedValueSource.GetCodedValueSources(LookupField, FieldInfo, dataItem, DynamicCodedValueSource, nullableSources);
+                if (codedValueSources != null)
+                {
+
+                    if (!string.IsNullOrEmpty(LookupField) && DynamicCodedValueSource != null)
+                    {
+                        nameConverter.LookupField = this.LookupField;
+                        nameConverter.Field = this.Field;
+
+                        Binding binding =
 #if SILVERLIGHT
-				new Binding();
+                        new Binding();
 #else
-				new Binding("Attributes["+Field+"]");
+				        new Binding("Attributes["+Field+"]");
 #endif
-				binding.Mode = BindingMode.OneWay;
-				binding.Converter = nameConverter;
-				binding.ConverterParameter = 
+                        binding.Mode = BindingMode.OneWay;
+                        binding.Converter = nameConverter;
+                        binding.ConverterParameter =
 #if SILVERLIGHT
-				DynamicCodedValueSource;
+                        DynamicCodedValueSource;
 #else
-				new Object[] { DynamicCodedValueSource, block };
-#endif					
-				block.SetBinding(TextBlock.TextProperty, binding);
-			}			
-			return block;
+				        new Object[] { DynamicCodedValueSource, block };
+#endif
+                        block.SetBinding(TextBlock.TextProperty, binding);
+                    }
+                }
+                else if (FieldInfo.Type == Client.Field.FieldType.Date)
+                {                    
+                    if (!string.IsNullOrEmpty(Field))
+                    {
+                        dateTimeConverter.DateTimeFormat = this.DateTimeFormat;
+                        dateTimeConverter.DateTimeKind = this.DateTimeKind;
+
+                        Binding binding =
+#if SILVERLIGHT
+                        new Binding(Field);
+#else
+				        new Binding("Attributes["+Field+"]");			
+#endif
+                        binding.Mode = BindingMode.OneWay;
+                        binding.Converter = dateTimeConverter;
+                        block.SetBinding(TextBlock.TextProperty, binding);
+                    }
+                }
+                else
+                {
+                    
+                    Binding binding =
+#if SILVERLIGHT
+                    new Binding(Field);
+#else
+				    new Binding("Attributes["+Field+"]");			
+#endif
+                    binding.Mode = BindingMode.OneWay;
+                    block.SetBinding(TextBlock.TextProperty, binding);                    
+                }
+            }
+            return block;
 		}
 
 		private void box_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -1771,7 +2112,10 @@ namespace ESRI.ArcGIS.Client.Toolkit
 		/// </returns>
 		protected override object PrepareCellForEdit(FrameworkElement editingElement, RoutedEventArgs editingEventArgs)
 		{
-			return null;
+#if !SILVERLIGHT
+			_isEditing = true;
+#endif
+			return editingElement;
 		}
 
 		private class DynamicCodedValueSourceSelectedItemConverter : IValueConverter
@@ -1853,8 +2197,8 @@ namespace ESRI.ArcGIS.Client.Toolkit
 			}
 
 			#endregion
-		}	
-	}
+		}        
+    }
 
 	/// <summary>
 	/// DateTimePickerColumn is used for editing DateTime fields using an internal
@@ -1987,8 +2331,8 @@ namespace ESRI.ArcGIS.Client.Toolkit
 				VerticalAlignment = VerticalAlignment.Center,
 				VerticalContentAlignment = VerticalAlignment.Center,				
 				DateTimeFormat = this.DateTimeFormat,
-				DateTimeKind = this.DateTimeKind
-
+				DateTimeKind = this.DateTimeKind,
+				Language = cell.Language
 			};
 			if (!string.IsNullOrEmpty(Field))
 			{												

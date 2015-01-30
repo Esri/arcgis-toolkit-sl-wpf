@@ -108,6 +108,42 @@ namespace ESRI.ArcGIS.Client.Toolkit
 #endif
     }
 
+#if !SILVERLIGHT
+	  static Visual rootVisual;
+	  private static Visual GetRootVisual(UIElement element)
+	  {
+		  if (Application.Current != null && Application.Current.MainWindow != null)
+		  {
+			  if (element.IsDescendantOf(Application.Current.MainWindow))
+				  return Application.Current.MainWindow.Content as Visual;
+		  }
+		  if (rootVisual != null && element.IsDescendantOf(rootVisual))
+			  return rootVisual;
+		  DependencyObject dependencyObject = VisualTreeHelper.GetParent(element);
+		  if (dependencyObject == null)
+			  return element;
+		  while (VisualTreeHelper.GetParent(dependencyObject) != null)
+			  dependencyObject = VisualTreeHelper.GetParent(dependencyObject);
+		  rootVisual = dependencyObject as Visual;
+		  return rootVisual;
+	  }
+#endif
+      
+    private Point TransformToRootVisual(Point toTransform)
+    {
+        if (!isDesignMode && Map != null)
+        {
+            var parent =
+#if SILVERLIGHT
+ Application.Current.RootVisual;
+#else
+ GetRootVisual(Map);
+#endif
+            return Map.TransformToVisual(parent).Transform(toTransform);
+        }
+        return toTransform;
+    }
+
     /// <summary>
     /// Provides the behavior for the Arrange pass of the layout.
     /// Classes can override this method to define their own Arrange pass 
@@ -132,7 +168,7 @@ namespace ESRI.ArcGIS.Client.Toolkit
       CheckPosition();
       if (!isDesignMode)
       {
-        Point p2 = Map.MapToScreen(Anchor, true);
+        Point p2 = TransformToRootVisual(Map.MapToScreen(Anchor, true));
         Point p = Map.TransformToVisual(this.Parent as UIElement).Transform(p2);
         double sum_Height_CR_AH = size.Height + CornerRadius + ArrowHeight;
         switch (currentPlacementMode)
@@ -179,6 +215,10 @@ namespace ESRI.ArcGIS.Client.Toolkit
             break;
         }
 
+          var topLeft = TransformToRootVisual(new Point(0, 0));
+          var bottomRight = TransformToRootVisual(new Point(Map.ActualWidth, Map.ActualHeight));
+          Margin = new Thickness(-topLeft.X + margin.Left, -topLeft.Y + margin.Top, -bottomRight.X + margin.Right,
+              -bottomRight.Y + margin.Bottom);
       }
       return size;
     }
@@ -261,7 +301,7 @@ namespace ESRI.ArcGIS.Client.Toolkit
       Point pT = new Point(0, 0);
       if (Map != null)
       {
-        Point p2 = Map.MapToScreen(Anchor, true);
+        Point p2 = TransformToRootVisual(Map.MapToScreen(Anchor, true));
         pT = Map.TransformToVisual(this.Parent as UIElement).Transform(p2);
       }
       else
@@ -513,7 +553,10 @@ namespace ESRI.ArcGIS.Client.Toolkit
       RenderTransform = translate = new TranslateTransform();
       InvalidateArrange();
       ChangeVisualState(false);
+        margin = Margin;
     }
+
+    private Thickness margin;
 
     private void ChangeVisualState(bool useTransitions)
     {

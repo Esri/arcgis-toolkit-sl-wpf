@@ -464,6 +464,12 @@
     <EmbeddedResource Include="..\..\..\CommonAPI\API\ESRI.ArcGIS.Client.Toolkit\Properties\Resources.sv.resx">
       <Link>Properties\Resources.sv.resx</Link>
     </EmbeddedResource>
+    <EmbeddedResource Include="..\..\..\CommonAPI\API\ESRI.ArcGIS.Client.Toolkit\Properties\Resources.th.resx">
+      <Link>Properties\Resources.th.resx</Link>
+    </EmbeddedResource>
+    <EmbeddedResource Include="..\..\..\CommonAPI\API\ESRI.ArcGIS.Client.Toolkit\Properties\Resources.tr.resx">
+      <Link>Properties\Resources.tr.resx</Link>
+    </EmbeddedResource>
     <EmbeddedResource Include="..\..\..\CommonAPI\API\ESRI.ArcGIS.Client.Toolkit\Properties\Resources.zh-CN.resx">
       <Link>Properties\Resources.zh-CN.resx</Link>
     </EmbeddedResource>

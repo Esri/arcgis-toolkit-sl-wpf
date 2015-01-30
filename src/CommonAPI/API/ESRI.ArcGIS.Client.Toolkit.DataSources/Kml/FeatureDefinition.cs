@@ -68,6 +68,11 @@ namespace ESRI.ArcGIS.Client.Toolkit.DataSources.Kml
         public double IconHeading { get; set; }
 
         /// <summary>
+        /// The icon color.
+        /// </summary>
+        public Color IconColor { get; set; }
+
+        /// <summary>
         /// The scale of the point image.
         /// </summary>
         public double IconScale { get; set; }
@@ -136,6 +141,7 @@ namespace ESRI.ArcGIS.Client.Toolkit.DataSources.Kml
             this.PolyOutline = from.PolyOutline;
             this.PolyFillColor = from.PolyFillColor;
             this.BalloonText = from.BalloonText;
+            this.IconColor = from.IconColor;
         }
 
         public KMLStyle()
@@ -156,6 +162,7 @@ namespace ESRI.ArcGIS.Client.Toolkit.DataSources.Kml
             // By default, colors should be NOT transparent and white
             this.LineColor = Color.FromArgb(255, 255, 255, 255);
             this.PolyFillColor = Color.FromArgb(255, 255, 255, 255);
+            this.IconColor = Color.FromArgb(255, 255, 255, 255);
 
             this.BalloonText = null;
         }
@@ -638,7 +645,8 @@ namespace ESRI.ArcGIS.Client.Toolkit.DataSources.Kml
 						ms.Height = 40;
 						ms.Width = 40;
 
-						ms.Fill = style.IconImage as ImageBrush;
+                        ms.Fill = style.IconImage;
+                        ms.IconColor = style.IconColor;
 
 						// Default to half the pixel size (width and height) if symbol offsets are 0 (supported in wpf and sl3)
 						ImageBrush ib = ms.Fill;
@@ -813,13 +821,32 @@ namespace ESRI.ArcGIS.Client.Toolkit.DataSources.Kml
 						// Get the image using the HREF
 						imageSource = new BitmapImage(KmlLayer.GetUri(feature.IconHref, _baseUri));
 					}
-					double opacity = (double)feature.Color.A/byte.MaxValue;
+
+                    // If feature color is White with an alpha channel, this can be managed with Opacity, else we need the to blend the color with the icon
+                    double opacity;
+                    bool needBlendEffect;
+
+                    if (feature.Color.R == byte.MaxValue && feature.Color.G == byte.MaxValue && feature.Color.B == byte.MaxValue)
+                    {
+                        opacity = (double)feature.Color.A / byte.MaxValue;
+                        needBlendEffect = false;
+                    }
+                    else
+                    {
+                        opacity = 1.0;
+                        needBlendEffect = true;
+                    }
+
 					uiElement = new Image
 					            	{
 					            		Source = imageSource,
 					            		Stretch = Stretch.Fill,
 					            		Opacity = opacity
 					            	};
+                    if (needBlendEffect)
+                    {
+                        uiElement.Effect = new MultiplyBlendEffect{BlendColor = feature.Color};
+                    }
 				}
 				else
 				{
@@ -857,10 +884,10 @@ namespace ESRI.ArcGIS.Client.Toolkit.DataSources.Kml
 
         private static void ComputeIconTranslationValues(KMLStyle style, KmlPlaceMarkerSymbol ms, BitmapImage bi)
         {
-            if (bi.PixelWidth > 0)
-                ms.Width = bi.PixelWidth;
-            if (bi.PixelHeight > 0)
-                ms.Height = bi.PixelHeight;
+            // To match sizing of Google Earth, default size of point images is 40x40
+            // Note: the iconScale will be applied later globally to the symbol
+            ms.Height = 40;
+            ms.Width = 40;
 
             switch (style.IconHotspotUnitsX)
             {
@@ -869,7 +896,7 @@ namespace ESRI.ArcGIS.Client.Toolkit.DataSources.Kml
                     break;
 
                 case HotSpotUnitType.Fraction:
-                    ms.TranslateX = (bi.PixelWidth * style.IconHotspotX) * -1;
+                    ms.TranslateX = (ms.Width * style.IconHotspotX) * -1;
                     break;
             }
 
@@ -880,7 +907,7 @@ namespace ESRI.ArcGIS.Client.Toolkit.DataSources.Kml
                     break;
 
                 case HotSpotUnitType.Fraction:
-                    ms.TranslateY = (bi.PixelHeight * style.IconHotspotY) * -1;
+                    ms.TranslateY = (ms.Height * style.IconHotspotY) * -1;
                     break;
             }
         }
