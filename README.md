@@ -73,7 +73,7 @@ Licensed under Ms-PL (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
 
-   http://www.microsoft.com/en-us/openness/licenses.aspx#MPL
+   https://opensource.org/licenses/ms-pl
 
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
